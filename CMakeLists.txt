@@ -50,11 +50,12 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 add_library(${PROJECT_NAME} ${SOURCES_LIST} ${PUBLIC_HEADERS_LIST})
-set_target_properties(${PROJECT_NAME} PROPERTIES FRAMEWORK TRUE)
+#set_target_properties(${PROJECT_NAME} PROPERTIES FRAMEWORK TRUE)
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 
 target_include_directories(${PROJECT_NAME} PRIVATE inc)
+target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt ${Iconv_LIBRARIES})
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)

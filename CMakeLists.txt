@@ -23,17 +23,21 @@ set(SOURCES_LIST
     src/filesystem/structure/directory.cpp
     src/filesystem/platform/sgold.cpp
     src/filesystem/platform/newsgold.cpp
-    src/filesystem/platform/newsgold_x85.cpp)
+    src/filesystem/platform/newsgold_x85.cpp
+    src/filesystem/platform/builder.cpp)
 
 set(PUBLIC_HEADERS_LIST
     inc/ffshit/rawdata.h
     inc/ffshit/help.h
     inc/ffshit/filesystem/structure/file.h
     inc/ffshit/filesystem/structure/directory.h
+    inc/ffshit/filesystem/platform/types.h
+    inc/ffshit/filesystem/platform/platform.h
     inc/ffshit/filesystem/platform/base.h
     inc/ffshit/filesystem/platform/newsgold.h
     inc/ffshit/filesystem/platform/sgold.h
     inc/ffshit/filesystem/platform/newsgold_x85.h
+    inc/ffshit/filesystem/platform/builder.h
     inc/ffshit/filesystem/extract.h
     inc/ffshit/filesystem/ex.h
     inc/ffshit/log/interface.h

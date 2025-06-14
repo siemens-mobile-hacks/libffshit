@@ -18,8 +18,9 @@ class SGOLD : public Base {
             return std::make_shared<SGOLD>(blocks);
         }
 
-        void    load() override final;
-        void    extract(std::string path, bool overwrite) override final;
+        void            load() override final;
+        // void            extract(std::string path, bool overwrite) override final;
+        const FSMap &   get_filesystem_map() const override final;
 
     private:
         typedef struct {

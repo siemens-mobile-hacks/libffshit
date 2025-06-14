@@ -79,34 +79,21 @@ void SGOLD::load() {
     parse_FIT();
 }
 
-void SGOLD::extract(std::string path, bool overwrite) {
-    FULLFLASH::Filesystem::extract(path, overwrite, [&](std::string dst_path) {
-        for (const auto &fs : fs_map) {
-            std::string fs_name = fs.first;
-            auto root           = fs.second;
+// void SGOLD::extract(std::string path, bool overwrite) {
+//     FULLFLASH::Filesystem::extract(path, overwrite, [&](std::string dst_path) {
+//         for (const auto &fs : fs_map) {
+//             std::string fs_name = fs.first;
+//             auto root           = fs.second;
 
-            Log::Logger::info("Extracting {}", fs_name);
+//             Log::Logger::info("Extracting {}", fs_name);
 
-            unpack(root, dst_path + "/" + fs_name);
-        };
-    });
+//             unpack(root, dst_path + "/" + fs_name);
+//         };
+//     });
+// }
 
-    // Log::Logger::info("Extracting filesystem");
-
-    // int r = mkdir(path.c_str(), 0755);
-
-    // if (r == -1) {
-    //     throw Exception("Couldn't create directory '{}': {}", path, strerror(errno));
-    // }
-
-    // for (const auto &fs : fs_map) {
-    //     std::string fs_name = fs.first;
-    //     auto root           = fs.second;
-
-    //     Log::Logger::info("Extracting {}", fs_name);
-
-    //     unpack(root, path + "/" + fs_name);
-    // }
+const FSMap & SGOLD::get_filesystem_map() const {
+    return fs_map;
 }
 
 void SGOLD::print_fit_header(const SGOLD::FITHeader &header) {

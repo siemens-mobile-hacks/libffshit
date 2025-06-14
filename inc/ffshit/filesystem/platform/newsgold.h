@@ -18,7 +18,8 @@ class NewSGOLD : public Base {
         }
 
         void                        load() override final;
-        void                        extract(std::string path, bool overwrite) override final;
+        // void                        extract(std::string path, bool overwrite) override final;
+        const FSMap &               get_filesystem_map() const override final;
 
     private:
         typedef struct {

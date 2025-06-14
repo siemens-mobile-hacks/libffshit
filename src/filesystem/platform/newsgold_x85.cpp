@@ -13,13 +13,28 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-NewSGOLD_X85::NewSGOLD_X85(Blocks &blocks) : blocks(blocks) {
+NewSGOLD_X85::NewSGOLD_X85(Blocks &blocks) : blocks(blocks) { }
+
+void NewSGOLD_X85::load() {
     parse_FIT();
 }
 
-void NewSGOLD_X85::load() {
-
+const FSMap & NewSGOLD_X85::get_filesystem_map() const {
+    return fs_map;
 }
+
+// void NewSGOLD_X85::extract(std::string path, bool overwrite) {
+//     FULLFLASH::Filesystem::extract(path, overwrite, [&](std::string dst_path) {
+//         for (const auto &fs : fs_map) {
+//             std::string fs_name = fs.first;
+//             auto root           = fs.second;
+
+//             Log::Logger::info("Extracting {}", fs_name);
+
+//             unpack(root, dst_path + "/" + fs_name);
+//         }
+//     });
+// }
 
 static bool is_directory_exists(std::string path) {
     struct stat sb;
@@ -29,19 +44,6 @@ static bool is_directory_exists(std::string path) {
     }
 
     return false;
-}
-
-void NewSGOLD_X85::extract(std::string path, bool overwrite) {
-    FULLFLASH::Filesystem::extract(path, overwrite, [&](std::string dst_path) {
-        for (const auto &fs : fs_map) {
-            std::string fs_name = fs.first;
-            auto root           = fs.second;
-
-            Log::Logger::info("Extracting {}", fs_name);
-
-            unpack(root, dst_path + "/" + fs_name);
-        }
-    });
 }
 
 void NewSGOLD_X85::print_fit_header(const NewSGOLD_X85::FITHeader &header) {

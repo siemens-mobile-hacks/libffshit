@@ -18,7 +18,6 @@ set(SOURCES_LIST
     src/system.cpp
     src/rawdata.cpp
     src/blocks.cpp 
-    src/filesystem/extract.cpp
     src/filesystem/structure/file.cpp
     src/filesystem/structure/directory.cpp
     src/filesystem/platform/sgold.cpp
@@ -38,7 +37,6 @@ set(PUBLIC_HEADERS_LIST
     inc/ffshit/filesystem/platform/sgold.h
     inc/ffshit/filesystem/platform/newsgold_x85.h
     inc/ffshit/filesystem/platform/builder.h
-    inc/ffshit/filesystem/extract.h
     inc/ffshit/filesystem/ex.h
     inc/ffshit/log/interface.h
     inc/ffshit/log/logger.h

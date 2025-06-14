@@ -1,7 +1,6 @@
 #include "ffshit/filesystem/platform/newsgold.h"
 
 #include "ffshit/filesystem/ex.h"
-#include "ffshit/filesystem/extract.h"
 
 #include "ffshit/help.h"
 #include "ffshit/system.h"

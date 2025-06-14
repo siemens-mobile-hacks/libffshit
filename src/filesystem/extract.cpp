@@ -1,6 +1,7 @@
 #include "ffshit/filesystem/extract.h"
 #include "ffshit/filesystem/ex.h"
 #include "ffshit/system.h"
+#include "ffshit/log/logger.h"
 
 #include <iostream>
 
@@ -11,7 +12,7 @@ namespace FULLFLASH {
 namespace Filesystem  {
 
 void extract(const std::string &path, bool overwrite, std::function<void(std::string)> extractor) {
-    spdlog::info("Extracting filesystem");
+    Log::Logger::info("Extracting filesystem");
 
     if (System::is_file_exists(path)) {
         std::string yes_no;
@@ -20,7 +21,7 @@ void extract(const std::string &path, bool overwrite, std::function<void(std::st
             yes_no = "y";
         } else {
             while (yes_no != "n" && yes_no != "y") {
-                spdlog::warn("'{}' is regular file. Delete? (y/n)", path);
+                Log::Logger::warn("'{}' is regular file. Delete? (y/n)", path);
 
                 yes_no.clear();
                 std::cin >> yes_no;
@@ -48,7 +49,7 @@ void extract(const std::string &path, bool overwrite, std::function<void(std::st
             yes_no = "y";
         } else {
             while (yes_no != "n" && yes_no != "y") {
-                spdlog::warn("Directory '{}' already exists. Delete? (y/n)", path);
+                Log::Logger::warn("Directory '{}' already exists. Delete? (y/n)", path);
 
                 yes_no.clear();
                 std::cin >> yes_no;

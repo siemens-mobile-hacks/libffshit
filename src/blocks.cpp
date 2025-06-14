@@ -1,6 +1,7 @@
 #include "ffshit/blocks.h"
 #include "ffshit/help.h"
 #include "ffshit/ex.h"
+#include "ffshit/log/logger.h"
 
 #include <cctype>
 #include <fstream>
@@ -226,7 +227,7 @@ void Blocks::search_blocks() {
 }
 
 void Blocks::search_blocks_x85() {
-    spdlog::debug("search_blocks_x85() {}", data.get_size());
+    Log::Logger::debug("search_blocks_x85() {}", data.get_size());
 
     char *buf = data.get_data().get();
 
@@ -249,7 +250,7 @@ void Blocks::search_blocks_x85() {
             continue;
         }
 
-        // spdlog::debug("Name: {}, Unk1: {:04X}, Unk2: {:04X}, Unk3: {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
+        // Log::Logger::debug("Name: {}, Unk1: {:04X}, Unk2: {:04X}, Unk3: {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
 
         // if (header.unknown_2 != 0x0000 && header.unknown_3 != 0xFFFFFFF0) {
         //     continue;
@@ -304,10 +305,10 @@ void Blocks::search_blocks_x85() {
 
 void Blocks::print() {
     for (const auto &pair : blocks_map) {
-        spdlog::debug("{} Count: {}:", pair.first, pair.second.size());
+        Log::Logger::debug("{} Count: {}:", pair.first, pair.second.size());
 
         for (const auto &block : pair.second) {
-            spdlog::debug("  0x{:08X}: {}, Size: {}", block.offset, block.header.name, block.data.get_size());
+            Log::Logger::debug("  0x{:08X}: {}, Size: {}", block.offset, block.header.name, block.data.get_size());
         }
     }
 }

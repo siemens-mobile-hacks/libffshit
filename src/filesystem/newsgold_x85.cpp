@@ -1,6 +1,7 @@
 #include "ffshit/filesystem/newsgold_x85.h"
 #include "ffshit/filesystem/ex.h"
 #include "ffshit/filesystem/extract.h"
+#include "ffshit/log/logger.h"
 
 #include <iconv.h>
 #include <sys/stat.h>
@@ -35,7 +36,7 @@ void NewSGOLD_X85::extract(std::string path, bool overwrite) {
             std::string fs_name = fs.first;
             auto root           = fs.second;
 
-            spdlog::info("Extracting {}", fs_name);
+            Log::Logger::info("Extracting {}", fs_name);
 
             unpack(root, dst_path + "/" + fs_name);
         }
@@ -43,49 +44,49 @@ void NewSGOLD_X85::extract(std::string path, bool overwrite) {
 }
 
 void NewSGOLD_X85::print_fit_header(const NewSGOLD_X85::FITHeader &header) {
-    spdlog::debug("    ===========================");
-    spdlog::debug("    FIT:");
-    spdlog::debug("      Flags:      {:08X}",      header.flags);
-    spdlog::debug("      ID:         {:08X} {:d}", header.id, header.id);
-    spdlog::debug("      Size:       {:08X} {:d}", header.size, header.size);
-    spdlog::debug("      Offset:     {:08X}",      header.offset);
-    spdlog::debug("      Unk1:       {:08X} {:d}", header.unk1, header.unk1);
-    spdlog::debug("      Unk2:       {:08X} {:d}", header.unk2, header.unk2);
-    spdlog::debug("      Unk3:       {:08X} {:d}", header.unk3, header.unk3);
-    spdlog::debug("      Unk4:       {:08X} {:d}", header.unk4, header.unk4);
+    Log::Logger::debug("    ===========================");
+    Log::Logger::debug("    FIT:");
+    Log::Logger::debug("      Flags:      {:08X}",      header.flags);
+    Log::Logger::debug("      ID:         {:08X} {:d}", header.id, header.id);
+    Log::Logger::debug("      Size:       {:08X} {:d}", header.size, header.size);
+    Log::Logger::debug("      Offset:     {:08X}",      header.offset);
+    Log::Logger::debug("      Unk1:       {:08X} {:d}", header.unk1, header.unk1);
+    Log::Logger::debug("      Unk2:       {:08X} {:d}", header.unk2, header.unk2);
+    Log::Logger::debug("      Unk3:       {:08X} {:d}", header.unk3, header.unk3);
+    Log::Logger::debug("      Unk4:       {:08X} {:d}", header.unk4, header.unk4);
 
 }
 
 void NewSGOLD_X85::print_dir_header(const DirHeader &header) {
-    spdlog::debug("===========================");
-    spdlog::debug("Dir header:");
-    spdlog::debug("  ID:           {:04X} {}",     header.id, header.id);
-    spdlog::debug("  Unknown1:     {:04X} {}",     header.unknown1, header.unknown1);
-    spdlog::debug("  Unknown2:     {:04X} {}",     header.unknown2, header.unknown2);
-    spdlog::debug("  Unknown3:     {:04X} {}",     header.unknown3, header.unknown3);
+    Log::Logger::debug("===========================");
+    Log::Logger::debug("Dir header:");
+    Log::Logger::debug("  ID:           {:04X} {}",     header.id, header.id);
+    Log::Logger::debug("  Unknown1:     {:04X} {}",     header.unknown1, header.unknown1);
+    Log::Logger::debug("  Unknown2:     {:04X} {}",     header.unknown2, header.unknown2);
+    Log::Logger::debug("  Unknown3:     {:04X} {}",     header.unknown3, header.unknown3);
 }
 
 void NewSGOLD_X85::print_file_header(const NewSGOLD_X85::FileHeader &header) {
-    spdlog::debug("===========================");
-    spdlog::debug("File:");
-    spdlog::debug("  ID:           {:04X} {}",     header.id, header.id);
-    spdlog::debug("  Unknown1:     {:04X} {}",     header.unknown1, header.unknown1);
-    spdlog::debug("  Parent ID:    {:04X} {}",     header.parent_id, header.parent_id);
-    spdlog::debug("  Next part ID: {:04X} {}",     header.next_part, header.next_part);
-    spdlog::debug("  Size:         {:08X} {}",     header.unknown2, header.unknown2);
-    spdlog::debug("  Unknown4:     {:04X} {}",     header.unknown4, header.unknown4);
-    spdlog::debug("  Unknown5:     {:04X} {}",     header.unknown5, header.unknown5);
-    spdlog::debug("  Unknown6:     {:04X} {}",     header.unknown6, header.unknown6);
-    spdlog::debug("  Unknown7:     {:04X} {}",     header.unknown7, header.unknown7);
-    spdlog::debug("  Name:         {}",            header.name);
+    Log::Logger::debug("===========================");
+    Log::Logger::debug("File:");
+    Log::Logger::debug("  ID:           {:04X} {}",     header.id, header.id);
+    Log::Logger::debug("  Unknown1:     {:04X} {}",     header.unknown1, header.unknown1);
+    Log::Logger::debug("  Parent ID:    {:04X} {}",     header.parent_id, header.parent_id);
+    Log::Logger::debug("  Next part ID: {:04X} {}",     header.next_part, header.next_part);
+    Log::Logger::debug("  Size:         {:08X} {}",     header.unknown2, header.unknown2);
+    Log::Logger::debug("  Unknown4:     {:04X} {}",     header.unknown4, header.unknown4);
+    Log::Logger::debug("  Unknown5:     {:04X} {}",     header.unknown5, header.unknown5);
+    Log::Logger::debug("  Unknown6:     {:04X} {}",     header.unknown6, header.unknown6);
+    Log::Logger::debug("  Unknown7:     {:04X} {}",     header.unknown7, header.unknown7);
+    Log::Logger::debug("  Name:         {}",            header.name);
 }
 
 void NewSGOLD_X85::print_file_part(const FilePart &part) {
-    spdlog::debug("===========================");
-    spdlog::debug("Part:");
-    spdlog::debug("  ID:             {:04X} {}", part.id, part.id);
-    spdlog::debug("  Parent ID:      {:04X} {}", part.parent_id, part.parent_id);
-    spdlog::debug("  Next part ID:   {:04X} {}", part.next_part, part.next_part);
+    Log::Logger::debug("===========================");
+    Log::Logger::debug("Part:");
+    Log::Logger::debug("  ID:             {:04X} {}", part.id, part.id);
+    Log::Logger::debug("  Parent ID:      {:04X} {}", part.parent_id, part.parent_id);
+    Log::Logger::debug("  Next part ID:   {:04X} {}", part.next_part, part.next_part);
 }
 
 RawData NewSGOLD_X85::read_aligned(const FFSBlock &block) {
@@ -282,7 +283,7 @@ void NewSGOLD_X85::dump_data(const RawData &raw_data) {
         bin_print += fmt::format("{:02X} ", (unsigned char) *(raw_data.get_data().get() + i));
 
         if ((i + 1) % 16 == 0) {
-            spdlog::debug("{}", bin_print);
+            Log::Logger::debug("{}", bin_print);
             bin_print.clear();
 
             is_aligned = true;
@@ -290,28 +291,28 @@ void NewSGOLD_X85::dump_data(const RawData &raw_data) {
     }
 
     if (!is_aligned) {
-        spdlog::debug("{}", bin_print);
+        Log::Logger::debug("{}", bin_print);
     }
 }
 
 void NewSGOLD_X85::dump_block(const NewSGOLD_X85::FFSBlock &block, bool is_dump_data) {
-    spdlog::debug("    ==================================================");
-    spdlog::debug("    {} FFS Block addr: {:08X}, FIT Record addr {:08X}", block.block_ptr->name, block.ff_boffset, block.ff_offset);
+    Log::Logger::debug("    ==================================================");
+    Log::Logger::debug("    {} FFS Block addr: {:08X}, FIT Record addr {:08X}", block.block_ptr->name, block.ff_boffset, block.ff_offset);
     print_fit_header(block.header);
 
-    spdlog::debug("Header data (size: {}): ", block.data_header.get_size());
+    Log::Logger::debug("Header data (size: {}): ", block.data_header.get_size());
 
     if (is_dump_data) {
         dump_data(block.data_header);
 
         if (block.data_from_header.get_size() > 0) {
-            spdlog::debug("Header aligned data (size: {}): ", block.data_from_header.get_size());
+            Log::Logger::debug("Header aligned data (size: {}): ", block.data_from_header.get_size());
 
             dump_data(block.data_from_header);
         }
     }
 
-    spdlog::debug("Data (size: {}):", block.data.get_size());
+    Log::Logger::debug("Data (size: {}):", block.data.get_size());
 
     if (is_dump_data) {
         dump_data(block.data);
@@ -329,13 +330,13 @@ void NewSGOLD_X85::parse_FIT() {
         FSBlocksMapList ffs_map_00;
 
         if (ffs_block_name.find("FFS") != std::string::npos) {
-            spdlog::debug("{} Blocks: {}", ffs_block_name, ffs.size());
+            Log::Logger::debug("{} Blocks: {}", ffs_block_name, ffs.size());
         } else {
             continue;
         }
 
         for (auto &block : ffs) {
-             spdlog::debug("  Block {:08X} {:08X} {:08X} {:08x} Size: {}",
+             Log::Logger::debug("  Block {:08X} {:08X} {:08X} {:08x} Size: {}",
                 block.offset,
                 block.header.unknown_1,
                 block.header.unknown_2,
@@ -381,7 +382,7 @@ void NewSGOLD_X85::parse_FIT() {
                 if (fs_block.header.flags == 0xFFFFFFC0 || fs_block.header.flags == 0xFFFFFF00) {
                     fs_block.data_header.add(block_data.get_data().get() + offset, last_offset - offset + 32);
 
-                    // spdlog::debug("    {:08X}", block.offset + offset);
+                    // Log::Logger::debug("    {:08X}", block.offset + offset);
 
                     fs_block.ff_boffset = block.offset;
                     fs_block.ff_offset  = block.offset + offset;
@@ -441,7 +442,7 @@ void NewSGOLD_X85::parse_FIT() {
                             //     char tmp[16];
 
                             //     memcpy(tmp, fs_block.data_header.get_data().get() + offset, to_read);
-                            //     // spdlog::debug("{}", to_read);
+                            //     // Log::Logger::debug("{}", to_read);
                             //     fs_block.data_from_header.add_top(tmp, to_read);
                             //     // fs_block.data_from_header.reverse(1);
                             // }
@@ -459,14 +460,14 @@ void NewSGOLD_X85::parse_FIT() {
             }
 
 
-            spdlog::debug("  C0 ID List:");
+            Log::Logger::debug("  C0 ID List:");
             for (const auto &id : id_list_C0) {
-                spdlog::debug("    {}", id);
+                Log::Logger::debug("    {}", id);
             }
 
-            spdlog::debug("  00 ID List:");
+            Log::Logger::debug("  00 ID List:");
             for (const auto &id : id_list_00) {
-                spdlog::debug("    {}", id);
+                Log::Logger::debug("    {}", id);
             }
 
         }
@@ -476,7 +477,7 @@ void NewSGOLD_X85::parse_FIT() {
         }
 
         // return;
-        spdlog::debug("ROOOOOOOT");
+        Log::Logger::debug("ROOOOOOOT");
         const FFSBlock &    root_block      = ffs_map_C0.at(10);
         FileHeader          root_header     = read_file_header(root_block);
 
@@ -494,7 +495,7 @@ NewSGOLD_X85::DirList NewSGOLD_X85::get_directory(FSBlocksMap &ffs_map_C0, FSBlo
     DirList dir_list;
 
     if (!ffs_map_C0.count(block.header.id + 1)) {
-        spdlog::warn("get_directory() block ID {} not found in ffs_map", block.header.id + 1);
+        Log::Logger::warn("get_directory() block ID {} not found in ffs_map", block.header.id + 1);
 
         // exit(0);
 
@@ -569,11 +570,11 @@ uint32_t NewSGOLD_X85::read_part(const FFSBlock &prev_part, const FileHeader &fi
 
     // dump_block(part_data, false);
 
-    // spdlog::debug("ID: {} Full size: {}, data size: {}, maybe size: {}", next_part, file_header.unknown2, data.get_size(), data.get_size() + part_data.header.size);
-    // spdlog::debug("ID: {} Last offset: {:08X} part_data.header.offset: {:08X}", next_part, last_offset, part_data.header.offset);
+    // Log::Logger::debug("ID: {} Full size: {}, data size: {}, maybe size: {}", next_part, file_header.unknown2, data.get_size(), data.get_size() + part_data.header.size);
+    // Log::Logger::debug("ID: {} Last offset: {:08X} part_data.header.offset: {:08X}", next_part, last_offset, part_data.header.offset);
 
     if (last_offset == part_data.header.offset) {
-        spdlog::warn("Add end. Last offset: {:08X} part_data.header.offset: {:08X}\n", last_offset, part_data.header.offset);
+        Log::Logger::warn("Add end. Last offset: {:08X} part_data.header.offset: {:08X}\n", last_offset, part_data.header.offset);
         auto end = read_aligned(part_data);
 
         data.add(end);
@@ -587,7 +588,7 @@ uint32_t NewSGOLD_X85::read_part(const FFSBlock &prev_part, const FileHeader &fi
     // size_t data_addr = start_offset + part_data.header.offset;
     size_t data_addr = part_data.ff_boffset + part_data.header.offset;
 
-    spdlog::debug("Data addr: {:08X} Block offset: {:08X} End data ddr: {:08X}", data_addr, part_data.ff_boffset, (data_addr + part_data.header.size) & 0xFFFFFF00);
+    Log::Logger::debug("Data addr: {:08X} Block offset: {:08X} End data ddr: {:08X}", data_addr, part_data.ff_boffset, (data_addr + part_data.header.size) & 0xFFFFFF00);
 
     // if (part_block.header.offset != part_data.header.offset) {
     //     data_addr += part_block.header.offset + part_block.fit_size + 0x800;
@@ -596,7 +597,7 @@ uint32_t NewSGOLD_X85::read_part(const FFSBlock &prev_part, const FileHeader &fi
     RawData file_data(this->blocks.get_data(), data_addr, part_data.header.size);
     data.add(file_data);
 
-    // spdlog::debug("ID: {}, FF Block offset: {:08X} Part block offset {:08X} Size: {:08X} Part data offset {:08X} Size: {:08X} - Data addr: {:08X}", 
+    // Log::Logger::debug("ID: {}, FF Block offset: {:08X} Part block offset {:08X} Size: {:08X} Part data offset {:08X} Size: {:08X} - Data addr: {:08X}", 
     //     next_part, part_block.ff_boffset, 
     //     part_block.header.offset, part_block.header.size, 
     //     part_data.header.offset, part_data.header.size, 
@@ -629,7 +630,7 @@ void NewSGOLD_X85::read_file(const FSBlocksMap &ffs_map_C0, const FSBlocksMapLis
 
     const FFSBlock &file_data_block = ffs_map_C0.at(file_header.id + 1);
 
-    spdlog::debug("  {:08X} Start: {:04X}, {:08X}", file_data_block.ff_boffset, file_data_block.header.offset, file_data_block.ff_boffset + file_data_block.header.offset);
+    Log::Logger::debug("  {:08X} Start: {:04X}, {:08X}", file_data_block.ff_boffset, file_data_block.header.offset, file_data_block.ff_boffset + file_data_block.header.offset);
     // fmt::print("{:08X} {:04X} {:04X} Data offset: {:04X}\n", file_data.ff_boffset, file_data.header.offset, file_data.header.offset, file_data.ff_boffset + file_data.header.offset - file_data.header.offset);
     RawData file_data(this->blocks.get_data(), file_data_block.ff_boffset + file_data_block.header.offset, file_data_block.header.size);
 
@@ -656,7 +657,7 @@ void NewSGOLD_X85::scan(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Di
         const FFSBlock *    file_block;
 
         if (!ffs_map_C0.count(dir_info.id)) {
-            spdlog::warn("scan() ID {} not found in ffs_map_C0", dir_info.id);
+            Log::Logger::warn("scan() ID {} not found in ffs_map_C0", dir_info.id);
             continue;
             if (!ffs_map_00.count(dir_info.id)) {
                 throw Exception("scan() ID {} not found in ffs_map_00", dir_info.id);
@@ -665,7 +666,7 @@ void NewSGOLD_X85::scan(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Di
             // file_block = &ffs_map_00.at(dir_info.id).at(0);
 
             // dump_block(*file_block);
-            // spdlog::debug(" !!!!! ");
+            // Log::Logger::debug(" !!!!! ");
             // FileHeader          file_header = read_file_header2(*file_block);
 
             // print_file_header(file_header);
@@ -680,9 +681,9 @@ void NewSGOLD_X85::scan(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Di
         // dump_block(*file_block);
         FileHeader          file_header = read_file_header(*file_block);;
 
-        spdlog::debug("{:5d} {}", dir_info.id, path + file_header.name);
-        // spdlog::debug("Block: {:08X}", file_block.ff_boffset);
-        // spdlog::debug("FF Offset: {:08X}", file_block.ff_offset);
+        Log::Logger::debug("{:5d} {}", dir_info.id, path + file_header.name);
+        // Log::Logger::debug("Block: {:08X}", file_block.ff_boffset);
+        // Log::Logger::debug("FF Offset: {:08X}", file_block.ff_offset);
 
         // print_fit_header(file_block.header);
         // print_file_header(file_header);
@@ -711,7 +712,7 @@ void NewSGOLD_X85::scan(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Di
                 }
 
             } catch (const Exception &e) {
-                spdlog::warn("Warning! Broken file: {}\n", e.what());
+                Log::Logger::warn("Warning! Broken file: {}\n", e.what());
             }
         }
 
@@ -736,7 +737,7 @@ void NewSGOLD_X85::unpack(Directory::Ptr dir, std::string path) {
         std::string     file_path = path + "/" + file->get_name();
         std::ofstream   file_stream;
 
-        spdlog::info("  Extracting {}", file_path);
+        Log::Logger::info("  Extracting {}", file_path);
 
         file_stream.open(file_path, std::ios_base::binary | std::ios_base::trunc);
 

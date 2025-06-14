@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(fmt REQUIRED)
 find_package(Iconv REQUIRED)
-find_package(spdlog REQUIRED)
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/inc
@@ -37,6 +36,8 @@ set(PUBLIC_HEADERS_LIST
     inc/ffshit/filesystem/newsgold_x85.h
     inc/ffshit/filesystem/extract.h
     inc/ffshit/filesystem/ex.h
+    inc/ffshit/log/interface.h
+    inc/ffshit/log/log.h
     inc/ffshit/blocks.h
     inc/ffshit/ex.h
     inc/ffshit/system.h

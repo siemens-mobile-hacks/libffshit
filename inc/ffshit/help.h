@@ -1,5 +1,5 @@
-#ifndef HELP_H
-#define HELP_H
+#ifndef LIBFFSHIT_HELP_H
+#define LIBFFSHIT_HELP_H
 
 #include <cstring>
 

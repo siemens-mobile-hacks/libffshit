@@ -1,4 +1,4 @@
-#include "ffshit/filesystem/directory.h"
+#include "ffshit/filesystem/structure/directory.h"
 
 namespace FULLFLASH {
 namespace Filesystem {

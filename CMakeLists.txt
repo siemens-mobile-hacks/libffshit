@@ -19,25 +19,25 @@ set(SOURCES_LIST
     src/rawdata.cpp
     src/blocks.cpp 
     src/filesystem/extract.cpp
-    src/filesystem/file.cpp
-    src/filesystem/directory.cpp
-    src/filesystem/sgold.cpp 
-    src/filesystem/newsgold.cpp
-    src/filesystem/newsgold_x85.cpp)
+    src/filesystem/structure/file.cpp
+    src/filesystem/structure/directory.cpp
+    src/filesystem/platform/sgold.cpp
+    src/filesystem/platform/newsgold.cpp
+    src/filesystem/platform/newsgold_x85.cpp)
 
 set(PUBLIC_HEADERS_LIST
     inc/ffshit/rawdata.h
     inc/ffshit/help.h
-    inc/ffshit/filesystem/file.h
-    inc/ffshit/filesystem/directory.h
-    inc/ffshit/filesystem/base.h
-    inc/ffshit/filesystem/newsgold.h
-    inc/ffshit/filesystem/sgold.h
-    inc/ffshit/filesystem/newsgold_x85.h
+    inc/ffshit/filesystem/structure/file.h
+    inc/ffshit/filesystem/structure/directory.h
+    inc/ffshit/filesystem/platform/base.h
+    inc/ffshit/filesystem/platform/newsgold.h
+    inc/ffshit/filesystem/platform/sgold.h
+    inc/ffshit/filesystem/platform/newsgold_x85.h
     inc/ffshit/filesystem/extract.h
     inc/ffshit/filesystem/ex.h
     inc/ffshit/log/interface.h
-    inc/ffshit/log/log.h
+    inc/ffshit/log/logger.h
     inc/ffshit/blocks.h
     inc/ffshit/ex.h
     inc/ffshit/system.h

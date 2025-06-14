@@ -1,7 +1,5 @@
-#ifndef BLOCKS_H
-#define BLOCKS_H
-
-#define FMT_HEADER_ONLY
+#ifndef LIBFFSHIT_BLOCKS_H
+#define LIBFFSHIT_BLOCKS_H
 
 #include <fmt/format.h>
 #include <fmt/printf.h>

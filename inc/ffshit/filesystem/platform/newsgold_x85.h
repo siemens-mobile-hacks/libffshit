@@ -1,10 +1,10 @@
-#ifndef FULLFLASH_FILESYSTEM_NEWSGOLD_X85_H
-#define FULLFLASH_FILESYSTEM_NEWSGOLD_X85_H
+#ifndef LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_NEWSGOLD_X85_H
+#define LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_NEWSGOLD_X85_H
 
 #include "ffshit/blocks.h"
-#include "ffshit/filesystem/base.h"
-#include "ffshit/filesystem/file.h"
-#include "ffshit/filesystem/directory.h"
+
+#include "ffshit/filesystem/platform/base.h"
+#include "ffshit/filesystem/structure/structure.h"
 
 namespace FULLFLASH {
 namespace Filesystem {
@@ -74,8 +74,6 @@ class NewSGOLD_X85 : public Base {
 
         using FSBlocksMap       = std::map<uint16_t, FFSBlock>;
         using FSBlocksMapList   = std::map<uint16_t, std::vector<FFSBlock>>;
-
-        using FSMap             = std::map<std::string, Directory::Ptr>;
 
         Blocks &                    blocks;
         FSMap                       fs_map;

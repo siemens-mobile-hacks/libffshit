@@ -1,12 +1,12 @@
-#ifndef FULLFLASH_FILESYSTEM_DIRECTORY_H
-#define FULLFLASH_FILESYSTEM_DIRECTORY_H
+#ifndef LIBFFSHIT_FULLFLASH_FILESYSTEM_STRUCTURE_DIRECTORY_H
+#define LIBFFSHIT_FULLFLASH_FILESYSTEM_STRUCTURE_DIRECTORY_H
 
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "ffshit/rawdata.h"
-#include "ffshit/filesystem/file.h"
+#include "ffshit/filesystem/structure/file.h"
 
 namespace FULLFLASH {
 namespace Filesystem {

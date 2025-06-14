@@ -1,4 +1,5 @@
-#include "ffshit/filesystem/newsgold_x85.h"
+#include "ffshit/filesystem/platform/newsgold_x85.h"
+
 #include "ffshit/filesystem/ex.h"
 #include "ffshit/filesystem/extract.h"
 #include "ffshit/log/logger.h"

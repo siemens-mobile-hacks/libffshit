@@ -1,4 +1,5 @@
-#include "ffshit/filesystem/sgold.h"
+#include "ffshit/filesystem/platform/sgold.h"
+
 #include "ffshit/filesystem/ex.h"
 #include "ffshit/filesystem/extract.h"
 

@@ -1,5 +1,5 @@
-#ifndef FF_SYSTEM_H
-#define FF_SYSTEM_H
+#ifndef LIBFFSHIT_SYSTEM_H
+#define LIBFFSHIT_SYSTEM_H
 
 #include <string>
 #include <filesystem>

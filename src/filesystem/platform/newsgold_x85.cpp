@@ -23,19 +23,6 @@ const FSMap & NewSGOLD_X85::get_filesystem_map() const {
     return fs_map;
 }
 
-// void NewSGOLD_X85::extract(std::string path, bool overwrite) {
-//     FULLFLASH::Filesystem::extract(path, overwrite, [&](std::string dst_path) {
-//         for (const auto &fs : fs_map) {
-//             std::string fs_name = fs.first;
-//             auto root           = fs.second;
-
-//             Log::Logger::info("Extracting {}", fs_name);
-
-//             unpack(root, dst_path + "/" + fs_name);
-//         }
-//     });
-// }
-
 static bool is_directory_exists(std::string path) {
     struct stat sb;
 
@@ -720,43 +707,6 @@ void NewSGOLD_X85::scan(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Di
         }
 
     }
-}
-
-void NewSGOLD_X85::unpack(Directory::Ptr dir, std::string path) {
-    int r = mkdir(path.c_str(), 0755);
-
-    if (r == -1) {
-        throw Exception("Couldn't create directory '{}': {}", path, strerror(errno));
-    }
-
-    const auto &subdirs = dir->get_subdirs();
-    const auto &files   = dir->get_files();
-
-    for (const auto &file : files) {
-        if (file->get_name().length() == 0) {
-            continue;
-        }
-
-        std::string     file_path = path + "/" + file->get_name();
-        std::ofstream   file_stream;
-
-        Log::Logger::info("  Extracting {}", file_path);
-
-        file_stream.open(file_path, std::ios_base::binary | std::ios_base::trunc);
-
-        if (!file_stream.is_open()) {
-            throw Exception("Couldn't create file '{}': {}", file_path, strerror(errno));
-        }
-
-        file_stream.write(file->get_data().get_data().get(), file->get_data().get_size());
-
-        file_stream.close();
-    }
-
-    for (const auto &subdir : subdirs) {
-        unpack(subdir, path + "/" + subdir->get_name());
-    }
-
 }
 
 };

@@ -79,19 +79,6 @@ void SGOLD::load() {
     parse_FIT();
 }
 
-// void SGOLD::extract(std::string path, bool overwrite) {
-//     FULLFLASH::Filesystem::extract(path, overwrite, [&](std::string dst_path) {
-//         for (const auto &fs : fs_map) {
-//             std::string fs_name = fs.first;
-//             auto root           = fs.second;
-
-//             Log::Logger::info("Extracting {}", fs_name);
-
-//             unpack(root, dst_path + "/" + fs_name);
-//         };
-//     });
-// }
-
 const FSMap & SGOLD::get_filesystem_map() const {
     return fs_map;
 }
@@ -247,42 +234,6 @@ void SGOLD::parse_FIT() {
         scan(ffs_block_name, ffs_map, root, root_header);
 
         fs_map[ffs_block_name] = root;
-    }
-}
-
-void SGOLD::unpack(Directory::Ptr dir, std::string path) {
-    int r = mkdir(path.c_str(), 0755);
-
-    if (r == -1) {
-        throw Exception("Couldn't create directory '{}': {}", path, strerror(errno));
-    }
-
-    const auto &subdirs = dir->get_subdirs();
-    const auto &files   = dir->get_files();
-
-    for (const auto &file : files) {
-        if (file->get_name().length() == 0) {
-            continue;
-        }
-
-        std::string     file_path = path + "/" + file->get_name();
-        std::ofstream   file_stream;
-
-        Log::Logger::info("  Extracting {}", file_path);
-
-        file_stream.open(file_path, std::ios_base::binary | std::ios_base::trunc);
-
-        if (!file_stream.is_open()) {
-            throw Exception("Couldn't create file '{}': {}", file_path, strerror(errno));
-        }
-
-        file_stream.write(file->get_data().get_data().get(), file->get_data().get_size());
-
-        file_stream.close();
-    }
-
-    for (const auto &subdir : subdirs) {
-        unpack(subdir, path + "/" + subdir->get_name());
     }
 }
 

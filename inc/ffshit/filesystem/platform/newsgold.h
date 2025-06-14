@@ -18,7 +18,6 @@ class NewSGOLD : public Base {
         }
 
         void                        load() override final;
-        // void                        extract(std::string path, bool overwrite) override final;
         const FSMap &               get_filesystem_map() const override final;
 
     private:
@@ -71,8 +70,6 @@ class NewSGOLD : public Base {
         void                        read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id);
         RawData                     read_full_data(FSBlocksMap &ffs_map, const FileHeader &header);
         void                        scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, std::string path = "/");
-
-        void                        unpack(Directory::Ptr dir, std::string path = "/");
 
 };
 

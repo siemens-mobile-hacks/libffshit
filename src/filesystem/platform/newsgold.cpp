@@ -28,19 +28,6 @@ const FSMap & NewSGOLD::get_filesystem_map() const {
     return fs_map;
 }
 
-// void NewSGOLD::extract(std::string path, bool overwrite) {
-//     FULLFLASH::Filesystem::extract(path, overwrite, [&](std::string dst_path) {
-//         for (const auto &fs : fs_map) {
-//             std::string fs_name = fs.first;
-//             auto root           = fs.second;
-
-//             Log::Logger::info("Extracting {}", fs_name);
-
-//             unpack(root, dst_path + "/" + fs_name);
-//         };
-//     });
-// }
-
 void NewSGOLD::print_fit_header(const NewSGOLD::FITHeader &header) {
     Log::Logger::debug("===========================");
     Log::Logger::debug("FIT:");
@@ -361,46 +348,6 @@ void NewSGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directo
             }
         }
     }
-}
-
-void NewSGOLD::unpack(Directory::Ptr dir, std::string path) {
-    bool r = System::create_directory(path, 
-                        std::filesystem::perms::owner_read | std::filesystem::perms::owner_write | std::filesystem::perms::owner_exec |
-                        std::filesystem::perms::group_read | std::filesystem::perms::group_exec |
-                        std::filesystem::perms::others_read | std::filesystem::perms::others_exec);
-
-    if (!r) {
-        throw Exception("Couldn't create directory '{}'", path);
-    }
-
-    const auto &subdirs = dir->get_subdirs();
-    const auto &files   = dir->get_files();
-
-    for (const auto &file : files) {
-        if (file->get_name().length() == 0) {
-            continue;
-        }
-
-        std::string     file_path = path + "/" + file->get_name();
-        std::ofstream   file_stream;
-
-        Log::Logger::info("  Extracting {}", file_path);
-
-        file_stream.open(file_path, std::ios_base::binary | std::ios_base::trunc);
-
-        if (!file_stream.is_open()) {
-            throw Exception("Couldn't create file '{}': {}", file_path, strerror(errno));
-        }
-
-        file_stream.write(file->get_data().get_data().get(), file->get_data().get_size());
-
-        file_stream.close();
-    }
-
-    for (const auto &subdir : subdirs) {
-        unpack(subdir, path + "/" + subdir->get_name());
-    }
-
 }
 
 };

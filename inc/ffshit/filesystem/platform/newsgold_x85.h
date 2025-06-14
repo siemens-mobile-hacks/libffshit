@@ -19,7 +19,6 @@ class NewSGOLD_X85 : public Base {
 
         void                        load() override final;
         const FSMap &               get_filesystem_map() const override final;
-        // void                        extract(std::string path, bool overwrite) override final;
 
     private:
         typedef struct {
@@ -100,8 +99,6 @@ class NewSGOLD_X85 : public Base {
 
         DirList                     get_directory(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, const FFSBlock &block);
         void                        scan(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Directory::Ptr dir, const FFSBlock &block, std::string path = "/");
-
-        void                        unpack(Directory::Ptr dir, std::string path = "/");
 
 };
 

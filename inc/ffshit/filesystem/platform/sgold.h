@@ -72,8 +72,6 @@ class SGOLD : public Base {
 
         static SGOLD::FileHeader    read_file_header(const RawData &data);
         static SGOLD::FilePart      read_file_part(const RawData &data);
-
-        void                        unpack(Directory::Ptr dir, std::string path = "/");
 };
 
 };

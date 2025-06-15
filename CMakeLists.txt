@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.5)
 project(ffshit VERSION 0.0.1 DESCRIPTION "Siemens filesystem library" LANGUAGES CXX)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    option(BUILD_SHARED_LIBS "Build shadred library" ON)
-else()
     option(BUILD_SHARED_LIBS "Build shadred library" OFF)
+else()
+    option(BUILD_SHARED_LIBS "Build shadred library" ON)
 endif()
 
 set(CMAKE_CXX_STANDARD 17)

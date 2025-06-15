@@ -240,7 +240,7 @@ void NewSGOLD::parse_FIT() {
 
         const FFSBlock &    root_block      = ffs_map.at(10);
         FileHeader          root_header     = read_file_header(root_block.data);
-        Directory::Ptr      root            = Directory::build(root_header.name);
+        Directory::Ptr      root            = Directory::build(root_header.name, "/");
 
         scan(ffs_block_name, ffs_map, root, root_header);
 
@@ -325,7 +325,7 @@ void NewSGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directo
         Log::Logger::info("Found ID: {:5d}, Path: {}{}", id, block_name, path + file_header.name);
 
         if (file_header.unknown6 & 0x10) {
-            Directory::Ptr dir_next = Directory::build(file_header.name);
+            Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path);
 
             dir->add_subdir(dir_next);
 
@@ -339,7 +339,7 @@ void NewSGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directo
                     file_data = read_full_data(ffs_map, file_header);
                 }
             
-                File::Ptr file = File::build(file_header.name, file_data);
+                File::Ptr file = File::build(file_header.name, block_name + path, file_data);
 
                 dir->add_file(file);
             } catch (const Exception &e) {

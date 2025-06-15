@@ -98,7 +98,7 @@ class NewSGOLD_X85 : public Base {
         void                        parse_FIT();
 
         DirList                     get_directory(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, const FFSBlock &block);
-        void                        scan(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Directory::Ptr dir, const FFSBlock &block, std::string path = "/");
+        void                        scan(const std::string &block_name, FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Directory::Ptr dir, const FFSBlock &block, std::string path = "/");
 
 };
 

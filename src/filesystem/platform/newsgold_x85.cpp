@@ -460,9 +460,9 @@ void NewSGOLD_X85::parse_FIT() {
 
         dump_block(root_block);
 
-        Directory::Ptr      root            = Directory::build(root_header.name);
+        Directory::Ptr      root            = Directory::build(root_header.name, "/");
 
-        scan(ffs_map_C0, ffs_map_00, root, root_block);
+        scan(ffs_block_name, ffs_map_C0, ffs_map_00, root, root_block);
 
         fs_map[ffs_block_name] = root;
     }
@@ -627,7 +627,7 @@ void NewSGOLD_X85::read_file(const FSBlocksMap &ffs_map_C0, const FSBlocksMapLis
 
 }
 
-void NewSGOLD_X85::scan(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Directory::Ptr dir, const FFSBlock &block, std::string path) {
+void NewSGOLD_X85::scan(const std::string &block_name, FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Directory::Ptr dir, const FFSBlock &block, std::string path) {
     auto dir_list = get_directory(ffs_map_C0, ffs_map_00, block);
 
     for (const auto &dir_info : dir_list) {
@@ -666,11 +666,11 @@ void NewSGOLD_X85::scan(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Di
         // print_file_header(file_header);
         
         if (file_header.unknown6 & 0x10) {
-            Directory::Ptr dir_next = Directory::build(file_header.name);
+            Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path);
 
             dir->add_subdir(dir_next);
 
-            scan(ffs_map_C0, ffs_map_00, dir_next, *file_block, path + file_header.name + "/");
+            scan(block_name, ffs_map_C0, ffs_map_00, dir_next, *file_block, path + file_header.name + "/");
         } else {
             try {
                 RawData                 file_data;
@@ -683,7 +683,7 @@ void NewSGOLD_X85::scan(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Di
                         throw Exception("Result size {} != header size {}", file_data.get_size(), size);
                     }
 
-                    File::Ptr file = File::build(file_header.name, file_data);
+                    File::Ptr file = File::build(file_header.name, block_name + path, file_data);
 
                     dir->add_file(file);
                 }

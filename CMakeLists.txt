@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.5)
 project(ffshit VERSION 0.0.1 DESCRIPTION "Siemens filesystem library" LANGUAGES CXX)
 
-option(BUILD_SHARED_LIBS "Build shadred library" ON)
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    option(BUILD_SHARED_LIBS "Build shadred library" ON)
+else()
+    option(BUILD_SHARED_LIBS "Build shadred library" OFF)
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -45,12 +49,14 @@ set(PUBLIC_HEADERS_LIST
     inc/ffshit/system.h
 )
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} /Z7 /D_DEBUG /Od")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2")
+else()
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 add_library(${PROJECT_NAME} ${SOURCES_LIST} ${PUBLIC_HEADERS_LIST})
 #set_target_properties(${PROJECT_NAME} PROPERTIES FRAMEWORK TRUE)

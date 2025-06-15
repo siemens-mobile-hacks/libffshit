@@ -13,6 +13,11 @@
 #include "ffshit/rawdata.h"
 #include "ffshit/filesystem/platform/types.h"
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
+
 namespace FULLFLASH {
 
 class Blocks {

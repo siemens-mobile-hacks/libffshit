@@ -4,8 +4,6 @@
 #include "ffshit/log/logger.h"
 
 #include <iconv.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 #include <spdlog/spdlog.h>
 
@@ -20,16 +18,6 @@ void NewSGOLD_X85::load() {
 
 const FSMap & NewSGOLD_X85::get_filesystem_map() const {
     return fs_map;
-}
-
-static bool is_directory_exists(std::string path) {
-    struct stat sb;
-
-    if (stat(path.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode)) { 
-        return true;
-    }
-
-    return false;
 }
 
 void NewSGOLD_X85::print_fit_header(const NewSGOLD_X85::FITHeader &header) {

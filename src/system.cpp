@@ -4,7 +4,7 @@
 
 namespace System {
 
-bool is_file_exists(const std::string &path) {
+bool is_file_exists(const std::filesystem::path path) {
     if (std::filesystem::exists(path)) {
         if (std::filesystem::is_regular_file(path)) {
             return true;
@@ -14,7 +14,7 @@ bool is_file_exists(const std::string &path) {
     return false;
 }
 
-bool is_directory_exists(const std::string &path) {
+bool is_directory_exists(const std::filesystem::path path) {
     if (std::filesystem::exists(path)) {
         if (std::filesystem::is_directory(path)) {
             return true;
@@ -45,7 +45,7 @@ bool remove_directory(const std::filesystem::path path) {
 }
 
 
-bool create_directory(const std::string &path, std::filesystem::perms perms) {
+bool create_directory(const std::filesystem::path path, std::filesystem::perms perms) {
     if (std::filesystem::create_directory(path)) {
         std::filesystem::permissions(path, perms, std::filesystem::perm_options::replace);
 

@@ -17,7 +17,11 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-NewSGOLD::NewSGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions) { }
+NewSGOLD::NewSGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions) {
+    if (!partitions) {
+        throw Exception("NewSGOLD partitions == nullptr o_O");
+    }
+}
 
 void NewSGOLD::load() {
     parse_FIT();

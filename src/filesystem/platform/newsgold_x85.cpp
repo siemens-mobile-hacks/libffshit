@@ -10,7 +10,11 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-NewSGOLD_X85::NewSGOLD_X85(Blocks &blocks) : blocks(blocks) { }
+NewSGOLD_X85::NewSGOLD_X85(Partitions::Partitions::Ptr partitions) : partitions(partitions) {
+    if (!partitions) {
+        throw Exception("NewSGOLD_X85 partitions == nullptr o_O");
+    }
+}
 
 void NewSGOLD_X85::load() {
     parse_FIT();
@@ -274,7 +278,7 @@ void NewSGOLD_X85::dump_data(const RawData &raw_data) {
 
 void NewSGOLD_X85::dump_block(const NewSGOLD_X85::FFSBlock &block, bool is_dump_data) {
     Log::Logger::debug("    ==================================================");
-    Log::Logger::debug("    {} FFS Block addr: {:08X}, FIT Record addr {:08X}", block.block_ptr->name, block.ff_boffset, block.ff_offset);
+    Log::Logger::debug("    {} FFS Block addr: {:08X}, FIT Record addr {:08X}", block.block_ptr->get_header().name, block.ff_boffset, block.ff_offset);
     print_fit_header(block.header);
 
     Log::Logger::debug("Header data (size: {}): ", block.data_header.get_size());
@@ -297,34 +301,37 @@ void NewSGOLD_X85::dump_block(const NewSGOLD_X85::FFSBlock &block, bool is_dump_
 }
 
 void NewSGOLD_X85::parse_FIT() {
-    Blocks::Map &bl = blocks.get_blocks();
+    const auto &part_map = partitions->get_partitions();
 
-    for (const auto &block : blocks.get_blocks()) {
-        const auto &ffs_block_name  = block.first;
-        const auto &ffs             = block.second;
+    for (const auto &pair : part_map) {
+        const std::string & part_name   = pair.first;
+        const auto &        part_info   = pair.second;
+        const auto &        part_blocks = part_info.get_blocks();
 
-        FSBlocksMap     ffs_map_C0;
-        FSBlocksMapList ffs_map_00;
-
-        if (ffs_block_name.find("FFS") != std::string::npos) {
-            Log::Logger::debug("{} Blocks: {}", ffs_block_name, ffs.size());
+        if (part_name.find("FFS") != std::string::npos) {
+            Log::Logger::debug("Partition: {}, Blocks {}", part_name, part_blocks.size());
         } else {
             continue;
         }
 
-        for (auto &block : ffs) {
+        FSBlocksMap     ffs_map_C0;
+        FSBlocksMapList ffs_map_00;
+
+        for (const auto &block : part_blocks) {
+            const auto &block_header = block.get_header();
+
              Log::Logger::debug("  Block {:08X} {:08X} {:08X} {:08x} Size: {}",
-                block.offset,
-                block.header.unknown_1,
-                block.header.unknown_2,
-                block.header.unknown_3,
-                block.data.get_size());
+                block.get_addr(),
+                block_header.unknown_1,
+                block_header.unknown_2,
+                block_header.unknown_3,
+                block.get_size());
 
             std::vector<uint32_t> id_list_C0;
             std::vector<uint32_t> id_list_00;
 
-            const RawData & block_data = block.data;
-            size_t          block_size = block_data.get_size();
+            const RawData & block_data = block.get_data();
+            size_t          block_size = block.get_size();
             size_t          fit_size = 0;
 
             size_t last_offset = block_size - 32;
@@ -351,7 +358,7 @@ void NewSGOLD_X85::parse_FIT() {
                 // block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&end_marker), 1);
 
                 if (fs_block.header.unk1 != 0xFFFFFFFF) {
-                    fit_size = (block.offset + block_size) - (block.offset + offset) - 32;
+                    fit_size = (block.get_addr() + block_size) - (block.get_addr() + offset) - 32;
 
                     break;
                 }
@@ -361,8 +368,8 @@ void NewSGOLD_X85::parse_FIT() {
 
                     // Log::Logger::debug("    {:08X}", block.offset + offset);
 
-                    fs_block.ff_boffset = block.offset;
-                    fs_block.ff_offset  = block.offset + offset;
+                    fs_block.ff_boffset = block.get_addr();
+                    fs_block.ff_offset  = block.get_addr() + offset;
 
                     last_offset = offset - 32;
 
@@ -446,7 +453,6 @@ void NewSGOLD_X85::parse_FIT() {
             for (const auto &id : id_list_00) {
                 Log::Logger::debug("    {}", id);
             }
-
         }
 
         if (!ffs_map_C0.count(10)) {
@@ -462,9 +468,10 @@ void NewSGOLD_X85::parse_FIT() {
 
         Directory::Ptr      root            = Directory::build(root_header.name, "/");
 
-        scan(ffs_block_name, ffs_map_C0, ffs_map_00, root, root_block);
+        scan(part_name, ffs_map_C0, ffs_map_00, root, root_block);
 
-        fs_map[ffs_block_name] = root;
+        fs_map[part_name] = root;
+
     }
 }
 
@@ -571,7 +578,7 @@ uint32_t NewSGOLD_X85::read_part(const FFSBlock &prev_part, const FileHeader &fi
     //     data_addr += part_block.header.offset + part_block.fit_size + 0x800;
     // }
 
-    RawData file_data(this->blocks.get_data(), data_addr, part_data.header.size);
+    RawData file_data(this->partitions->get_data(), data_addr, part_data.header.size);
     data.add(file_data);
 
     // Log::Logger::debug("ID: {}, FF Block offset: {:08X} Part block offset {:08X} Size: {:08X} Part data offset {:08X} Size: {:08X} - Data addr: {:08X}", 
@@ -609,7 +616,7 @@ void NewSGOLD_X85::read_file(const FSBlocksMap &ffs_map_C0, const FSBlocksMapLis
 
     Log::Logger::debug("  {:08X} Start: {:04X}, {:08X}", file_data_block.ff_boffset, file_data_block.header.offset, file_data_block.ff_boffset + file_data_block.header.offset);
     // fmt::print("{:08X} {:04X} {:04X} Data offset: {:04X}\n", file_data.ff_boffset, file_data.header.offset, file_data.header.offset, file_data.ff_boffset + file_data.header.offset - file_data.header.offset);
-    RawData file_data(this->blocks.get_data(), file_data_block.ff_boffset + file_data_block.header.offset, file_data_block.header.size);
+    RawData file_data(this->partitions->get_data(), file_data_block.ff_boffset + file_data_block.header.offset, file_data_block.header.size);
 
     data.add(file_data);
 

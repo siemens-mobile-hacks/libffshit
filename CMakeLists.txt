@@ -21,7 +21,6 @@ include_directories(
 set(SOURCES_LIST 
     src/system.cpp
     src/rawdata.cpp
-    src/blocks.cpp 
     src/partition/block.cpp
     src/partition/partition.cpp
     src/partition/partitions.cpp
@@ -51,7 +50,6 @@ set(PUBLIC_HEADERS_LIST
     inc/ffshit/filesystem/ex.h
     inc/ffshit/log/interface.h
     inc/ffshit/log/logger.h
-    inc/ffshit/blocks.h
     inc/ffshit/ex.h
     inc/ffshit/system.h
 )

@@ -1,8 +1,6 @@
 #ifndef LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_NEWSGOLD_H
 #define LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_NEWSGOLD_H
 
-#include "ffshit/blocks.h"
-
 #include "ffshit/filesystem/platform/base.h"
 #include "ffshit/filesystem/structure/structure.h"
 #include "ffshit/partition/partitions.h"

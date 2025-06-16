@@ -107,6 +107,10 @@ const Partitions::Map &Partitions::get_partitions() const {
     return partitions_map;
 }
 
+const RawData & Partitions::get_data() const {
+    return data;
+}
+
 const Platform Partitions::get_platform() const {
     return platform;
 }
@@ -241,6 +245,87 @@ void Partitions::search_blocks() {
 }
 
 void Partitions::search_blocks_x85() {
+    char *buf = data.get_data().get();
+
+    for (size_t offset = 0; offset < data.get_size(); offset += block_size) {
+        char *              ptr         = buf + offset;
+        constexpr size_t    header_size = 4 + 2 + 2 + 8;
+
+        if (is_empty(ptr, header_size)) {
+            continue;
+        }
+
+        Block::Header header;
+
+        ptr = read_data<char>(header.name, ptr + block_size - 32, 8);
+        ptr = read_data<uint16_t>(reinterpret_cast<char *>(&header.unknown_1), ptr, 1);
+        ptr = read_data<uint16_t>(reinterpret_cast<char *>(&header.unknown_2), ptr, 1);
+        ptr = read_data<uint32_t>(reinterpret_cast<char *>(&header.unknown_3), ptr, 1);
+
+        if (header.unknown_3 != 0xFFFFFFF0) {
+            continue;
+        }
+
+        // Log::Logger::debug("Name: {}, Unk1: {:04X}, Unk2: {:04X}, Unk3: {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
+
+        // if (header.unknown_2 != 0x0000 && header.unknown_3 != 0xFFFFFFF0) {
+        //     continue;
+        // }
+
+        size_t end_of_name = search_end(header.name, 8);
+
+        if (end_of_name == 8) {
+            continue;
+        }
+
+        if (!is_printable(header.name, end_of_name)) {
+            continue;
+        }
+
+        header.name[end_of_name] = '\0';
+
+        std::string block_name(header.name);
+        std::vector<std::string> names = { "EEFULL", "EELITE", "FFS" };
+
+        bool any_find = false;
+
+        for (const auto &name : names) {
+            if (block_name.find(name) != std::string::npos) {
+                any_find = true;
+
+                break;
+            }
+        }
+
+        if (any_find == false) {
+            continue;
+        }
+
+        if (!partitions_map.count(block_name)) {
+            partitions_map[block_name] = Partition(block_name);
+        }
+
+        uint32_t    block_count     = 4;
+        uint32_t    block_offset    = offset - (block_size * (block_count - 1));
+
+        partitions_map[block_name].add_block(Block(header, RawData(buf + block_offset, block_size * block_count), block_offset, block_size * block_count));
+
+        // if (!blocks_map.count(block_name)) {
+        //     blocks_map[block_name] = std::vector<Block>();
+        // }
+
+        // Block block;
+
+        // block.header    = header;
+        // block.offset    = offset - (block_size * 3);
+        // block.count     = 4;
+        // block.data      = RawData(buf + block.offset, block_size * block.count);
+        // block.name      = block_name;
+
+        // blocks_map[block_name].push_back(block);
+        // offset += block_size;
+        // offset += block_size * (block.count - 1);
+    }
 
 }
 

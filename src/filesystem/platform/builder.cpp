@@ -3,25 +3,13 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-Filesystem::Base::Ptr build(Platform platform, Blocks &blocks) {
-    switch(platform) {
-        // case FULLFLASH::Platform::X65: return FULLFLASH::Filesystem::SGOLD::build(blocks);
-        // case FULLFLASH::Platform::X75: return FULLFLASH::Filesystem::NewSGOLD::build(blocks);
-        case FULLFLASH::Platform::X85: return FULLFLASH::Filesystem::NewSGOLD_X85::build(blocks);
-        default:
-        case FULLFLASH::Platform::UNK: {
-            throw FULLFLASH::Exception("Unknown platform");
-        }
-    };
-}
-
 Filesystem::Base::Ptr build(Platform platform, Partitions::Partitions::Ptr partitions) {
     switch(platform) {
         case FULLFLASH::Platform::X65: return FULLFLASH::Filesystem::SGOLD::build(partitions);
         case FULLFLASH::Platform::X75: return FULLFLASH::Filesystem::NewSGOLD::build(partitions);
-        // case FULLFLASH::Platform::X85: return FULLFLASH::Filesystem::NewSGOLD_X85::build(blocks);
-        // default:
-        case FULLFLASH::Platform::UNK: {
+        case FULLFLASH::Platform::X85: return FULLFLASH::Filesystem::NewSGOLD_X85::build(partitions);
+        case FULLFLASH::Platform::UNK:
+        default: {
             throw FULLFLASH::Exception("Unknown platform");
         }
     };

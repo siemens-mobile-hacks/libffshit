@@ -1,20 +1,19 @@
 #ifndef LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_NEWSGOLD_X85_H
 #define LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_NEWSGOLD_X85_H
 
-#include "ffshit/blocks.h"
-
 #include "ffshit/filesystem/platform/base.h"
 #include "ffshit/filesystem/structure/structure.h"
+#include "ffshit/partition/partitions.h"
 
 namespace FULLFLASH {
 namespace Filesystem {
 
 class NewSGOLD_X85 : public Base {
     public:
-        NewSGOLD_X85(Blocks &blocks);
+        NewSGOLD_X85(Partitions::Partitions::Ptr partitions);
 
-        static Base::Ptr build(Blocks &blocks) {
-            return std::make_shared<NewSGOLD_X85>(blocks);
+        static Base::Ptr build(Partitions::Partitions::Ptr partitions) {
+            return std::make_shared<NewSGOLD_X85>(partitions);
         }
 
         void                        load() override final;
@@ -37,7 +36,7 @@ class NewSGOLD_X85 : public Base {
             RawData                 data;
             RawData                 data_header;
             RawData                 data_from_header;
-            const Blocks::Block *   block_ptr;
+            const Partitions::Block * block_ptr;
             uint32_t                ff_boffset;
             uint32_t                ff_offset;
             uint16_t                fit_size;
@@ -75,7 +74,7 @@ class NewSGOLD_X85 : public Base {
         using FSBlocksMap       = std::map<uint16_t, FFSBlock>;
         using FSBlocksMapList   = std::map<uint16_t, std::vector<FFSBlock>>;
 
-        Blocks &                    blocks;
+        Partitions::Partitions::Ptr partitions;
         FSMap                       fs_map;
 
         static void                 dump_data(const RawData &raw_data);

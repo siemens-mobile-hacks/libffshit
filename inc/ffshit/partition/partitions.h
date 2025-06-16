@@ -26,6 +26,7 @@ class Partitions {
         Partitions(std::string fullflash_path, Platform platform);
 
         const Map &                 get_partitions() const;
+        const RawData &             get_data() const;
 
         const Platform              get_platform() const;
         const std::string &         get_imei() const;

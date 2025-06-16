@@ -1,25 +1,24 @@
 #ifndef LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_SGOLD_H
 #define LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_SGOLD_H
 
-#include "ffshit/blocks.h"
 #include "ffshit/rawdata.h"
 
 #include "ffshit/filesystem/platform/base.h"
 #include "ffshit/filesystem/structure/structure.h"
+#include "ffshit/partition/partitions.h"
 
 namespace FULLFLASH {
 namespace Filesystem {
 
 class SGOLD : public Base {
     public:
-        SGOLD(Blocks &blocks);
+        SGOLD(Partitions::Partitions::Ptr partitions);
 
-        static Base::Ptr build(Blocks &blocks) {
-            return std::make_shared<SGOLD>(blocks);
+        static Base::Ptr build(Partitions::Partitions::Ptr partitions) {
+            return std::make_shared<SGOLD>(partitions);
         }
 
         void            load() override final;
-        // void            extract(std::string path, bool overwrite) override final;
         const FSMap &   get_filesystem_map() const override final;
 
     private:
@@ -57,7 +56,7 @@ class SGOLD : public Base {
 
         using FSBlocksMap   = std::map<uint16_t, FFSBlock>;
 
-        Blocks  &                   blocks;
+        Partitions::Partitions::Ptr partitions;
         FSMap                       fs_map;
 
         void                        parse_FIT();

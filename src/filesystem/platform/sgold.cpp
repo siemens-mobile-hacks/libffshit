@@ -1,5 +1,4 @@
 #include "ffshit/filesystem/platform/sgold.h"
-
 #include "ffshit/filesystem/ex.h"
 
 #include "ffshit/help.h"
@@ -72,7 +71,11 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-SGOLD::SGOLD(Blocks &blocks) : blocks(blocks) { }
+SGOLD::SGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions) {
+    if (!partitions) {
+        throw Exception("SGOLD partitions == nullptr o_O");
+    }
+}
 
 void SGOLD::load() {
     parse_FIT();
@@ -146,27 +149,26 @@ SGOLD::FilePart SGOLD::read_file_part(const RawData &data) {
 }
 
 void SGOLD::parse_FIT() {
-    Blocks::Map &bl = blocks.get_blocks();
+    const auto &part_map = partitions->get_partitions();
 
-    for (const auto &block : blocks.get_blocks()) {
-        const auto &ffs_block_name  = block.first;
-        const auto &ffs             = block.second;
-        FSBlocksMap ffs_map;
+    for (const auto &pair : part_map) {
+        const std::string & part_name   = pair.first;
+        const auto &        part_info   = pair.second;
+        const auto &        part_blocks = part_info.get_blocks();
 
-        if (ffs_block_name.find("FFS") != std::string::npos) {
-            Log::Logger::debug("{} Blocks:", ffs_block_name, ffs.size());
+        if (part_name.find("FFS") != std::string::npos) {
+            Log::Logger::debug("Partition: {}, Blocks {}", part_name, part_blocks.size());
         } else {
             continue;
         }
 
-        bool data_end = true;
+        FSBlocksMap ffs_map;
 
-        size_t max_block = 0;
-        for (auto &block : ffs) {
-            Log::Logger::debug("  Block {:08X} Size: {}", block.offset, block.data.get_size());
+        for (const auto &block : part_blocks) {
+            Log::Logger::debug("  Block {:08X} Size: {}", block.get_addr(), block.get_size());
 
-            const RawData & block_data = block.data;
-            size_t          block_size = block_data.get_size();
+            const RawData & block_data = block.get_data();
+            size_t          block_size = block.get_size();
 
             for (ssize_t offset = block_size - 16; offset > 0; offset -= 16) {
                 FFSBlock    fs_block;
@@ -207,7 +209,6 @@ void SGOLD::parse_FIT() {
                     }
                 }
 
-                // fs_block.data = RawData(block_data_ptr + fs_block.header.offset, fs_block.header.size);
                 fs_block.data = RawData(block_data, fs_block.header.offset, fs_block.header.size);
 
                 if (ffs_map.count(fs_block.header.id)) {
@@ -215,10 +216,6 @@ void SGOLD::parse_FIT() {
                 }
 
                 ffs_map[fs_block.header.id] = fs_block;
-
-                if (fs_block.header.id > max_block) {
-                    max_block = fs_block.header.id;
-                }
             }
         }
 
@@ -230,9 +227,9 @@ void SGOLD::parse_FIT() {
         FileHeader          root_header     = read_file_header(root_block.data);
         Directory::Ptr      root            = Directory::build(root_header.name, "/");
 
-        scan(ffs_block_name, ffs_map, root, root_header);
+        scan(part_name, ffs_map, root, root_header);
 
-        fs_map[ffs_block_name] = root;
+        fs_map[part_name] = root;
     }
 }
 

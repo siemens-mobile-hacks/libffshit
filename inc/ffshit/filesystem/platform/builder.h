@@ -7,6 +7,7 @@ namespace FULLFLASH {
 namespace Filesystem {
 
 Filesystem::Base::Ptr build(Platform platform, Blocks &blocks);
+Filesystem::Base::Ptr build(Platform platform, Partitions::Partitions::Ptr partitions);
 
 };
 };

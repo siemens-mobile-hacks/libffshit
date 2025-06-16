@@ -35,6 +35,9 @@ set(SOURCES_LIST
 set(PUBLIC_HEADERS_LIST
     inc/ffshit/rawdata.h
     inc/ffshit/help.h
+    inc/ffshit/partition/ex.h
+    inc/ffshit/partition/block.h
+    inc/ffshit/partition/partition.h
     inc/ffshit/partition/partitions.h
     inc/ffshit/filesystem/structure/file.h
     inc/ffshit/filesystem/structure/directory.h

@@ -22,6 +22,9 @@ set(SOURCES_LIST
     src/system.cpp
     src/rawdata.cpp
     src/blocks.cpp 
+    src/partition/block.cpp
+    src/partition/partition.cpp
+    src/partition/partitions.cpp
     src/filesystem/structure/file.cpp
     src/filesystem/structure/directory.cpp
     src/filesystem/platform/sgold.cpp
@@ -32,6 +35,7 @@ set(SOURCES_LIST
 set(PUBLIC_HEADERS_LIST
     inc/ffshit/rawdata.h
     inc/ffshit/help.h
+    inc/ffshit/partition/partitions.h
     inc/ffshit/filesystem/structure/file.h
     inc/ffshit/filesystem/structure/directory.h
     inc/ffshit/filesystem/platform/types.h

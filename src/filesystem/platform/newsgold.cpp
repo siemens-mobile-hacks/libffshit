@@ -17,7 +17,7 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-NewSGOLD::NewSGOLD(Blocks &blocks) : blocks(blocks) { }
+NewSGOLD::NewSGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions) { }
 
 void NewSGOLD::load() {
     parse_FIT();
@@ -126,25 +126,26 @@ NewSGOLD::FilePart NewSGOLD::read_file_part(const RawData &data)  {
 }
 
 void NewSGOLD::parse_FIT() {
-    Blocks::Map &bl = blocks.get_blocks();
+    const auto &part_map = partitions->get_partitions();
 
-    for (const auto &block : blocks.get_blocks()) {
-        const auto &ffs_block_name  = block.first;
-        const auto &ffs             = block.second;
+    for (const auto &pair : part_map) {
+        const std::string & part_name   = pair.first;
+        const auto &        part_info   = pair.second;
+        const auto &        part_blocks = part_info.get_blocks();
 
-        FSBlocksMap ffs_map;
-
-        if (ffs_block_name.find("FFS") != std::string::npos) {
-            Log::Logger::debug("{} Blocks: {}", ffs_block_name, ffs.size());
+        if (part_name.find("FFS") != std::string::npos) {
+            Log::Logger::debug("Partition: {}, Blocks {}", part_name, part_blocks.size());
         } else {
             continue;
         }
 
-        for (auto &block : ffs) {
-            Log::Logger::debug("  Block {:08X} Size: {}", block.offset, block.data.get_size());
+        FSBlocksMap ffs_map;
 
-            const RawData & block_data = block.data;
-            size_t          block_size = block_data.get_size();
+        for (const auto &block : part_blocks) {
+            Log::Logger::debug("  Block {:08X} Size: {}", block.get_addr(), block.get_size());
+
+            const RawData & block_data = block.get_data();
+            size_t          block_size = block.get_size();
 
             for (ssize_t offset = block_size - 16; offset > 0; offset -= 16) {
                 FFSBlock    fs_block;
@@ -186,53 +187,9 @@ void NewSGOLD::parse_FIT() {
                 }
 
                 ffs_map[fs_block.header.id] = fs_block;
-
-                // print_fit_header(fs_block.header);
-
-                // Log::Logger::info("Data:\n");
-
-                // for (size_t i = 0; i < fs_block.data.get_size(); ++i) {
-                //     Log::Logger::info("{:02X} ", (unsigned char) *(fs_block.data.get_data().get() + i));
-
-                //     if ((i + 1) % 32 == 0) {
-                //         Log::Logger::info("\n");
-                //     }
-                // }
-                // Log::Logger::info("\n");
-                // Log::Logger::info("=============================\n");
             }
+
         }
-
-        // for (const auto &block_pair : ffs_map) {
-        //     const auto &fs_block = block_pair.second;
-
-        //     // if (fs_block.data.get_size() > 30 && fs_block.data.get_size() < 100) {
-
-        //     // } else {
-        //     //     continue;
-        //     // }
-
-        //     print_fit_header(fs_block.header);
-        //     Log::Logger::info("Data:\n");
-
-        //     for (size_t i = 0; i < fs_block.data.get_size(); ++i) {
-        //         Log::Logger::info("{:02X} ", (unsigned char) *(fs_block.data.get_data().get() + i));
-
-        //         if ((i + 1) % 32 == 0) {
-        //             Log::Logger::info("\n");
-        //         }
-        //     }
-        //     Log::Logger::info("\n");
-        //     Log::Logger::info("=============================\n");
-        // }
-
-        // const FFSBlock &    root_block      = ffs_map.at(0x14);
-        // FileHeader          root_header     = read_file_header(root_block.data);
-
-        // print_fit_header(root_block.header);
-        // print_file_header(root_header);
-
-        // const FFSBlock &    root_block      = ffs_map.at(3686);
 
         if (!ffs_map.count(10)) {
             throw Exception("Root block (ID: 10) not found. Broken filesystem?");
@@ -242,9 +199,9 @@ void NewSGOLD::parse_FIT() {
         FileHeader          root_header     = read_file_header(root_block.data);
         Directory::Ptr      root            = Directory::build(root_header.name, "/");
 
-        scan(ffs_block_name, ffs_map, root, root_header);
+        scan(part_name, ffs_map, root, root_header);
 
-        fs_map[ffs_block_name] = root;
+        fs_map[part_name] = root;
     }
 }
 

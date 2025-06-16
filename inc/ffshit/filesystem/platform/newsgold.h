@@ -5,16 +5,17 @@
 
 #include "ffshit/filesystem/platform/base.h"
 #include "ffshit/filesystem/structure/structure.h"
+#include "ffshit/partition/partitions.h"
 
 namespace FULLFLASH {
 namespace Filesystem {
 
 class NewSGOLD : public Base {
     public:
-        NewSGOLD(Blocks &blocks);
+        NewSGOLD(Partitions::Partitions::Ptr partitions);
 
-        static Base::Ptr build(Blocks &blocks) {
-            return std::make_shared<NewSGOLD>(blocks);
+        static Base::Ptr build(Partitions::Partitions::Ptr partitions) {
+            return std::make_shared<NewSGOLD>(partitions);
         }
 
         void                        load() override final;
@@ -55,7 +56,7 @@ class NewSGOLD : public Base {
 
         using FSBlocksMap   = std::map<uint16_t, FFSBlock>;
 
-        Blocks &                    blocks;
+        Partitions::Partitions::Ptr partitions;
         FSMap                       fs_map;
 
         static void                 print_fit_header(const NewSGOLD::FITHeader &header);

@@ -33,7 +33,7 @@ static constexpr size_t     X85_IMEI_OFFSET     = 0x3E410;
 static constexpr uint32_t   FF_ADDRESS_MASK     = 0x0FFFFFFF;
 
 static constexpr uint32_t   X65_SEARCH_START_ADDR   =   0x00800000;
-static constexpr uint32_t   X75_SEARCH_START_ADDR   =   0x004C0000;
+static constexpr uint32_t   X75_SEARCH_START_ADDR   =   0x004C0000; 
 
 static const Patterns::Readable pattern_sg {
     "?? ?? ?? A?", // name ptr

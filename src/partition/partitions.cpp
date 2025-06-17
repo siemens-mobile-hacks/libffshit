@@ -32,6 +32,9 @@ static constexpr size_t     X85_IMEI_OFFSET     = 0x3E410;
 
 static constexpr uint32_t   FF_ADDRESS_MASK     = 0x0FFFFFFF;
 
+static constexpr uint32_t   X65_SEARCH_START_ADDR   =   0x00800000;
+static constexpr uint32_t   X75_SEARCH_START_ADDR   =   0x004C0000;
+
 static const Patterns::Readable pattern_sg {
     "?? ?? ?? A?", // name ptr
     "?? ?? 00 00",
@@ -129,7 +132,7 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, bo
     } else {
         switch (platform) {
             case Platform::X65: {
-                start_addr = 0x00800000;
+                start_addr = X65_SEARCH_START_ADDR;
 
                 if (search_from_addr) {
                     start_addr = search_start_addr;
@@ -140,7 +143,7 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, bo
                 break;
             }
             case Platform::X75: {
-                start_addr = 0x004C0000;
+                start_addr = X75_SEARCH_START_ADDR;
 
                 search_partitions_x75(start_addr); 
 
@@ -199,7 +202,7 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
     } else {
         switch (platform) {
             case Platform::X65: {
-                start_addr = 0x00800000;
+                start_addr = X65_SEARCH_START_ADDR;
 
                 if (search_from_addr) {
                     start_addr = search_start_addr;
@@ -210,7 +213,7 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
                 break;
             }
             case Platform::X75: {
-                start_addr = 0x004C0000;
+                start_addr = X75_SEARCH_START_ADDR;
 
                 search_partitions_x75(start_addr); 
 
@@ -287,8 +290,8 @@ bool Partitions::search_partitions_x65(uint32_t start_addr) {
             if ((name_addr & 0xF0000000) != 0xA0000000) {
                 break;
             }
-		    if ((table_addr & 0xF0000000) != 0xA0000000) {
-			    break;
+            if ((table_addr & 0xF0000000) != 0xA0000000) {
+                break;
             }
 
             if (!table_size) {
@@ -312,7 +315,7 @@ bool Partitions::search_partitions_x65(uint32_t start_addr) {
 
             Log::Logger::debug("Name addr: {:08X}, Table addr: {:08X}, size {:08X}, {}", name_addr, table_addr, table_size, partition_name);
 
-    		for (size_t i = 0; i < table_size * 8; i += 8) {
+            for (size_t i = 0; i < table_size * 8; i += 8) {
                 uint32_t block_addr;
                 uint32_t block_size;
 

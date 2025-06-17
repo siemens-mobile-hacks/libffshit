@@ -3,6 +3,7 @@
    |  Thanks to Azq2, marry_on_me for partitions search algorithm  |
    |                                                               |
    |                   ♡♡♡ Love you guys ♡♡♡                       |
+   |                                                               |
    ================================================================= */
 
 #include "ffshit/help.h"
@@ -145,11 +146,12 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, bo
             case Platform::X75: {
                 start_addr = X75_SEARCH_START_ADDR;
 
-                search_partitions_x75(start_addr); 
-
                 if (search_from_addr) {
                     start_addr = search_start_addr;
                 }
+
+                search_partitions_x75(start_addr);
+
                 break;
             }
             case Platform::X85:  {
@@ -215,11 +217,12 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
             case Platform::X75: {
                 start_addr = X75_SEARCH_START_ADDR;
 
-                search_partitions_x75(start_addr); 
-
                 if (search_from_addr) {
                     start_addr = search_start_addr;
                 }
+
+                search_partitions_x75(start_addr);
+
                 break;
             }
             case Platform::X85:  {

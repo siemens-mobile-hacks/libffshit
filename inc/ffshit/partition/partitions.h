@@ -3,27 +3,29 @@
 
 #include "ffshit/rawdata.h"
 #include "ffshit/filesystem/platform/types.h"
-
 #include "ffshit/partition/partition.h"
+#include "ffshit/patterns/pattern.h"
+
 
 #include <memory>
 #include <map>
+#include <regex>
 
 namespace FULLFLASH {
 namespace Partitions {
 
 class Partitions {
     public:
-        using Ptr = std::shared_ptr<Partitions>;
-        using Map = std::map<std::string, Partition>;
+        using Ptr       = std::shared_ptr<Partitions>;
+        using Map       = std::map<std::string, Partition>;
         
         template<typename ...Args>
         static Ptr build(Args ...args) {
             return std::make_unique<Partitions>(args...);
         }
 
-        Partitions(std::string fullflash_path);
-        Partitions(std::string fullflash_path, Platform platform);
+        Partitions(std::string fullflash_path, bool old_search_alghoritm, bool search_from_addr = false, uint32_t search_start_addr = 0);
+        Partitions(std::string fullflash_path, Platform platform, bool old_search_alghoritm, bool search_from_addr = false, uint32_t search_start_addr = 0);
 
         const Map &                 get_partitions() const;
         const RawData &             get_data() const;
@@ -41,9 +43,17 @@ class Partitions {
         std::string                 imei;
         std::string                 model;
 
+        bool                        sl75_bober_kurwa;
+
+        bool                        search_partitions_x65(uint32_t start_addr);
+        bool                        search_partitions_x75(uint32_t start_addr);
+        bool                        search_partitions_x85(uint32_t start_addr);
+
         void                        detect_platform();
-        void                        search_blocks();
-        void                        search_blocks_x85();
+        void                        old_search_blocks();
+        void                        old_search_blocks_x85();
+
+        std::vector<uint32_t>       find_pattern(const Patterns::Readable &pattern_readable, uint32_t start = 0, bool break_first = false);
 
 
 };

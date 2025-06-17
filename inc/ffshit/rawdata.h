@@ -36,7 +36,12 @@ class RawData {
         void            read_wstring(size_t offset, std::wstring &str) const;
 
         template<typename T>
-        void read(size_t &offset, char *dst, size_t count) const {
+        void read_type(const size_t offset, T *dst, size_t count = 1) const {
+            read(offset, reinterpret_cast<char *>(dst), count * sizeof(T));
+        }
+
+        template<typename T>
+        void read(size_t &offset, char *dst, size_t count = 1) const {
             read(offset, dst, count * sizeof(T));
 
             offset += count * sizeof(T);

@@ -28,7 +28,7 @@ class Pattern {
 
             auto hex_to_T = [](const std::string &h) -> T {
                 std::stringstream   ss;
-                uint32_t            out;
+                T                   out;
 
                 ss << std::hex << h;
                 ss >> out;

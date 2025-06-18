@@ -725,9 +725,7 @@ std::vector<uint32_t> Partitions::find_pattern(const Patterns::Readable &pattern
     auto start_time = std::chrono::high_resolution_clock::now();
 
     for (size_t i = start; i < data.get_size(); i += 4) {
-        uint32_t    *data_ptr   = reinterpret_cast<uint32_t *>(data.get_data().get() + i);
-
-        bool match = true;
+        uint32_t *data_ptr   = reinterpret_cast<uint32_t *>(data.get_data().get() + i);
 
         if (!pattern.match(data_ptr)) {
             continue;

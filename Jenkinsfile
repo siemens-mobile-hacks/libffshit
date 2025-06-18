@@ -1,7 +1,12 @@
 pipeline {
-    agent any
+    agent none
     stages {
-        stage('Build') { 
+        stage('Build ubuntu') {
+            agent {
+                node {
+                    label 'ubuntu'
+                }
+            }
             steps {
                 sh 'rm -rf build'
                 sh 'cmake -B build -S .' 

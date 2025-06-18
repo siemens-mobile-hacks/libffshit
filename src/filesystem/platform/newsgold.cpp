@@ -10,8 +10,6 @@
 #include <iostream>
 #include <algorithm>
 
-#include <spdlog/spdlog.h>
-
 #include <iconv.h>
 
 namespace FULLFLASH {

@@ -5,8 +5,6 @@
 
 #include <iconv.h>
 
-#include <spdlog/spdlog.h>
-
 namespace FULLFLASH {
 namespace Filesystem {
 

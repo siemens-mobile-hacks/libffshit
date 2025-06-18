@@ -8,8 +8,6 @@
 
 #include <fstream>
 
-#include <spdlog/spdlog.h>
-
 // Судя по всему, структура заголовка такая
 // Например
 

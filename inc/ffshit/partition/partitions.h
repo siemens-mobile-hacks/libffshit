@@ -44,6 +44,8 @@ class Partitions {
         Partitions(std::string fullflash_path, bool old_search_alghoritm, bool search_from_addr = false, uint32_t search_start_addr = 0);
         Partitions(std::string fullflash_path, Platform platform, bool old_search_alghoritm, bool search_from_addr = false, uint32_t search_start_addr = 0);
 
+        const std::string &         get_file_path() const;
+
         const Map &                 get_partitions() const;
         const RawData &             get_data() const;
 
@@ -52,6 +54,8 @@ class Partitions {
         const std::string &         get_model() const;
 
     private:
+        std::string                 fullflash_path;
+
         uint32_t                    block_size;
         Map                         partitions_map;
         

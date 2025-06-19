@@ -88,6 +88,8 @@ static bool is_empty(const char *buf, size_t size) {
 Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, bool search_from_addr, uint32_t search_start_addr) {
     sl75_bober_kurwa = false;
     
+    this->fullflash_path = fullflash_path;
+
     std::ifstream file;
 
     file.open(fullflash_path, std::ios_base::binary | std::ios_base::in);
@@ -161,6 +163,8 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, bo
 Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_search_alghoritm, bool search_from_addr, uint32_t search_start_addr) {
     std::ifstream file;
 
+    this->fullflash_path = fullflash_path;
+
     file.open(fullflash_path, std::ios_base::binary | std::ios_base::in);
 
     if (!file.is_open()) {
@@ -223,6 +227,10 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
     for (const auto &pair : partitions_map) {
         Log::Logger::debug("{:10s} {}", pair.first, pair.second.get_blocks().size());
     }
+}
+
+const std::string &Partitions::get_file_path() const {
+    return fullflash_path;
 }
 
 const Partitions::Map &Partitions::get_partitions() const {

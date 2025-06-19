@@ -49,6 +49,16 @@ static const Patterns::Readable pattern_nsg {
     "?? ?? ?? ??",
 };
 
+static std::vector<std::string> possible_part_names {
+    "BCORE",
+    "EEFULL",
+    "EELITE",
+    "EXIT",
+    "FFS",
+    "UNUSED",
+    "__FM__",
+};
+
 static size_t search_end(const char *buf, size_t size) {
     for (size_t i = 0; i < size; ++i) {
         unsigned char data = buf[i];
@@ -253,6 +263,17 @@ const std::string &Partitions::get_model() const {
     return model;
 }
 
+bool Partitions::check_part_name(const std::string &name) {
+    for (const auto &pname : possible_part_names) {
+        if (name.find(name) != std::string::npos) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
 bool Partitions::search_partitions_x65(uint32_t start_addr) {
     Log::Logger::debug("Searching partitions");
 
@@ -304,6 +325,10 @@ bool Partitions::search_partitions_x65(uint32_t start_addr) {
             }
 
             if (partition_name.find(" ") != std::string::npos) {
+                continue;
+            }
+
+            if (!check_part_name(partition_name)) {
                 continue;
             }
 
@@ -420,6 +445,10 @@ bool Partitions::search_partitions_x75(uint32_t start_addr) {
             }
 
             if (partition_name.find(" ") != std::string::npos) {
+                continue;
+            }
+
+            if (!check_part_name(partition_name)) {
                 continue;
             }
 

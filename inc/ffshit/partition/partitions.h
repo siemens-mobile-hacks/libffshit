@@ -66,6 +66,8 @@ class Partitions {
 
         bool                        sl75_bober_kurwa;
 
+        bool                        check_part_name(const std::string &name);
+
         bool                        search_partitions_x65(uint32_t start_addr);
         bool                        search_partitions_x75(uint32_t start_addr);
         bool                        search_partitions_x85(uint32_t start_addr);

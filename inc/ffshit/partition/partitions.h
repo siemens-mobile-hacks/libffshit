@@ -14,6 +14,23 @@
 namespace FULLFLASH {
 namespace Partitions {
 
+static constexpr size_t     BC65_BC75_OFFSET    = 0x870;
+static constexpr size_t     BC85_OFFSET         = 0xC70;
+
+static constexpr size_t     X65_MODEL_OFFSET    = 0x210;
+static constexpr size_t     X75_MODEL_OFFSET    = 0x210;
+static constexpr size_t     X85_MODEL_OFFSET    = 0x3E000;
+
+static constexpr size_t     X65_IMEI_OFFSET     = 0x65C;
+static constexpr size_t     X65_7X_IMEI_OFFSET  = 0x660;
+static constexpr size_t     X75_IMEI_OFFSET     = 0x660;
+static constexpr size_t     X85_IMEI_OFFSET     = 0x3E410;
+
+static constexpr uint32_t   FF_ADDRESS_MASK     = 0x0FFFFFFF;
+
+static constexpr uint32_t   X65_SEARCH_START_ADDR   =   0x00800000;
+static constexpr uint32_t   X75_SEARCH_START_ADDR   =   0x004C0000;
+
 class Partitions {
     public:
         using Ptr       = std::shared_ptr<Partitions>;

@@ -49,7 +49,7 @@ static const Patterns::Readable pattern_nsg {
     "?? ?? ?? ??",
 };
 
-static std::vector<std::string> possible_part_names {
+static const std::vector<std::string> possible_part_names {
     "BCORE",
     "EEFULL",
     "EELITE",
@@ -265,7 +265,7 @@ const std::string &Partitions::get_model() const {
 
 bool Partitions::check_part_name(const std::string &name) {
     for (const auto &pname : possible_part_names) {
-        if (name.find(name) != std::string::npos) {
+        if (name.find(pname) != std::string::npos) {
             return true;
         }
     }

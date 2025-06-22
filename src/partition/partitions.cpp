@@ -275,10 +275,10 @@ bool Partitions::check_part_name(const std::string &name) {
 
 
 bool Partitions::search_partitions_x65(uint32_t start_addr) {
-    Log::Logger::debug("Searching partitions");
+    Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
+    Log::Logger::debug("Searching pattern");
 
     auto    addresses       = find_pattern(pattern_sg, start_addr, false);
-    // auto    addresses       = find_pattern(pattern_sg);
 
     Log::Logger::debug("Search end");
 
@@ -391,7 +391,7 @@ bool Partitions::search_partitions_x65(uint32_t start_addr) {
 }
 
 bool Partitions::search_partitions_x75(uint32_t start_addr) {
-    Log::Logger::debug("Searching partitions");
+    Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
 
     // auto address_list    = find_pattern(pattern_nsg);
     auto address_list    = find_pattern(pattern_nsg, start_addr);
@@ -744,7 +744,7 @@ std::vector<uint32_t> Partitions::find_pattern(const Patterns::Readable &pattern
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    for (size_t i = start; i < data.get_size(); i += 4) {
+    for (size_t i = start; i < data.get_size() - pattern_readable.size(); i += 4) {
         uint32_t *data_ptr   = reinterpret_cast<uint32_t *>(data.get_data().get() + i);
 
         if (!pattern.match(data_ptr)) {
@@ -752,6 +752,15 @@ std::vector<uint32_t> Partitions::find_pattern(const Patterns::Readable &pattern
         }
 
         address_list.push_back(i);
+        Log::Logger::debug("Match addr: {:08X}", i);
+        Log::Logger::debug("{}", pattern.to_string());
+
+        std::string match_data;
+
+        for (size_t j = 0; j < pattern_readable.size(); ++j) {
+            match_data += fmt::format("{:08X} ", + *(data_ptr + j));
+        }
+        Log::Logger::debug(match_data);
 
         if (break_first) {
             break;

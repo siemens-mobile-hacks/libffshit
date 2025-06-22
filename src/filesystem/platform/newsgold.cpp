@@ -162,10 +162,18 @@ void NewSGOLD::parse_FIT() {
                     break;
                 }
 
-                if (fs_block.header.flags == 0xFFFFFF00) {
+                if (fs_block.header.flags != 0xFFFFFFC0) {
                     continue;
                 }
-                
+
+                // if (fs_block.header.flags == 0xFFFFFF00) {
+                //     continue;
+                // }
+
+                // if (fs_block.header.flags == 0xFFFF0000) {
+                //     continue;
+                // }
+
                 print_fit_header(fs_block.header);
 
                 std::string data_print;

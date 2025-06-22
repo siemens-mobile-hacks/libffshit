@@ -264,6 +264,10 @@ const std::string &Partitions::get_model() const {
 }
 
 bool Partitions::check_part_name(const std::string &name) {
+    if (name.size() > 8) {
+        return false;
+    }
+
     for (const auto &pname : possible_part_names) {
         if (name.find(pname) != std::string::npos) {
             return true;
@@ -272,7 +276,6 @@ bool Partitions::check_part_name(const std::string &name) {
 
     return false;
 }
-
 
 bool Partitions::search_partitions_x65(uint32_t start_addr) {
     Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
@@ -752,6 +755,7 @@ std::vector<uint32_t> Partitions::find_pattern(const Patterns::Readable &pattern
         }
 
         address_list.push_back(i);
+
         Log::Logger::debug("Match addr: {:08X}", i);
         Log::Logger::debug("{}", pattern.to_string());
 

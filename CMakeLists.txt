@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
+
 project(ffshit VERSION 0.0.1 DESCRIPTION "Siemens filesystem library" LANGUAGES CXX)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -64,7 +65,6 @@ else()
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
-
 
 add_library(${PROJECT_NAME} ${SOURCES_LIST} ${PUBLIC_HEADERS_LIST})
 #set_target_properties(${PROJECT_NAME} PROPERTIES FRAMEWORK TRUE)

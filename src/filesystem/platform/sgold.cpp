@@ -127,6 +127,10 @@ SGOLD::FileHeader SGOLD::read_file_header(const RawData &data) {
     data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.attributes), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.next_part), 1);
     data.read_string(offset, header.name);
+
+    if (header.name.at(0) == 0x1F && header.name.size() >= 2) {
+        header.name.erase(header.name.begin(), header.name.begin() + 1);
+    }
     
     return header;
 }

@@ -542,7 +542,7 @@ void Partitions::detect_platform() {
 
     data.read_string(BC65_BC75_OFFSET, bc, 1);
 
-    if (bc == "BC65") {
+    if (bc == "BC65" || bc == "BCORE65") {
         platform = Platform::X65;
 
         data.read_string(X65_MODEL_OFFSET, model);

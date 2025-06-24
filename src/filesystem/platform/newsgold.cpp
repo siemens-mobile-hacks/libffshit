@@ -39,17 +39,17 @@ void NewSGOLD::print_fit_header(const NewSGOLD::FITHeader &header) {
 }
 
 void NewSGOLD::print_file_header(const NewSGOLD::FileHeader &header) {
-    Log::Logger::info("===========================");
-    Log::Logger::info("File:");
-    Log::Logger::info("ID:            {}",      header.id);
-    Log::Logger::info("Parent ID:     {}",      header.parent_id);
-    Log::Logger::info("Next part ID:  {}",      header.next_part);
-    Log::Logger::info("Unknown2:      {:04X} {}",      header.unknown2, header.unknown2);
-    Log::Logger::info("Unknown3:      {:04X} {}",      header.unknown3, header.unknown3);
-    Log::Logger::info("FAT timestamp: {:08X} {}",      header.fat_timestamp, header.fat_timestamp);
-    Log::Logger::info("Unknown6:      {:04X} {}",      header.unknown6, header.unknown6);
-    Log::Logger::info("Unknown7:      {:04X} {}",      header.unknown7, header.unknown7);
-    Log::Logger::info("Name:          {}",      header.name);
+    Log::Logger::debug("===========================");
+    Log::Logger::debug("File:");
+    Log::Logger::debug("ID:            {}",      header.id);
+    Log::Logger::debug("Parent ID:     {}",      header.parent_id);
+    Log::Logger::debug("Next part ID:  {}",      header.next_part);
+    Log::Logger::debug("Unknown2:      {:04X} {}",      header.unknown2, header.unknown2);
+    Log::Logger::debug("Unknown3:      {:04X} {}",      header.unknown3, header.unknown3);
+    Log::Logger::debug("FAT timestamp: {:08X} {}",      header.fat_timestamp, header.fat_timestamp);
+    Log::Logger::debug("Unknown6:      {:04X} {}",      header.unknown6, header.unknown6);
+    Log::Logger::debug("Unknown7:      {:04X} {}",      header.unknown7, header.unknown7);
+    Log::Logger::debug("Name:          {}",      header.name);
 }
 
 void NewSGOLD::print_file_part(const FilePart &part) {

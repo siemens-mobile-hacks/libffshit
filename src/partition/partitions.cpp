@@ -95,7 +95,7 @@ static bool is_empty(const char *buf, size_t size) {
 
 // =========================================================================
 
-Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, bool search_from_addr, uint32_t search_start_addr) {
+Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, uint32_t search_start_addr) {
     sl75_bober_kurwa = false;
     
     this->fullflash_path = fullflash_path;
@@ -116,8 +116,6 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, bo
 
     detect_platform();
 
-    uint32_t start_addr = 0x0;
-
     if (old_search_alghoritm) {
         switch (platform) {
             case Platform::X65:
@@ -127,28 +125,8 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, bo
         }
     } else {
         switch (platform) {
-            case Platform::X65: {
-                start_addr = X65_SEARCH_START_ADDR;
-
-                if (search_from_addr) {
-                    start_addr = search_start_addr;
-                }
-
-                search_partitions_x65(start_addr); 
-
-                break;
-            }
-            case Platform::X75: {
-                start_addr = X75_SEARCH_START_ADDR;
-
-                if (search_from_addr) {
-                    start_addr = search_start_addr;
-                }
-
-                search_partitions_x75(start_addr);
-
-                break;
-            }
+            case Platform::X65: search_partitions_x65(search_start_addr); break;
+            case Platform::X75: search_partitions_x75(search_start_addr); break;
             case Platform::X85:  {
                 Log::Logger::warn("New partitions search algorithm not implemented yet for X85");
 
@@ -170,7 +148,7 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, bo
 
 }
 
-Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_search_alghoritm, bool search_from_addr, uint32_t search_start_addr) {
+Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_search_alghoritm, uint32_t search_start_addr) {
     std::ifstream file;
 
     this->fullflash_path = fullflash_path;
@@ -188,8 +166,6 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
     this->data      = RawData(file, 0, data_size);
     this->platform  = platform;
 
-    uint32_t start_addr = 0x0;
-
     if (old_search_alghoritm) {
         switch (platform) {
             case Platform::X65:
@@ -200,28 +176,8 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
 
     } else {
         switch (platform) {
-            case Platform::X65: {
-                start_addr = X65_SEARCH_START_ADDR;
-
-                if (search_from_addr) {
-                    start_addr = search_start_addr;
-                }
-
-                search_partitions_x65(start_addr); 
-
-                break;
-            }
-            case Platform::X75: {
-                start_addr = X75_SEARCH_START_ADDR;
-
-                if (search_from_addr) {
-                    start_addr = search_start_addr;
-                }
-
-                search_partitions_x75(start_addr);
-
-                break;
-            }
+            case Platform::X65: search_partitions_x65(search_start_addr); break;
+            case Platform::X75: search_partitions_x75(search_start_addr); break;
             case Platform::X85:  {
                 Log::Logger::warn("New partitions search algorithm not implemented yet for X85");
 

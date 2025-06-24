@@ -95,25 +95,25 @@ void SGOLD::print_fit_header(const SGOLD::FITHeader &header) {
 void SGOLD::print_file_header(const SGOLD::FileHeader &header) {
     Log::Logger::debug("===========================");
     Log::Logger::debug("File:");
-    Log::Logger::debug("ID:           {}",      header.id);
-    Log::Logger::debug("Parent ID:    {}",      header.parent_id);
-    Log::Logger::debug("Unknown:      {:04X}",  header.unknown);
-    Log::Logger::debug("Data ID:      {}",      header.data_id);
-    Log::Logger::debug("Attributes:   {:04X}",  header.attributes);
-    Log::Logger::debug("Next part ID: {}",      header.next_part);
-    Log::Logger::debug("Name:         {}",      header.name);
+    Log::Logger::debug("ID:            {}",      header.id);
+    Log::Logger::debug("Parent ID:     {}",      header.parent_id);
+    Log::Logger::debug("FAT timestamp: {:04X} {}",  header.fat_timestamp, header.fat_timestamp);
+    Log::Logger::debug("Data ID:       {}",      header.data_id);
+    Log::Logger::debug("Attributes:    {:04X}",  header.attributes);
+    Log::Logger::debug("Next part ID:  {}",      header.next_part);
+    Log::Logger::debug("Name:          {}",      header.name);
 }
 
 void SGOLD::print_file_part(const SGOLD::FilePart &part) {
     Log::Logger::debug("===========================");
     Log::Logger::debug("File part:");
-    Log::Logger::debug("ID:           {}",      part.id);
-    Log::Logger::debug("Parent ID:    {}",      part.parent_id);
-    Log::Logger::debug("Unknown:      {:04X}",  part.unknown);
-    Log::Logger::debug("Data ID:      {}",      part.data_id);
-    Log::Logger::debug("Unknown2:     {:04X}",  part.unknown2);
-    Log::Logger::debug("Prev ID:      {}",      part.prev_id);
-    Log::Logger::debug("Next part ID: {}",      part.next_part);
+    Log::Logger::debug("ID:            {}",      part.id);
+    Log::Logger::debug("Parent ID:     {}",      part.parent_id);
+    Log::Logger::debug("Unknown:       {:04X}",  part.unknown);
+    Log::Logger::debug("Data ID:       {}",      part.data_id);
+    Log::Logger::debug("Unknown2:      {:04X}",  part.unknown2);
+    Log::Logger::debug("Prev ID:       {}",      part.prev_id);
+    Log::Logger::debug("Next part ID:  {}",      part.next_part);
 }
 
 SGOLD::FileHeader SGOLD::read_file_header(const RawData &data) {
@@ -122,7 +122,7 @@ SGOLD::FileHeader SGOLD::read_file_header(const RawData &data) {
 
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.id), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.parent_id), 1);
-    data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.unknown), 1);
+    data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.fat_timestamp), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.data_id), 1);
     data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.attributes), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.next_part), 1);
@@ -259,26 +259,27 @@ void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory:
             throw Exception("FFS Block ID: {} not found", id);
         }
 
-        const FFSBlock &tmp     = ffs_map.at(id);
-        FileHeader      title   = read_file_header(tmp.data);
+        const FFSBlock &tmp         = ffs_map.at(id);
+        FileHeader      file_header = read_file_header(tmp.data);
+        auto            timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
 
-        Log::Logger::info("Found ID: {:5d}, Path: {}{}{}", id, block_name, path, title.name);
+        Log::Logger::info("Found ID: {:5d}, Path: {}{}{}", id, block_name, path, file_header.name);
 
-        if (title.attributes & 0x10) {
-            Directory::Ptr dir_next = Directory::build(title.name, block_name + path);
+        if (file_header.attributes & 0x10) {
+            Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);
 
             dir->add_subdir(dir_next);
 
-            scan(block_name, ffs_map, dir_next, title, path + title.name + "/");
+            scan(block_name, ffs_map, dir_next, file_header, path + file_header.name + "/");
         } else {
             try {
                 RawData file_data;
 
-                if (ffs_map.count(title.data_id)) {
-                    file_data = read_full_data(ffs_map, title);
+                if (ffs_map.count(file_header.data_id)) {
+                    file_data = read_full_data(ffs_map, file_header);
                 }
-            
-                File::Ptr file = File::build(title.name, block_name + path, file_data);
+                                
+                File::Ptr file = File::build(file_header.name, block_name + path, timestamp, file_data);
 
                 dir->add_file(file);
             } catch (const Exception &e) {

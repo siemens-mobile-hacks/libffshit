@@ -39,18 +39,17 @@ void NewSGOLD::print_fit_header(const NewSGOLD::FITHeader &header) {
 }
 
 void NewSGOLD::print_file_header(const NewSGOLD::FileHeader &header) {
-    Log::Logger::debug("===========================");
-    Log::Logger::debug("File:");
-    Log::Logger::debug("ID:           {}",      header.id);
-    Log::Logger::debug("Parent ID:    {}",      header.parent_id);
-    Log::Logger::debug("Next part ID: {}",      header.next_part);
-    Log::Logger::debug("Unknown2:     {:04X} {}",      header.unknown2, header.unknown2);
-    Log::Logger::debug("Unknown3:     {:04X} {}",      header.unknown3, header.unknown3);
-    Log::Logger::debug("Unknown4:     {:04X} {}",      header.unknown4, header.unknown4);
-    Log::Logger::debug("Unknown5:     {:04X} {}",      header.unknown5, header.unknown5);
-    Log::Logger::debug("Unknown6:     {:04X} {}",      header.unknown6, header.unknown6);
-    Log::Logger::debug("Unknown7:     {:04X} {}",      header.unknown7, header.unknown7);
-    Log::Logger::debug("Name:         {}",      header.name);
+    Log::Logger::info("===========================");
+    Log::Logger::info("File:");
+    Log::Logger::info("ID:            {}",      header.id);
+    Log::Logger::info("Parent ID:     {}",      header.parent_id);
+    Log::Logger::info("Next part ID:  {}",      header.next_part);
+    Log::Logger::info("Unknown2:      {:04X} {}",      header.unknown2, header.unknown2);
+    Log::Logger::info("Unknown3:      {:04X} {}",      header.unknown3, header.unknown3);
+    Log::Logger::info("FAT timestamp: {:08X} {}",      header.fat_timestamp, header.fat_timestamp);
+    Log::Logger::info("Unknown6:      {:04X} {}",      header.unknown6, header.unknown6);
+    Log::Logger::info("Unknown7:      {:04X} {}",      header.unknown7, header.unknown7);
+    Log::Logger::info("Name:          {}",      header.name);
 }
 
 void NewSGOLD::print_file_part(const FilePart &part) {
@@ -71,8 +70,7 @@ NewSGOLD::FileHeader NewSGOLD::read_file_header(const RawData &data) {
     data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.parent_id), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown2), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown3), 1);
-    data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown4), 1);
-    data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown5), 1);
+    data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.fat_timestamp), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown6), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown7), 1);
 
@@ -288,11 +286,12 @@ void NewSGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directo
 
         const FFSBlock &    file_block      = ffs_map.at(id);
         FileHeader          file_header     = read_file_header(file_block.data);
+        TimePoint           timestamp       = fat_timestamp_to_unix(file_header.fat_timestamp);
         
         Log::Logger::info("Found ID: {:5d}, Path: {}{}", id, block_name, path + file_header.name);
 
         if (file_header.unknown6 & 0x10) {
-            Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path);
+            Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);
 
             dir->add_subdir(dir_next);
 
@@ -306,7 +305,7 @@ void NewSGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directo
                     file_data = read_full_data(ffs_map, file_header);
                 }
             
-                File::Ptr file = File::build(file_header.name, block_name + path, file_data);
+                File::Ptr file = File::build(file_header.name, block_name + path, timestamp, file_data);
 
                 dir->add_file(file);
             } catch (const Exception &e) {

@@ -25,6 +25,7 @@ set(SOURCES_LIST
     src/partition/block.cpp
     src/partition/partition.cpp
     src/partition/partitions.cpp
+    src/filesystem/help.cpp
     src/filesystem/structure/file.cpp
     src/filesystem/structure/directory.cpp
     src/filesystem/platform/sgold.cpp
@@ -42,6 +43,7 @@ set(PUBLIC_HEADERS_LIST
     inc/ffshit/partition/block.h
     inc/ffshit/partition/partition.h
     inc/ffshit/partition/partitions.h
+    inc/ffshit/filesystem/help.h
     inc/ffshit/filesystem/structure/file.h
     inc/ffshit/filesystem/structure/directory.h
     inc/ffshit/filesystem/platform/types.h

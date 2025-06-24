@@ -37,7 +37,7 @@ class SGOLD : public Base {
         typedef struct {
             uint16_t    id;
             uint16_t    parent_id;
-            uint32_t    unknown;
+            uint32_t    fat_timestamp;
             uint16_t    data_id;
             uint32_t    attributes;
             uint16_t    next_part;

@@ -39,8 +39,7 @@ class NewSGOLD : public Base {
             uint32_t    parent_id;
             uint16_t    unknown2;
             uint16_t    unknown3;
-            uint16_t    unknown4;
-            uint16_t    unknown5;
+            uint32_t    fat_timestamp;
             uint16_t    unknown6;
             uint16_t    unknown7;
             std::string name;

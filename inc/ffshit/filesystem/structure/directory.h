@@ -17,14 +17,17 @@ class Directory {
         using Directories   = std::vector<Ptr>;
 
         Directory(const std::string name, const std::string path);
+        Directory(const std::string name, const std::string path, const TimePoint &timestamp);
 
         static Ptr              build(const std::string name, const std::string path);
+        static Ptr              build(const std::string name, const std::string path, const TimePoint &timestamp);
 
         void                    add_subdir(Ptr dir);
         void                    add_file(File::Ptr file);
 
         const std::string &     get_name() const;
         const std::string &     get_path() const;
+        const TimePoint         get_timestamp() const;
 
         const Directories &     get_subdirs() const;
         const File::Files &     get_files() const;
@@ -32,6 +35,7 @@ class Directory {
     private:
         std::string             name;
         std::string             path;
+        TimePoint               timestamp;
 
         Directories             subdirs;
         File::Files             files;

@@ -68,6 +68,17 @@ else()
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
 
+find_package(Git QUIET)
+
+if(GIT_FOUND)
+    execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    OUTPUT_VARIABLE GIT_COMMIT_HASH
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    set(VERSION_STRING "${CMAKE_PROJECT_VERSION}-${GIT_COMMIT_HASH}")
+endif()
+
 add_library(${PROJECT_NAME} ${SOURCES_LIST} ${PUBLIC_HEADERS_LIST})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})

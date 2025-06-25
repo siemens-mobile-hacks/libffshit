@@ -137,8 +137,8 @@ NewSGOLD_X85::FileHeader NewSGOLD_X85::read_file_header(const FFSBlock &block) {
         throw Exception("iconv_open(): {}", strerror(errno));
     }
 
-    char *inptr = from;
-    char *ouptr = to;
+    const char *inptr = from;
+    char *      ouptr = to;
 
     int r = iconv(iccd, &inptr, &from_n, &ouptr, &to_n);
 

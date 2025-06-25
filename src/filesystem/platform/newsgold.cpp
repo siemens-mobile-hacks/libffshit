@@ -92,8 +92,8 @@ NewSGOLD::FileHeader NewSGOLD::read_file_header(const RawData &data) {
 
     data.read<char>(offset, from, from_size);
 
-    char *inptr = from;
-    char *ouptr = to;
+    const char *    inptr = from;
+    char *          ouptr = to;
 
     int r = iconv(iccd, &inptr, &from_size, &ouptr, &to_size);
 

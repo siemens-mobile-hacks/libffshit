@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  ubuntu-24.04-release-build:
+  ubuntu-noble-release-build:
     runs-on: ubuntu-24.04
     steps:
     - name: Checkout

@@ -69,7 +69,7 @@ else()
 endif()
 
 add_library(${PROJECT_NAME} ${SOURCES_LIST} ${PUBLIC_HEADERS_LIST})
-#set_target_properties(${PROJECT_NAME} PROPERTIES FRAMEWORK TRUE)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 
@@ -108,3 +108,7 @@ write_basic_package_version_file(
 install(
     FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     DESTINATION lib/cmake/${PROJECT_NAME})
+
+
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/packaging/deb")
+include(deb)

@@ -19,6 +19,7 @@ endif()
 
 find_package(fmt REQUIRED)
 find_package(Iconv REQUIRED)
+find_package(Git QUIET)
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/inc
@@ -80,8 +81,6 @@ else()
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
 
-find_package(Git QUIET)
-
 if(GIT_FOUND)
     execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -89,6 +88,8 @@ if(GIT_FOUND)
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
     set(VERSION_STRING "${CMAKE_PROJECT_VERSION}-${GIT_COMMIT_HASH}")
+else()
+    set(GIT_COMMIT_HASH, "")
 endif()
 
 add_library(${PROJECT_NAME} ${SOURCES_LIST} ${PUBLIC_HEADERS_LIST})

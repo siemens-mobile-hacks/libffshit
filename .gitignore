@@ -1,4 +1,6 @@
-build/
+build
+build_*/
 .vscode/
 target
+target_*
 _packages_deb/

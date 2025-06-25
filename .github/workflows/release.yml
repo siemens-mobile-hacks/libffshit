@@ -1,0 +1,32 @@
+name: Build for release
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  ubuntu-24.04-release-build:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install make cmake libfmt9 libfmt-dev
+    - name: Build release
+      id: vars
+      run: |
+        packaging/deb/build_ubuntu_24.04.sh build_ub2404
+    - name: Make ubuntu-24.04 package
+      run: |
+        packaging/deb/pack.sh build_ub2404
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        token: "${{ secrets.GITHUB_TOKEN }}"
+        prerelease: true
+        files: |
+          _packages_deb/*.deb

@@ -30,3 +30,27 @@ jobs:
         prerelease: true
         files: |
           _packages_deb/*.deb
+
+  debian-bookworm-release-build:
+    runs-on: deb-bookworm
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install build-essential make cmake libfmt9 libfmt-dev
+    - name: Build release
+      id: vars
+      run: |
+        packaging/deb/build_debian_12.sh build_deb12
+    - name: Make debian 12 package
+      run: |
+        packaging/deb/pack.sh build_deb12
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        token: "${{ secrets.GITHUB_TOKEN }}"
+        prerelease: true
+        files: |
+          _packages_deb/*.deb

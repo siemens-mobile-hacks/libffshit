@@ -15,7 +15,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install make cmake libfmt9 libfmt-dev
+        sudo apt -y install make cmake libfmt9 libfmt-dev
     - name: Build release
       id: vars
       run: |
@@ -39,7 +39,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install build-essential make cmake libfmt9 libfmt-dev
+        sudo apt -y install build-essential make cmake libfmt9 libfmt-dev
     - name: Build release
       id: vars
       run: |

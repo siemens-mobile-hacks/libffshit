@@ -19,7 +19,7 @@ jobs:
     - name: Build release
       id: vars
       run: |
-        packaging/deb/build_ubuntu_24.04.sh build_ub2404
+        packaging/deb/build_ubuntu_24.04.sh build_ub2404 prod
     - name: Make ubuntu-24.04 package
       run: |
         packaging/deb/pack.sh build_ub2404
@@ -43,7 +43,7 @@ jobs:
     - name: Build release
       id: vars
       run: |
-        packaging/deb/build_debian_12.sh build_deb12
+        packaging/deb/build_debian_12.sh build_deb12 prod
     - name: Make debian 12 package
       run: |
         packaging/deb/pack.sh build_deb12

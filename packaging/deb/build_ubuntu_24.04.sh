@@ -12,7 +12,7 @@ then
     exit -1
 fi;
 
-DEV_BUILD="FALSE"
+BUILD_DEV="FALSE"
 
 if [ ! "$2" = "dev" ] && [ ! "$2" = "prod" ]
 then
@@ -22,10 +22,10 @@ fi
 
 if [ "$2" = "dev" ]
 then
-    DEV_BUILD="TRUE"
+    BUILD_DEV="TRUE"
 fi
 
 BUILD_DIR=$1
 
-cmake -DDEV_BUILD=$DEV_BUILD -DCMAKE_BUILD_TYPE=Release -DDIST_NAME="ubuntu-24.04" -DDIST_DEPS="libfmt9,libfmt-dev" -DDIST_ARCH="amd64" -B $BUILD_DIR
+cmake -DBUILD_DEV=$BUILD_DEV -DCMAKE_BUILD_TYPE=Release -DBUILD_DEB_PACKAGE=TRUE -DDEB_DIST_NAME="ubuntu-24.04" -DDEB_DIST_DEPS="libfmt9,libfmt-dev" -DDEB_DIST_ARCH="amd64" -B $BUILD_DIR
 cmake --build $BUILD_DIR --config Release

@@ -26,7 +26,8 @@ include_directories(
     ${Iconv_INCLUDE_DIRS}
 )
 
-set(SOURCES_LIST 
+set(SOURCES_LIST
+    src/version.cpp
     src/system.cpp
     src/rawdata.cpp
     src/partition/block.cpp
@@ -41,6 +42,7 @@ set(SOURCES_LIST
     src/filesystem/platform/builder.cpp)
 
 set(PUBLIC_HEADERS_LIST
+    inc/ffshit/version.h
     inc/ffshit/rawdata.h
     inc/ffshit/help.h
     inc/ffshit/patterns/ex.h
@@ -81,21 +83,34 @@ else()
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
 
+set(VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+set(VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+set(VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+
 if(GIT_FOUND)
     execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                     OUTPUT_VARIABLE GIT_COMMIT_HASH
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-    set(VERSION_STRING "${CMAKE_PROJECT_VERSION}-${GIT_COMMIT_HASH}")
-else()
-    set(GIT_COMMIT_HASH, "")
+    string(APPEND VERSION_PATCH "-${GIT_COMMIT_HASH}")
 endif()
+
+if(DEV_BUILD)
+    string(APPEND VERSION_PATCH "-unstable")
+endif()
+
+set(VERSION_STRING "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
 add_library(${PROJECT_NAME} ${SOURCES_LIST} ${PUBLIC_HEADERS_LIST})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE DEF_VERSION_STRING_MAJOR="${VERSION_MAJOR}")
+target_compile_definitions(${PROJECT_NAME} PRIVATE DEF_VERSION_STRING_MINOR="${VERSION_MINOR}")
+target_compile_definitions(${PROJECT_NAME} PRIVATE DEF_VERSION_STRING_PATCH="${VERSION_PATCH}")
+target_compile_definitions(${PROJECT_NAME} PRIVATE DEF_VERSION_STRING="${VERSION_STRING}")
 
 target_include_directories(${PROJECT_NAME} PRIVATE inc)
 target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt ${Iconv_LIBRARIES})

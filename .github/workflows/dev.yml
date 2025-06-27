@@ -1,0 +1,51 @@
+name: Build dev
+on: [push]
+
+permissions:
+  contents: write
+
+jobs:
+  ubuntu-noble-dev-build:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt -y install git build-essential make cmake libfmt9 libfmt-dev
+    - name: Build release
+      id: vars
+      run: |
+        packaging/deb/build_ubuntu_24.04.sh build_ub2404 dev
+    - name: Make ubuntu-24.04 package
+      run: |
+        packaging/deb/pack.sh build_ub2404
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ubuntu-24.04-package
+        path: |
+          _packages_deb/*.deb
+  debian-bookworm-dev-build:
+    runs-on: deb-bookworm
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt -y install git build-essential make cmake libfmt9 libfmt-dev
+    - name: Build release
+      id: vars
+      run: |
+        packaging/deb/build_debian_12.sh build_deb12 dev
+    - name: Make debian 12 package
+      run: |
+        packaging/deb/pack.sh build_deb12
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: debian-12-package
+        path: |
+          _packages_deb/*.deb

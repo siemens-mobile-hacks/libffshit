@@ -70,6 +70,8 @@ class Partitions {
         bool                        search_partitions_x85(uint32_t start_addr);
 
         void                        detect_platform();
+
+        void                        old_search_blocks_x55();
         void                        old_search_blocks();
         void                        old_search_blocks_x85();
 

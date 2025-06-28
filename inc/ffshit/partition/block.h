@@ -16,6 +16,10 @@ class Block {
             uint16_t    unknown_1;
             uint16_t    unknown_2;
             uint32_t    unknown_3;
+
+            //x55
+            uint16_t    unknown_4;
+
         } Header;
 
         Block(const Header &header, const RawData & data, uint32_t addr, uint32_t size);

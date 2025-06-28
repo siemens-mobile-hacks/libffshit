@@ -49,6 +49,17 @@ static const Patterns::Readable pattern_nsg {
     "?? ?? ?? ??",
 };
 
+static const Patterns::Readable pattern_egold {
+    "FF FF FF FF",
+    "FF FF FF FF",
+    "FF FF FF FF",
+    "FF FF FF FF",
+    "FE FE ?? ??",
+    "?? ?? ?? ??",
+    "?? ?? ?? ??",
+    "?? ?? FE FE",
+};
+
 static const std::vector<std::string> possible_part_names {
     "BCORE",
     "EEFULL",
@@ -168,6 +179,7 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
 
     if (old_search_alghoritm) {
         switch (platform) {
+            case Platform::X55: block_size = 0x10000; old_search_blocks_x55(); break;
             case Platform::X65:
             case Platform::X75: block_size = 0x10000; old_search_blocks(); break;
             case Platform::X85: block_size = 0x10000; old_search_blocks_x85(); break;
@@ -176,6 +188,7 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
 
     } else {
         switch (platform) {
+            case Platform::X55: block_size = 0x10000; old_search_blocks_x55(); break;
             case Platform::X65: search_partitions_x65(search_start_addr); break;
             case Platform::X75: search_partitions_x75(search_start_addr); break;
             case Platform::X85:  {
@@ -539,6 +552,39 @@ void Partitions::detect_platform() {
         } else if (data.get_size() > 0x04000000) {
             sl75_bober_kurwa = true;
         }
+    }
+}
+
+void Partitions::old_search_blocks_x55() {
+    auto addresses   = find_pattern(pattern_egold, 0x0, false);
+
+    for (const auto &addr : addresses) {
+        char *      ptr         = data.get_data().get() + addr + 18;
+        uint32_t    block_addr  = addr & 0xFFFFFF00;
+        char *      block_ptr   = data.get_data().get() + block_addr;
+
+        Block::Header header;
+
+        ptr = read_data<char>(header.name, ptr, 6);
+        ptr = read_data<uint16_t>(reinterpret_cast<char *>(&header.unknown_1), ptr, 1);
+        ptr = read_data<uint16_t>(reinterpret_cast<char *>(&header.unknown_2), ptr, 1);
+        ptr = read_data<uint16_t>(reinterpret_cast<char *>(&header.unknown_4), ptr, 1);
+ 
+        size_t end_of_name = search_end(header.name, 6);
+
+        if (!is_printable(header.name, end_of_name)) {
+            continue;
+        }
+
+        std::string block_name(header.name);
+
+        if (!partitions_map.count(block_name)) {
+            partitions_map[block_name] = Partition(block_name);
+        }
+
+        partitions_map[block_name].add_block(Block(header, RawData(block_ptr, block_size), block_addr, block_size));
+
+        Log::Logger::debug("Block: {:08X} {} {:04X} {:04X} {:04X}", block_addr, header.name, header.unknown_1, header.unknown_2, header.unknown_4);
     }
 }
 

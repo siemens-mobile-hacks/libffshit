@@ -36,6 +36,7 @@ set(SOURCES_LIST
     src/filesystem/help.cpp
     src/filesystem/structure/file.cpp
     src/filesystem/structure/directory.cpp
+    src/filesystem/platform/egold.cpp
     src/filesystem/platform/sgold.cpp
     src/filesystem/platform/newsgold.cpp
     src/filesystem/platform/newsgold_x85.cpp
@@ -58,8 +59,9 @@ set(PUBLIC_HEADERS_LIST
     inc/ffshit/filesystem/platform/types.h
     inc/ffshit/filesystem/platform/platform.h
     inc/ffshit/filesystem/platform/base.h
-    inc/ffshit/filesystem/platform/newsgold.h
+    inc/ffshit/filesystem/platform/egold.h
     inc/ffshit/filesystem/platform/sgold.h
+    inc/ffshit/filesystem/platform/newsgold.h
     inc/ffshit/filesystem/platform/newsgold_x85.h
     inc/ffshit/filesystem/platform/builder.h
     inc/ffshit/filesystem/ex.h

@@ -14,7 +14,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt -y install git build-essential make cmake libfmt9 libfmt-dev
-    - name: Build release
+    - name: Build
       id: vars
       run: |
         packaging/deb/build_ubuntu_24.04.sh build_ub2404 dev
@@ -36,7 +36,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt -y install git build-essential make cmake libfmt9 libfmt-dev
-    - name: Build release
+    - name: Build
       id: vars
       run: |
         packaging/deb/build_debian_12.sh build_deb12 dev

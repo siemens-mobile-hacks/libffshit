@@ -8,6 +8,9 @@ else()
     option(BUILD_SHARED_LIBS "Build shadred library" ON)
 endif()
 
+option(BUILD_DEV "Development build" ON)
+option(BUILD_DEB_PACKAGE "Build debian-like package" OFF)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -98,7 +101,7 @@ if(GIT_FOUND)
     string(APPEND VERSION_PATCH "-${GIT_COMMIT_HASH}")
 endif()
 
-if(DEV_BUILD)
+if(BUILD_DEV)
     string(APPEND VERSION_PATCH "-unstable")
 endif()
 
@@ -150,6 +153,20 @@ install(
     FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     DESTINATION lib/cmake/${PROJECT_NAME})
 
+if (BUILD_DEB_PACKAGE)
+    if (NOT DEFINED DEB_DIST_ARCH)
+        message( FATAL_ERROR "You must specify DEB_DIST_ARCH. For example -DDEB_DIST_ARCH=amd64" )
+    endif()
 
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/packaging/deb")
-include(deb)
+    if (NOT DEFINED DEB_DIST_DEPS)
+        message( FATAL_ERROR "You must specify DEB_DIST_DEPS. For example -DDEB_DIST_DEPS=\"libfmt9,libfmt-dev\"" )
+    endif()
+
+    if (NOT DEFINED DEB_DIST_NAME)
+        message( FATAL_ERROR "You must specify DEB_DIST_NAME. For example -DDEB_DIST_NAME=debian-12" )
+    endif()
+
+    set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/packaging/deb")
+
+    include(deb)
+endif()

@@ -582,7 +582,7 @@ void Partitions::old_search_blocks_x55() {
             partitions_map[block_name] = Partition(block_name);
         }
 
-        partitions_map[block_name].add_block(Block(header, RawData(block_ptr, block_size), block_addr, block_size));
+        partitions_map[block_name].add_block(Block(header, RawData(block_ptr, block_size * 2), block_addr, block_size * 2));
 
         Log::Logger::debug("Block: {:08X} {} {:04X} {:04X} {:04X}", block_addr, header.name, header.unknown_1, header.unknown_2, header.unknown_4);
     }

@@ -21,8 +21,8 @@ void EGOLD::print_block_header(const FFSBlock &block) {
     Log::Logger::debug("    ==== Offset: {:08X} ====", block.addr);
     Log::Logger::debug("    Marker1:  {:04X}", block.header.marker1);
     Log::Logger::debug("    Size:     {:04X}", block.header.size);
-    Log::Logger::debug("    Offset:   {:04X} {:08X} {:08X}", block.header.offset, block.addr_start, block.addr_start | block.header.offset);
-    Log::Logger::debug("    Unk1:     {:04X}, {:4X}", block.header.unk1, block.header.unk1 - (block.addr >> 16));
+    Log::Logger::debug("    Offset:   {:08X} {:08X} {:08X}", block.header.offset, block.addr_start, block.addr_start | block.header.offset);
+    // Log::Logger::debug("    Unk1:     {:04X}, {:4X}", block.header.unk1, block.header.unk1 - (block.addr >> 16));
     Log::Logger::debug("    Block ID: {:04X}", block.header.block_id);
     Log::Logger::debug("    Marker2:  {:04X}", block.header.marker2);
 }
@@ -96,14 +96,17 @@ void EGOLD::parse_FIT() {
 
                 block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.marker1), 1);
                 block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.size), 1);
-                block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.offset), 1);
-                block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.unk1), 1);
+                block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.offset), 1);
+                // block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.unk1), 1);
                 block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.block_id), 1);
                 block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.marker2), 1);
 
                 if (fs_block.header.marker1 == 0xFFFF) {
                     break;
                 }
+
+                // print_block_header(fs_block);
+                // print_data(fs_block);
 
                 // if ((fs_block.header.marker1 != 0x00FC && fs_block.header.marker2 != 0xFC00) &&
                 //     (fs_block.header.marker1 != 0x00F0 && fs_block.header.marker2 != 0xF000)) {
@@ -113,8 +116,12 @@ void EGOLD::parse_FIT() {
                 if (((fs_block.header.marker1 & 0x00FF) == 0x00F0)  && ((fs_block.header.marker2 & 0xFF00) == 0xF000)) {
                     continue;
                 }
+                
 
-                fs_block.data = RawData(block_data, fs_block.header.offset, fs_block.header.size);
+                size_t tmp = fs_block.header.offset & 0x1FFFF;
+                // Log::Logger::debug("{:08X} {:08X} {:08X}", tmp, tmp + fs_block.header.size, block_addr + block_data.get_size());
+
+                fs_block.data = RawData(block_data, tmp, fs_block.header.size);
 
                 if (ffs_blocks.count(fs_block.header.block_id)) {
                     throw Exception("Block already exists. {:04} {}", fs_block.header.block_id);
@@ -161,11 +168,15 @@ void EGOLD::parse_FIT() {
             fs_block.data.read<uint32_t>(oofs, reinterpret_cast<char *>(&file.header.fat_timestamp), 1);
             fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.data_id), 1);
             fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.flags), 1);
-            fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.next_part_id), 1);
             fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.unk4), 1);
-            
+            fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.next_part_id), 1);
 
             if (fs_block.header.size > 0x10) {
+                // oofs += 4;
+                uint32_t wtf;
+                // Log::Logger::debug("wtf: {:08X}", wtf);
+                fs_block.data.read<uint32_t>(oofs, reinterpret_cast<char *>(&wtf), 1);
+
                 fs_block.data.read_string(oofs, file.header.name);
             }
 
@@ -188,10 +199,41 @@ void EGOLD::parse_FIT() {
         scan(ffs_blocks, ffs_files, root_block, root, "/");
 
         fs_map[part_name] = root;
-
-        break;
     }
 }
+
+void EGOLD::read_catalog(const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, std::vector<uint16_t> &addrs) {
+    uint32_t data_id = file.block->header.block_id + 1;
+
+    if (!ffs_blocks.count(data_id)) {
+        throw Exception("Continiousr directory ID: {:04X} '{}' data not found {:04X}", file.block->header.block_id, file.header.name, data_id);
+    }
+
+    const auto &            dir_data = ffs_blocks.at(data_id);
+    
+    for (size_t i = 0; i < dir_data.data.get_size(); i += 2) {
+        uint16_t id;
+
+        dir_data.data.read<uint16_t>(i, reinterpret_cast<char *>(&id), 1);
+
+        if (id == 0x0000) {
+            continue;
+        }
+        
+        if (id == 0xFFFF) {
+            break;
+        }
+
+        addrs.push_back(id);
+    }
+
+    if (file.header.next_part_id != 0xFFFF) {
+        FFSFile next_file = ffs_files.at(file.header.next_part_id);
+
+        read_catalog(ffs_blocks, ffs_files, next_file, addrs);
+    }
+}
+
 
 void EGOLD::scan(const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, std::filesystem::path path) {
     Log::Logger::debug("  {}", path.string());
@@ -221,6 +263,19 @@ void EGOLD::scan(const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, c
         dir_id_list.push_back(id);
     }
 
+    if (file.header.next_part_id != 0xFFFF) {
+        uint32_t n = file.header.next_part_id;
+        Log::Logger::debug("Next catalog id: {:04X}, this id: {}", n, file.header.id);
+
+        if (!ffs_files.count(n)) {
+            throw Exception("o-O");
+        }
+
+        const FFSFile &next_file = ffs_files.at(n);
+
+        read_catalog(ffs_blocks, ffs_files, next_file, dir_id_list);
+    }
+
     for (const auto &id : dir_id_list) {
         if (!ffs_files.count(id)) {
             throw Exception("File {:04X} not found", id);
@@ -232,6 +287,8 @@ void EGOLD::scan(const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, c
             std::filesystem::path next_path(path);
 
             next_path.append(file.header.name);
+
+            Log::Logger::debug("  {:04X} {}", file.block->header.block_id, next_path.string());
 
             Directory::Ptr dir_next = Directory::build(file.header.name, path.string());
 

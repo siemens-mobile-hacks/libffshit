@@ -69,7 +69,7 @@ class EGOLD_CE : public Base {
         void                        print_file_header(const FFSFile &file);
         void                        print_data(const FFSBlock &block);
 
-        void                        scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, std::filesystem::path path);
+        void                        scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, std::string path = "/");
         void                        read_full(const FFSBlocksMap &ffs_map, const FFSFilesMap &ffs_files, const FFSFile &file, RawData &data);
         void                        read_recurse(const FFSBlocksMap &ffs_map, const FFSFilesMap &ffs_files, const FFSFile &file, RawData &data, uint16_t next_file_id);
 

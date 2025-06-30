@@ -135,11 +135,6 @@ void EGOLD_CE::parse_FIT() {
             const auto &fs_block    = pair.second;
 
             bool is_header = !(fs_block.header.block_id & 1);
-            std::string hdb;
-
-            if (is_header) {
-                hdb = "Header bleat!";
-            }
 
             // print_block_header(fs_block);
             // print_data(fs_block);
@@ -196,13 +191,13 @@ void EGOLD_CE::parse_FIT() {
         const auto &        root_block = ffs_files.at(6);
         Directory::Ptr      root = Directory::build(part_name, "/");
 
-        scan(part_name, ffs_blocks, ffs_files, root_block, root, "/");
+        scan(part_name, ffs_blocks, ffs_files, root_block, root);
 
         fs_map[part_name] = root;
     }
 }
 
-void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, std::filesystem::path path) {
+void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, std::string path) {
     RawData dir_data;
 
     read_full(ffs_blocks, ffs_files, file, dir_data);
@@ -230,29 +225,24 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
             throw Exception("File {:04X} not found", id);
         }
 
-        const auto &file = ffs_files.at(id);
+        const auto &file        = ffs_files.at(id);
+        auto        timestamp   = fat_timestamp_to_unix(file.header.fat_timestamp);
+
+        Log::Logger::info("Found ID: {:5d} {:5d}, Path: {}{}{}", file.block->header.block_id, file.header.id, part_name, path, file.header.name);
 
         if (file.header.flags & 0x10) {
-            std::filesystem::path next_path(path);
-
-            next_path.append(file.header.name);
-
-            Directory::Ptr dir_next = Directory::build(file.header.name, path.string());
+            Directory::Ptr dir_next = Directory::build(file.header.name, part_name + path, timestamp);
 
             dir->add_subdir(dir_next);
 
-            scan(part_name, ffs_blocks, ffs_files, file, dir_next, next_path);
+            scan(part_name, ffs_blocks, ffs_files, file, dir_next, path + file.header.name + "/");
         } else {
-            std::filesystem::path file_path(path);
-            file_path.append(file.header.name);
-
-            Log::Logger::info("Found ID: {:5d} {:5d}, Path: {}{}", file.block->header.block_id, file.header.id, part_name, file_path.string());
 
             RawData file_data;
 
             read_full(ffs_blocks, ffs_files, file, file_data);
 
-            File::Ptr file_ = File::build(file.header.name, path.string(), file_data);
+            File::Ptr file_ = File::build(file.header.name, part_name + path, file_data);
 
             dir->add_file(file_);
         }

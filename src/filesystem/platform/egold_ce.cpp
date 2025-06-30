@@ -260,8 +260,8 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
 }
 
 void EGOLD_CE::read_full(const FFSBlocksMap &ffs_map, const FFSFilesMap &ffs_files, const FFSFile &file, RawData &data) {
-    uint32_t data_block_id  = file.block->header.block_id + 1;
-    
+    uint32_t data_block_id = file.header.data_id + ID_ADD;
+
     if (!ffs_map.count(data_block_id)) {
         return;
     }

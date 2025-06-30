@@ -55,6 +55,8 @@ class EGOLD_CE : public Base {
             const FFSBlock *    block;
         } FFSFile;
 
+        static constexpr uint32_t   ID_ADD = 6000;
+
         Partitions::Partitions::Ptr partitions;
         FSMap                       fs_map;
 

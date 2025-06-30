@@ -1,4 +1,4 @@
-#include "ffshit/filesystem/platform/newsgold.h"
+#include "ffshit/filesystem/platform/sgold2.h"
 
 #include "ffshit/filesystem/ex.h"
 
@@ -15,21 +15,21 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-NewSGOLD::NewSGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions) {
+SGOLD2::SGOLD2(Partitions::Partitions::Ptr partitions) : partitions(partitions) {
     if (!partitions) {
-        throw Exception("NewSGOLD partitions == nullptr o_O");
+        throw Exception("SGOLD2 partitions == nullptr o_O");
     }
 }
 
-void NewSGOLD::load() {
+void SGOLD2::load() {
     parse_FIT();
 }
 
-const FSMap & NewSGOLD::get_filesystem_map() const {
+const FSMap & SGOLD2::get_filesystem_map() const {
     return fs_map;
 }
 
-void NewSGOLD::print_fit_header(const NewSGOLD::FITHeader &header) {
+void SGOLD2::print_fit_header(const SGOLD2::FITHeader &header) {
     Log::Logger::debug("===========================");
     Log::Logger::debug("FIT:");
     Log::Logger::debug("Flags:      {:08X}",  header.flags);
@@ -38,7 +38,7 @@ void NewSGOLD::print_fit_header(const NewSGOLD::FITHeader &header) {
     Log::Logger::debug("Offset:     {:04X}",  header.offset);
 }
 
-void NewSGOLD::print_file_header(const NewSGOLD::FileHeader &header) {
+void SGOLD2::print_file_header(const SGOLD2::FileHeader &header) {
     Log::Logger::debug("===========================");
     Log::Logger::debug("File:");
     Log::Logger::debug("ID:            {}",      header.id);
@@ -52,7 +52,7 @@ void NewSGOLD::print_file_header(const NewSGOLD::FileHeader &header) {
     Log::Logger::debug("Name:          {}",      header.name);
 }
 
-void NewSGOLD::print_file_part(const FilePart &part) {
+void SGOLD2::print_file_part(const FilePart &part) {
     Log::Logger::debug("===========================");
     Log::Logger::debug("Part:");
     Log::Logger::debug("ID:             {}", part.id);
@@ -60,7 +60,7 @@ void NewSGOLD::print_file_part(const FilePart &part) {
     Log::Logger::debug("Next part ID:   {}", part.next_part);
 }
 
-NewSGOLD::FileHeader NewSGOLD::read_file_header(const RawData &data) {
+SGOLD2::FileHeader SGOLD2::read_file_header(const RawData &data) {
     FileHeader  header;
     size_t      offset = 0;
 
@@ -119,7 +119,7 @@ NewSGOLD::FileHeader NewSGOLD::read_file_header(const RawData &data) {
     return header;
 }
 
-NewSGOLD::FilePart NewSGOLD::read_file_part(const RawData &data)  {
+SGOLD2::FilePart SGOLD2::read_file_part(const RawData &data)  {
     FilePart    part;
     size_t      offset = 0;
 
@@ -130,7 +130,7 @@ NewSGOLD::FilePart NewSGOLD::read_file_part(const RawData &data)  {
     return part;
 }
 
-void NewSGOLD::parse_FIT() {
+void SGOLD2::parse_FIT() {
     const auto &part_map = partitions->get_partitions();
 
     for (const auto &pair : part_map) {
@@ -218,7 +218,7 @@ void NewSGOLD::parse_FIT() {
     }
 }
 
-void NewSGOLD::read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id) {
+void SGOLD2::read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id) {
     if (!ffs_map.count(next_id)) {
         throw Exception("Reading part. Couldn't find block with id: {}", next_id);
     }
@@ -242,7 +242,7 @@ void NewSGOLD::read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_i
     }
 }
 
-RawData NewSGOLD::read_full_data(FSBlocksMap &ffs_map, const FileHeader &header) {
+RawData SGOLD2::read_full_data(FSBlocksMap &ffs_map, const FileHeader &header) {
     print_file_header(header);
 
     uint32_t data_id = header.id + 1;
@@ -262,7 +262,7 @@ RawData NewSGOLD::read_full_data(FSBlocksMap &ffs_map, const FileHeader &header)
     return data_full;
 }
 
-void NewSGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, std::string path) {
+void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, std::string path) {
     RawData data    = read_full_data(ffs_map, header);
     size_t  offset  = 0;
 

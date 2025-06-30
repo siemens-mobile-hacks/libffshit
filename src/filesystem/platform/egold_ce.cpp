@@ -1,4 +1,4 @@
-#include "ffshit/filesystem/platform/egold.h"
+#include "ffshit/filesystem/platform/egold_ce.h"
 #include "ffshit/filesystem/ex.h"
 
 #include "ffshit/help.h"
@@ -7,17 +7,17 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-EGOLD::EGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions) { }
+EGOLD_CE::EGOLD_CE(Partitions::Partitions::Ptr partitions) : partitions(partitions) { }
 
-void EGOLD::load() {
+void EGOLD_CE::load() {
     parse_FIT();
 }
 
-const FSMap &EGOLD::get_filesystem_map() const {
+const FSMap &EGOLD_CE::get_filesystem_map() const {
     return fs_map;
 }
 
-void EGOLD::print_block_header(const FFSBlock &block) {
+void EGOLD_CE::print_block_header(const FFSBlock &block) {
     Log::Logger::debug("    ==== Offset: {:08X} ====", block.addr);
     Log::Logger::debug("    Marker1:  {:04X}", block.header.marker1);
     Log::Logger::debug("    Size:     {:04X}", block.header.size);
@@ -26,7 +26,7 @@ void EGOLD::print_block_header(const FFSBlock &block) {
     Log::Logger::debug("    Marker2:  {:04X}", block.header.marker2);
 }
 
-void EGOLD::print_file_header(const FFSFile &file) {
+void EGOLD_CE::print_file_header(const FFSFile &file) {
     Log::Logger::debug("    ID:           {:04X} {}", file.header.id, file.header.id);
     Log::Logger::debug("    Parent:       {:04X} {}", file.header.parent_id, file.header.parent_id);
     Log::Logger::debug("    Timestamp:    {:08X}", file.header.fat_timestamp);
@@ -40,7 +40,7 @@ void EGOLD::print_file_header(const FFSFile &file) {
     }
 }
 
-void EGOLD::print_data(const FFSBlock &block) {
+void EGOLD_CE::print_data(const FFSBlock &block) {
     std::string data_print;
 
     for (size_t i = 0; i < block.data.get_size(); ++i) {
@@ -61,7 +61,7 @@ void EGOLD::print_data(const FFSBlock &block) {
     }
 }
 
-void EGOLD::parse_FIT() {
+void EGOLD_CE::parse_FIT() {
     const auto &part_map = partitions->get_partitions();
 
     for (const auto &pair : part_map) {
@@ -202,7 +202,7 @@ void EGOLD::parse_FIT() {
     }
 }
 
-void EGOLD::scan(const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, std::filesystem::path path) {
+void EGOLD_CE::scan(const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, std::filesystem::path path) {
     Log::Logger::debug("  {}", path.string());
     RawData dir_data;
 
@@ -262,7 +262,7 @@ void EGOLD::scan(const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, c
     }
 }
 
-void EGOLD::read_full(const FFSBlocksMap &ffs_map, const FFSFilesMap &ffs_files, const FFSFile &file, RawData &data) {
+void EGOLD_CE::read_full(const FFSBlocksMap &ffs_map, const FFSFilesMap &ffs_files, const FFSFile &file, RawData &data) {
     uint32_t data_block_id  = file.block->header.block_id + 1;
     
     if (!ffs_map.count(data_block_id)) {
@@ -281,7 +281,7 @@ void EGOLD::read_full(const FFSBlocksMap &ffs_map, const FFSFilesMap &ffs_files,
 }
 
 
-void EGOLD::read_recurse(const FFSBlocksMap &ffs_map, const FFSFilesMap &ffs_files, const FFSFile &file, RawData &data, uint16_t next_file_id) {
+void EGOLD_CE::read_recurse(const FFSBlocksMap &ffs_map, const FFSFilesMap &ffs_files, const FFSFile &file, RawData &data, uint16_t next_file_id) {
     if (!ffs_files.count(next_file_id)) {
         throw Exception("read_recurse() Next file id {} not found", next_file_id);
     }

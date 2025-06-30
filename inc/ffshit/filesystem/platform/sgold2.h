@@ -1,5 +1,5 @@
-#ifndef LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_NEWSGOLD_H
-#define LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_NEWSGOLD_H
+#ifndef LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_SGOLD2_H
+#define LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_SGOLD2_H
 
 #include "ffshit/filesystem/platform/base.h"
 #include "ffshit/filesystem/structure/structure.h"
@@ -8,12 +8,12 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-class NewSGOLD : public Base {
+class SGOLD2 : public Base {
     public:
-        NewSGOLD(Partitions::Partitions::Ptr partitions);
+        SGOLD2(Partitions::Partitions::Ptr partitions);
 
         static Base::Ptr build(Partitions::Partitions::Ptr partitions) {
-            return std::make_shared<NewSGOLD>(partitions);
+            return std::make_shared<SGOLD2>(partitions);
         }
 
         void                        load() override final;
@@ -56,7 +56,7 @@ class NewSGOLD : public Base {
         Partitions::Partitions::Ptr partitions;
         FSMap                       fs_map;
 
-        static void                 print_fit_header(const NewSGOLD::FITHeader &header);
+        static void                 print_fit_header(const SGOLD2::FITHeader &header);
         void                        parse_FIT();
 
         static void                 print_file_header(const FileHeader &header);

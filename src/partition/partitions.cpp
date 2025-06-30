@@ -2,7 +2,7 @@
    |                                                               |
    |  Thanks to Azq2, marry_on_me for partitions search algorithm  |
    |                                                               |
-   |                   ♡♡♡ Love you guys ♡♡♡                       |
+   |                   ♡♡♡ Love you guys ♡♡♡                      |
    |                                                               |
    ================================================================= */
 
@@ -129,21 +129,21 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, ui
 
     if (old_search_alghoritm) {
         switch (platform) {
-            case Platform::X65:
-            case Platform::X75: block_size = 0x10000; old_search_blocks(); break;
-            case Platform::X85: block_size = 0x10000; old_search_blocks_x85(); break;
+            case Platform::SGOLD:
+            case Platform::SGOLD2:      block_size = 0x10000; old_search_partitions_sgold_sgold2(); break;
+            case Platform::SGOLD2_ELKA: block_size = 0x10000; old_search_partitions_sgold2_elka(); break;
             default: throw Exception("Couldn't detect fullflash platform");
         }
     } else {
         switch (platform) {
-            case Platform::X65: search_partitions_x65(search_start_addr); break;
-            case Platform::X75: search_partitions_x75(search_start_addr); break;
-            case Platform::X85:  {
-                Log::Logger::warn("New partitions search algorithm not implemented yet for X85");
+            case Platform::SGOLD:   search_partitions_sgold(search_start_addr); break;
+            case Platform::SGOLD2:  search_partitions_sgold2(search_start_addr); break;
+            case Platform::SGOLD2_ELKA:  {
+                Log::Logger::warn("New partitions search algorithm not implemented yet for SGOLD2_ELKA");
 
                 block_size = 0x10000; 
 
-                old_search_blocks_x85(); 
+                old_search_partitions_sgold2_elka(); 
                 
                 break;
             }
@@ -179,23 +179,24 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
 
     if (old_search_alghoritm) {
         switch (platform) {
-            case Platform::X55: block_size = 0x10000; old_search_blocks_x55(); break;
-            case Platform::X65:
-            case Platform::X75: block_size = 0x10000; old_search_blocks(); break;
-            case Platform::X85: block_size = 0x10000; old_search_blocks_x85(); break;
+            case Platform::EGOLD_CE: block_size = 0x10000; old_search_partitions_egold_ce(); break;
+            case Platform::SGOLD:
+            case Platform::SGOLD2:      block_size = 0x10000; old_search_partitions_sgold_sgold2(); break;
+            case Platform::SGOLD2_ELKA: block_size = 0x10000; old_search_partitions_sgold2_elka(); break;
             default: throw Exception("Couldn't detect fullflash platform");
         }
 
     } else {
         switch (platform) {
-            case Platform::X55: block_size = 0x10000; old_search_blocks_x55(); break;
-            case Platform::X65: search_partitions_x65(search_start_addr); break;
-            case Platform::X75: search_partitions_x75(search_start_addr); break;
-            case Platform::X85:  {
-                Log::Logger::warn("New partitions search algorithm not implemented yet for X85");
+            case Platform::EGOLD_CE:    block_size = 0x10000; 
+                                        old_search_partitions_egold_ce(); break;
+            case Platform::SGOLD:       search_partitions_sgold(search_start_addr); break;
+            case Platform::SGOLD2:      search_partitions_sgold2(search_start_addr); break;
+            case Platform::SGOLD2_ELKA:  {
+                Log::Logger::warn("New partitions search algorithm not implemented yet for SGOLD2_ELKA");
 
                 block_size = 0x10000; 
-                old_search_blocks_x85(); 
+                old_search_partitions_sgold2_elka(); 
                 
                 break;
             }
@@ -246,13 +247,13 @@ bool Partitions::check_part_name(const std::string &name) {
     return false;
 }
 
-bool Partitions::search_partitions_x65(uint32_t start_addr) {
+bool Partitions::search_partitions_sgold(uint32_t start_addr) {
     Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
     Log::Logger::debug("Searching pattern");
 
     auto    addresses       = find_pattern(pattern_sg, start_addr, false);
 
-    Log::Logger::debug("Search end");
+    Log::Logger::debug("Pattern searching end");
 
     if (!addresses.size()) {
         return false;
@@ -362,7 +363,7 @@ bool Partitions::search_partitions_x65(uint32_t start_addr) {
     return true;
 }
 
-bool Partitions::search_partitions_x75(uint32_t start_addr) {
+bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
     Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
 
     // auto address_list    = find_pattern(pattern_nsg);
@@ -502,7 +503,7 @@ bool Partitions::search_partitions_x75(uint32_t start_addr) {
     return true;
 }
 
-bool Partitions::search_partitions_x85(uint32_t start_addr) {
+bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
     return false;
 }
 
@@ -512,7 +513,7 @@ void Partitions::detect_platform() {
     data.read_string(BC65_BC75_OFFSET, bc, 1);
 
     if (bc == "BC65" || bc == "BCORE65") {
-        platform = Platform::X65;
+        platform = Platform::SGOLD;
 
         data.read_string(X65_MODEL_OFFSET, model);
         data.read_string(X65_IMEI_OFFSET, imei);
@@ -522,7 +523,7 @@ void Partitions::detect_platform() {
             data.read_string(X65_7X_IMEI_OFFSET, imei);
         }
     } else if (bc == "BC75") {
-        platform = Platform::X75;
+        platform = Platform::SGOLD2;
 
         data.read_string(X75_MODEL_OFFSET, model);
         data.read_string(X75_IMEI_OFFSET, imei);
@@ -532,7 +533,7 @@ void Partitions::detect_platform() {
         data.read_string(BC85_OFFSET, bc, 1);
 
         if (bc == "BC85") {
-            platform = Platform::X85;
+            platform = Platform::SGOLD2_ELKA;
 
             data.read_string(X85_MODEL_OFFSET, model);
             data.read_string(X85_IMEI_OFFSET, imei);
@@ -542,7 +543,7 @@ void Partitions::detect_platform() {
         }
     }
 
-    if (platform == Platform::X75) {
+    if (platform == Platform::SGOLD2) {
         std::string model_local(model);
 
         System::to_lower(model_local);
@@ -555,7 +556,7 @@ void Partitions::detect_platform() {
     }
 }
 
-void Partitions::old_search_blocks_x55() {
+void Partitions::old_search_partitions_egold_ce() {
     auto addresses   = find_pattern(pattern_egold, 0x0, false);
 
     std::map<uint32_t, Block::Header> headers;
@@ -616,7 +617,7 @@ void Partitions::old_search_blocks_x55() {
     }
 }
 
-void Partitions::old_search_blocks() {
+void Partitions::old_search_partitions_sgold_sgold2() {
     char *buf = data.get_data().get();
 
     for (size_t offset = 0; offset < data.get_size(); offset += block_size) {
@@ -701,7 +702,7 @@ void Partitions::old_search_blocks() {
     }
 }
 
-void Partitions::old_search_blocks_x85() {
+void Partitions::old_search_partitions_sgold2_elka() {
     char *buf = data.get_data().get();
 
     for (size_t offset = 0; offset < data.get_size(); offset += block_size) {

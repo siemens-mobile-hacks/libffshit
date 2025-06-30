@@ -1,5 +1,5 @@
-#ifndef LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_EGOLD_H
-#define LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_EGOLD_H
+#ifndef LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_EGOLD_CARDEXPLORER_H
+#define LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_EGOLD_CARDEXPLORER_H
 
 #include "ffshit/rawdata.h"
 
@@ -12,12 +12,12 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-class EGOLD : public Base {
+class EGOLD_CE : public Base {
     public:
-        EGOLD(Partitions::Partitions::Ptr partitions);
+        EGOLD_CE(Partitions::Partitions::Ptr partitions);
 
         static Base::Ptr build(Partitions::Partitions::Ptr partitions) {
-            return std::make_shared<EGOLD>(partitions);
+            return std::make_shared<EGOLD_CE>(partitions);
         }
 
         void                        load() override final;
@@ -28,7 +28,6 @@ class EGOLD : public Base {
             uint16_t marker1;
             uint16_t size;
             uint32_t offset;
-            // uint16_t unk1;
             uint16_t block_id;
             uint16_t marker2;
         } FITHeader;
@@ -58,8 +57,6 @@ class EGOLD : public Base {
 
         Partitions::Partitions::Ptr partitions;
         FSMap                       fs_map;
-        // std::map<uint16_t, FFSBlock> ffs_blocks;
-        // std::map<uint16_t, FFSFile>  ffs_files;
 
         using FFSBlocksMap = std::map<uint16_t, FFSBlock>;
         using FFSFilesMap = std::map<uint16_t, FFSFile>;

@@ -1,4 +1,4 @@
-#include "ffshit/filesystem/platform/newsgold_x85.h"
+#include "ffshit/filesystem/platform/sgold2_elka.h"
 
 #include "ffshit/filesystem/ex.h"
 #include "ffshit/log/logger.h"
@@ -8,21 +8,21 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-NewSGOLD_X85::NewSGOLD_X85(Partitions::Partitions::Ptr partitions) : partitions(partitions) {
+SGOLD2_ELKA::SGOLD2_ELKA(Partitions::Partitions::Ptr partitions) : partitions(partitions) {
     if (!partitions) {
-        throw Exception("NewSGOLD_X85 partitions == nullptr o_O");
+        throw Exception("SGOLD2_ELKA partitions == nullptr o_O");
     }
 }
 
-void NewSGOLD_X85::load() {
+void SGOLD2_ELKA::load() {
     parse_FIT();
 }
 
-const FSMap & NewSGOLD_X85::get_filesystem_map() const {
+const FSMap & SGOLD2_ELKA::get_filesystem_map() const {
     return fs_map;
 }
 
-void NewSGOLD_X85::print_fit_header(const NewSGOLD_X85::FITHeader &header) {
+void SGOLD2_ELKA::print_fit_header(const SGOLD2_ELKA::FITHeader &header) {
     Log::Logger::debug("    ===========================");
     Log::Logger::debug("    FIT:");
     Log::Logger::debug("      Flags:      {:08X}",      header.flags);
@@ -36,7 +36,7 @@ void NewSGOLD_X85::print_fit_header(const NewSGOLD_X85::FITHeader &header) {
 
 }
 
-void NewSGOLD_X85::print_dir_header(const DirHeader &header) {
+void SGOLD2_ELKA::print_dir_header(const DirHeader &header) {
     Log::Logger::debug("===========================");
     Log::Logger::debug("Dir header:");
     Log::Logger::debug("  ID:           {:04X} {}",     header.id, header.id);
@@ -45,7 +45,7 @@ void NewSGOLD_X85::print_dir_header(const DirHeader &header) {
     Log::Logger::debug("  Unknown3:     {:04X} {}",     header.unknown3, header.unknown3);
 }
 
-void NewSGOLD_X85::print_file_header(const NewSGOLD_X85::FileHeader &header) {
+void SGOLD2_ELKA::print_file_header(const SGOLD2_ELKA::FileHeader &header) {
     Log::Logger::debug("===========================");
     Log::Logger::debug("File:");
     Log::Logger::debug("  ID:           {:04X} {}",     header.id, header.id);
@@ -60,7 +60,7 @@ void NewSGOLD_X85::print_file_header(const NewSGOLD_X85::FileHeader &header) {
     Log::Logger::debug("  Name:         {}",            header.name);
 }
 
-void NewSGOLD_X85::print_file_part(const FilePart &part) {
+void SGOLD2_ELKA::print_file_part(const FilePart &part) {
     Log::Logger::debug("===========================");
     Log::Logger::debug("Part:");
     Log::Logger::debug("  ID:             {:04X} {}", part.id, part.id);
@@ -68,7 +68,7 @@ void NewSGOLD_X85::print_file_part(const FilePart &part) {
     Log::Logger::debug("  Next part ID:   {:04X} {}", part.next_part, part.next_part);
 }
 
-RawData NewSGOLD_X85::read_aligned(const FFSBlock &block) {
+RawData SGOLD2_ELKA::read_aligned(const FFSBlock &block) {
     const auto &    data    = block.data;
     const auto &    fit     = block.header;
 
@@ -78,7 +78,7 @@ RawData NewSGOLD_X85::read_aligned(const FFSBlock &block) {
     return read_aligned(data_ptr, fit.size);
 }
 
-RawData NewSGOLD_X85::read_aligned(char *data, size_t size) {
+RawData SGOLD2_ELKA::read_aligned(char *data, size_t size) {
     RawData         data_ret;
 
     char *          data_ptr    = data;
@@ -103,9 +103,9 @@ RawData NewSGOLD_X85::read_aligned(char *data, size_t size) {
     return data_ret;
 }
 
-NewSGOLD_X85::FileHeader NewSGOLD_X85::read_file_header(const FFSBlock &block) {
+SGOLD2_ELKA::FileHeader SGOLD2_ELKA::read_file_header(const FFSBlock &block) {
     RawData                     header_data = read_aligned(block);
-    NewSGOLD_X85::FileHeader    header;
+    SGOLD2_ELKA::FileHeader    header;
     size_t                      offset = 0;
 
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.id), 1);
@@ -161,9 +161,9 @@ NewSGOLD_X85::FileHeader NewSGOLD_X85::read_file_header(const FFSBlock &block) {
     return header;
 }
 
-// NewSGOLD_X85::FileHeader NewSGOLD_X85::read_file_header2(const FFSBlock &block) {
+// SGOLD2_ELKA::FileHeader SGOLD2_ELKA::read_file_header2(const FFSBlock &block) {
 //     RawData                     header_data = block.data_from_header;
-//     NewSGOLD_X85::FileHeader    header;
+//     SGOLD2_ELKA::FileHeader    header;
 //     size_t                      offset = 0;
 
 //     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.id), 1);
@@ -215,7 +215,7 @@ NewSGOLD_X85::FileHeader NewSGOLD_X85::read_file_header(const FFSBlock &block) {
 // }
 
 
-NewSGOLD_X85::FilePart NewSGOLD_X85::read_file_part(const FFSBlock &block) {
+SGOLD2_ELKA::FilePart SGOLD2_ELKA::read_file_part(const FFSBlock &block) {
    RawData         header_data;
 
     const auto &    data    = block.data;
@@ -252,7 +252,7 @@ NewSGOLD_X85::FilePart NewSGOLD_X85::read_file_part(const FFSBlock &block) {
     return part;
 }
 
-void NewSGOLD_X85::dump_data(const RawData &raw_data) {
+void SGOLD2_ELKA::dump_data(const RawData &raw_data) {
     if (!raw_data.get_data()) {
         throw Exception("raw_data == nullptr");
     }
@@ -279,7 +279,7 @@ void NewSGOLD_X85::dump_data(const RawData &raw_data) {
     }
 }
 
-void NewSGOLD_X85::dump_block(const NewSGOLD_X85::FFSBlock &block, bool is_dump_data) {
+void SGOLD2_ELKA::dump_block(const SGOLD2_ELKA::FFSBlock &block, bool is_dump_data) {
     Log::Logger::debug("    ==================================================");
     Log::Logger::debug("    {} FFS Block addr: {:08X}, FIT Record addr {:08X}", block.block_ptr->get_header().name, block.ff_boffset, block.ff_offset);
     print_fit_header(block.header);
@@ -303,7 +303,7 @@ void NewSGOLD_X85::dump_block(const NewSGOLD_X85::FFSBlock &block, bool is_dump_
     }
 }
 
-void NewSGOLD_X85::parse_FIT() {
+void SGOLD2_ELKA::parse_FIT() {
     const auto &part_map = partitions->get_partitions();
 
     for (const auto &pair : part_map) {
@@ -478,7 +478,7 @@ void NewSGOLD_X85::parse_FIT() {
     }
 }
 
-NewSGOLD_X85::DirList NewSGOLD_X85::get_directory(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, const FFSBlock &block) {
+SGOLD2_ELKA::DirList SGOLD2_ELKA::get_directory(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, const FFSBlock &block) {
     DirList dir_list;
 
     if (!ffs_map_C0.count(block.header.id + 1)) {
@@ -537,7 +537,7 @@ NewSGOLD_X85::DirList NewSGOLD_X85::get_directory(FSBlocksMap &ffs_map_C0, FSBlo
     return dir_list;
 }
 
-uint32_t NewSGOLD_X85::read_part(const FFSBlock &prev_part, const FileHeader &file_header, const FSBlocksMap &ffs_map_C0, const FSBlocksMapList &ffs_map_00, uint32_t next_part, uint32_t last_offset, RawData &data, size_t start_offset) {
+uint32_t SGOLD2_ELKA::read_part(const FFSBlock &prev_part, const FileHeader &file_header, const FSBlocksMap &ffs_map_C0, const FSBlocksMapList &ffs_map_00, uint32_t next_part, uint32_t last_offset, RawData &data, size_t start_offset) {
     if (!ffs_map_C0.count(next_part)) {
         throw Exception("read_part() block ID {} not found in ffs_map", next_part);
     }
@@ -599,7 +599,7 @@ uint32_t NewSGOLD_X85::read_part(const FFSBlock &prev_part, const FileHeader &fi
     return next_part;
 }
 
-void NewSGOLD_X85::read_file(const FSBlocksMap &ffs_map_C0, const FSBlocksMapList &ffs_map_00, const FFSBlock &file_block, RawData &data) {
+void SGOLD2_ELKA::read_file(const FSBlocksMap &ffs_map_C0, const FSBlocksMapList &ffs_map_00, const FFSBlock &file_block, RawData &data) {
     const FITHeader &   fit_header  = file_block.header;
     FileHeader          file_header = read_file_header(file_block);;
 
@@ -637,7 +637,7 @@ void NewSGOLD_X85::read_file(const FSBlocksMap &ffs_map_C0, const FSBlocksMapLis
 
 }
 
-void NewSGOLD_X85::scan(const std::string &block_name, FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Directory::Ptr dir, const FFSBlock &block, std::string path) {
+void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Directory::Ptr dir, const FFSBlock &block, std::string path) {
     auto dir_list = get_directory(ffs_map_C0, ffs_map_00, block);
 
     for (const auto &dir_info : dir_list) {

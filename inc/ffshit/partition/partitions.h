@@ -65,15 +65,15 @@ class Partitions {
 
         bool                        check_part_name(const std::string &name);
 
-        bool                        search_partitions_x65(uint32_t start_addr);
-        bool                        search_partitions_x75(uint32_t start_addr);
-        bool                        search_partitions_x85(uint32_t start_addr);
+        bool                        search_partitions_sgold(uint32_t start_addr);
+        bool                        search_partitions_sgold2(uint32_t start_addr);
+        bool                        search_partitions_sgold2_elka(uint32_t start_addr);
 
         void                        detect_platform();
 
-        void                        old_search_blocks_x55();
-        void                        old_search_blocks();
-        void                        old_search_blocks_x85();
+        void                        old_search_partitions_egold_ce();
+        void                        old_search_partitions_sgold_sgold2();
+        void                        old_search_partitions_sgold2_elka();
 
         std::vector<uint32_t>       find_pattern(const Patterns::Readable &pattern_readable, uint32_t start = 0, bool break_first = false);
 

@@ -1,5 +1,5 @@
-#ifndef LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_NEWSGOLD_X85_H
-#define LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_NEWSGOLD_X85_H
+#ifndef LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_SGOLD2_ELKA_H
+#define LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_SGOLD2_ELKA_H
 
 #include "ffshit/filesystem/platform/base.h"
 #include "ffshit/filesystem/structure/structure.h"
@@ -8,12 +8,12 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-class NewSGOLD_X85 : public Base {
+class SGOLD2_ELKA : public Base {
     public:
-        NewSGOLD_X85(Partitions::Partitions::Ptr partitions);
+        SGOLD2_ELKA(Partitions::Partitions::Ptr partitions);
 
         static Base::Ptr build(Partitions::Partitions::Ptr partitions) {
-            return std::make_shared<NewSGOLD_X85>(partitions);
+            return std::make_shared<SGOLD2_ELKA>(partitions);
         }
 
         void                        load() override final;
@@ -78,7 +78,7 @@ class NewSGOLD_X85 : public Base {
         FSMap                       fs_map;
 
         static void                 dump_data(const RawData &raw_data);
-        static void                 dump_block(const NewSGOLD_X85::FFSBlock &block, bool is_dump_data = true);
+        static void                 dump_block(const SGOLD2_ELKA::FFSBlock &block, bool is_dump_data = true);
 
         static void                 print_dir_header(const DirHeader &header);
         static void                 print_file_header(const FileHeader &header);
@@ -93,7 +93,7 @@ class NewSGOLD_X85 : public Base {
         uint32_t                    read_part(const FFSBlock &prev_part, const FileHeader &file_header, const FSBlocksMap &ffs_map_C0, const FSBlocksMapList &ffs_map_00, uint32_t next_part, uint32_t last_offset, RawData &data, size_t start_offset);
         void                        read_file(const FSBlocksMap &ffs_map_C0, const FSBlocksMapList &ffs_map_00, const FFSBlock &file_block, RawData &data);
 
-        static void                 print_fit_header(const NewSGOLD_X85::FITHeader &header);
+        static void                 print_fit_header(const SGOLD2_ELKA::FITHeader &header);
         void                        parse_FIT();
 
         DirList                     get_directory(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, const FFSBlock &block);

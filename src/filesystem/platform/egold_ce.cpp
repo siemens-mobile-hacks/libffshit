@@ -242,7 +242,7 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
 
             read_full(ffs_blocks, ffs_files, file, file_data);
 
-            File::Ptr file_ = File::build(file.header.name, part_name + path, file_data);
+            File::Ptr file_ = File::build(file.header.name, part_name + path, timestamp, file_data);
 
             dir->add_file(file_);
         }

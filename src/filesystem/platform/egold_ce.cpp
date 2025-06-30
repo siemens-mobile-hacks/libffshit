@@ -196,14 +196,13 @@ void EGOLD_CE::parse_FIT() {
         const auto &        root_block = ffs_files.at(6);
         Directory::Ptr      root = Directory::build(part_name, "/");
 
-        scan(ffs_blocks, ffs_files, root_block, root, "/");
+        scan(part_name, ffs_blocks, ffs_files, root_block, root, "/");
 
         fs_map[part_name] = root;
     }
 }
 
-void EGOLD_CE::scan(const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, std::filesystem::path path) {
-    Log::Logger::debug("  {}", path.string());
+void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, std::filesystem::path path) {
     RawData dir_data;
 
     read_full(ffs_blocks, ffs_files, file, dir_data);
@@ -238,20 +237,18 @@ void EGOLD_CE::scan(const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files
 
             next_path.append(file.header.name);
 
-            Log::Logger::debug("  {:04X} {}", file.block->header.block_id, next_path.string());
-
             Directory::Ptr dir_next = Directory::build(file.header.name, path.string());
 
             dir->add_subdir(dir_next);
 
-            scan(ffs_blocks, ffs_files, file, dir_next, next_path);
+            scan(part_name, ffs_blocks, ffs_files, file, dir_next, next_path);
         } else {
             std::filesystem::path file_path(path);
             file_path.append(file.header.name);
 
-            RawData file_data;
+            Log::Logger::info("Found ID: {:5d} {:5d}, Path: {}{}", file.block->header.block_id, file.header.id, part_name, file_path.string());
 
-            Log::Logger::debug("  {:04X} {}", file.block->header.block_id, file_path.string());
+            RawData file_data;
 
             read_full(ffs_blocks, ffs_files, file, file_data);
 

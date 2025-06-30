@@ -345,6 +345,12 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
 
                     Log::Logger::debug("    {} {:08X} {:08X} {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
 
+                    if (header.unknown_3 != 0xFFFFFFF0) {
+                        Log::Logger::warn("Broken partition record? Name: {}, {:08X}, {:08X}, {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
+
+                        continue;
+                    }
+
                     partitions_map[partition_name].add_block(
                         Block(  header, 
                                 RawData(data.get_data().get() + masked_block_addr, masked_block_size), 

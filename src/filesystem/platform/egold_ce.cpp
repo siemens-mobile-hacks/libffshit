@@ -31,7 +31,7 @@ void EGOLD_CE::print_file_header(const FFSFile &file) {
     Log::Logger::debug("    Parent:       {:04X} {}", file.header.parent_id, file.header.parent_id);
     Log::Logger::debug("    Timestamp:    {:08X}", file.header.fat_timestamp);
     Log::Logger::debug("    Flags:        {:04X}", file.header.flags);
-    Log::Logger::debug("    Data ID:      {:04X}", file.header.data_id);
+    Log::Logger::debug("    Data ID:      {:04X} {:04X}", file.header.data_id, file.header.data_id + ID_ADD);
     Log::Logger::debug("    Unk4:         {:04X}", file.header.unk4);
     Log::Logger::debug("    Next part ID: {:04X}", file.header.next_part_id);
 
@@ -112,6 +112,9 @@ void EGOLD_CE::parse_FIT() {
                 // }
 
                 if (((fs_block.header.marker1 & 0x00FF) == 0x00F0)  && ((fs_block.header.marker2 & 0xFF00) == 0xF000)) {
+                    // print_block_header(fs_block);
+                    // print_data(fs_block);
+
                     continue;
                 }
                 
@@ -136,8 +139,8 @@ void EGOLD_CE::parse_FIT() {
 
             bool is_header = !(fs_block.header.block_id & 1);
 
-            // print_block_header(fs_block);
-            // print_data(fs_block);
+            print_block_header(fs_block);
+            print_data(fs_block);
 
             if (!is_header) {
                 continue;
@@ -179,7 +182,7 @@ void EGOLD_CE::parse_FIT() {
                 }
             }
 
-            // print_file_header(file);
+            print_file_header(file);
 
             if (ffs_files.count(file.header.id)) {
                 throw Exception("File id {:04X} already exists in map", file.header.id);

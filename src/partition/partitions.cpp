@@ -560,14 +560,11 @@ void Partitions::detect_platform() {
 
             data.read_string(offset + EGOLD_MAGICK_SIEMENS_OFFSET, magick);
 
-            fmt::print("{:04X} {}\n", offset, magick);
-
             if (magick != "SIEMENS") {
                 continue;
             }
 
             data.read_string(offset + EGOLD_MODEL_OFFSET, model);
-            fmt::print("{:04X} {}\n", offset, model);
 
             platform = Platform::EGOLD_CE;
 

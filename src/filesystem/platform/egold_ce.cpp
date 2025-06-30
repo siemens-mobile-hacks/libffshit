@@ -173,6 +173,10 @@ void EGOLD_CE::parse_FIT() {
                 }
 
                 fs_block.data.read_string(oofs, file.header.name);
+
+                if (file.header.name.size() >= 2 && file.header.name.at(0) == 0x1F) {
+                    file.header.name.erase(file.header.name.begin(), file.header.name.begin() + 1);
+                }
             }
 
             // print_file_header(file);

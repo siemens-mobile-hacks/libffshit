@@ -558,6 +558,8 @@ void Partitions::detect_platform() {
 void Partitions::old_search_blocks_x55() {
     auto addresses   = find_pattern(pattern_egold, 0x0, false);
 
+    std::map<uint32_t, Block::Header> headers;
+
     for (const auto &addr : addresses) {
         char *      ptr         = data.get_data().get() + addr + 18;
         uint32_t    block_addr  = addr & 0xFFFFFF00;
@@ -576,13 +578,39 @@ void Partitions::old_search_blocks_x55() {
             continue;
         }
 
+        if (headers.count(block_addr)) {
+            throw Exception("Block with address {:08X} already exists");
+        }
+
+        headers[block_addr] = header;
+    }
+
+    if (headers.size() >= 2) {
+        auto block_1_it = headers.cbegin();
+        auto block_2_it = block_1_it;
+
+        block_2_it++;
+
+        size_t block_1_addr = block_1_it->first;
+        size_t block_2_addr = block_2_it->first;
+
+        block_size = block_2_addr - block_1_addr;
+    }
+
+    Log::Logger::debug("Detected block size: {:08X}", block_size);
+
+    for (const auto &pair : headers) {
+        uint32_t    block_addr  = pair.first;
+        const auto &header      = pair.second;
+        char *      block_ptr   = data.get_data().get() + block_addr;
+
         std::string block_name(header.name);
 
         if (!partitions_map.count(block_name)) {
             partitions_map[block_name] = Partition(block_name);
         }
 
-        partitions_map[block_name].add_block(Block(header, RawData(block_ptr, block_size * 2), block_addr, block_size * 2));
+        partitions_map[block_name].add_block(Block(header, RawData(block_ptr, block_size), block_addr, block_size));
 
         Log::Logger::debug("Block: {:08X} {} {:04X} {:04X} {:04X}", block_addr, header.name, header.unknown_1, header.unknown_2, header.unknown_4);
     }

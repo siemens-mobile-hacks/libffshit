@@ -22,6 +22,7 @@ class Partition {
 
     private:
         std::string name;
+        size_t      size;
         Blocks      blocks;
 };
 

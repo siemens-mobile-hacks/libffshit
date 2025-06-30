@@ -22,7 +22,6 @@ void EGOLD::print_block_header(const FFSBlock &block) {
     Log::Logger::debug("    Marker1:  {:04X}", block.header.marker1);
     Log::Logger::debug("    Size:     {:04X}", block.header.size);
     Log::Logger::debug("    Offset:   {:08X} {:08X} {:08X}", block.header.offset, block.addr_start, block.addr_start | block.header.offset);
-    // Log::Logger::debug("    Unk1:     {:04X}, {:4X}", block.header.unk1, block.header.unk1 - (block.addr >> 16));
     Log::Logger::debug("    Block ID: {:04X}", block.header.block_id);
     Log::Logger::debug("    Marker2:  {:04X}", block.header.marker2);
 }
@@ -97,7 +96,6 @@ void EGOLD::parse_FIT() {
                 block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.marker1), 1);
                 block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.size), 1);
                 block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.offset), 1);
-                // block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.unk1), 1);
                 block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.block_id), 1);
                 block_data.read<uint16_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.marker2), 1);
 
@@ -117,14 +115,15 @@ void EGOLD::parse_FIT() {
                     continue;
                 }
                 
+                size_t addr_mask    = block.get_size() - 1;
+                size_t addr_data    = fs_block.header.offset & addr_mask;
 
-                size_t tmp = fs_block.header.offset & 0x1FFFF;
-                // Log::Logger::debug("{:08X} {:08X} {:08X}", tmp, tmp + fs_block.header.size, block_addr + block_data.get_size());
+                // Log::Logger::debug("addr mask: {:08X} {:08X} {:08X}", block.get_addr(), fs_block.header.offset, addr_mask);
 
-                fs_block.data = RawData(block_data, tmp, fs_block.header.size);
+                fs_block.data = RawData(block_data, addr_data, fs_block.header.size);
 
                 if (ffs_blocks.count(fs_block.header.block_id)) {
-                    throw Exception("Block already exists. {:04} {}", fs_block.header.block_id);
+                    throw Exception("Block already exists. {:04} {}",fs_block.header.block_id);
                 }
 
                 ffs_blocks[fs_block.header.block_id] = fs_block;
@@ -134,11 +133,6 @@ void EGOLD::parse_FIT() {
         for (const auto &pair : ffs_blocks) {
             auto        fs_block_id = pair.first;
             const auto &fs_block    = pair.second;
-
-            // 00C8F7B4  /
-            // 00C4FA6C  /Address book
-            // 00C8F8C8  /Address book/.lock
-            // 00B8FCD0  /Address book/5F08.adr
 
             bool is_header = !(fs_block.header.block_id & 1);
             std::string hdb;
@@ -172,10 +166,16 @@ void EGOLD::parse_FIT() {
             fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.next_part_id), 1);
 
             if (fs_block.header.size > 0x10) {
-                // oofs += 4;
-                uint32_t wtf;
-                // Log::Logger::debug("wtf: {:08X}", wtf);
-                fs_block.data.read<uint32_t>(oofs, reinterpret_cast<char *>(&wtf), 1);
+                // old/new egold
+
+                if (fs_block.header.size > 0x14) {
+                    uint32_t wtf;
+                    fs_block.data.read<uint32_t>(oofs, reinterpret_cast<char *>(&wtf), 1);
+
+                    if (wtf != 0xFFFFFFFF) {
+                        oofs -= 4;
+                    }
+                }
 
                 fs_block.data.read_string(oofs, file.header.name);
             }

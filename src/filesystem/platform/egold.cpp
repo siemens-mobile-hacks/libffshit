@@ -21,7 +21,7 @@ void EGOLD::print_block_header(const FFSBlock &block) {
     Log::Logger::debug("    ==== Offset: {:08X} ====", block.addr);
     Log::Logger::debug("    Marker1:  {:04X}", block.header.marker1);
     Log::Logger::debug("    Size:     {:04X}", block.header.size);
-    Log::Logger::debug("    Offset:   {:08X} {:08X} {:08X}", block.header.offset, block.addr_start, block.addr_start | block.header.offset);
+    Log::Logger::debug("    Offset:   {:08X} {:08X}", block.header.offset, block.addr_start);
     Log::Logger::debug("    Block ID: {:04X}", block.header.block_id);
     Log::Logger::debug("    Marker2:  {:04X}", block.header.marker2);
 }
@@ -32,8 +32,8 @@ void EGOLD::print_file_header(const FFSFile &file) {
     Log::Logger::debug("    Timestamp:    {:08X}", file.header.fat_timestamp);
     Log::Logger::debug("    Flags:        {:04X}", file.header.flags);
     Log::Logger::debug("    Data ID:      {:04X}", file.header.data_id);
-    Log::Logger::debug("    Next part ID: {:04X}", file.header.next_part_id);
     Log::Logger::debug("    Unk4:         {:04X}", file.header.unk4);
+    Log::Logger::debug("    Next part ID: {:04X}", file.header.next_part_id);
 
     if (file.header.name.size()) {
         Log::Logger::debug("    Name:      {}", file.header.name);
@@ -202,78 +202,28 @@ void EGOLD::parse_FIT() {
     }
 }
 
-void EGOLD::read_catalog(const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, std::vector<uint16_t> &addrs) {
-    uint32_t data_id = file.block->header.block_id + 1;
-
-    if (!ffs_blocks.count(data_id)) {
-        throw Exception("Continiousr directory ID: {:04X} '{}' data not found {:04X}", file.block->header.block_id, file.header.name, data_id);
-    }
-
-    const auto &            dir_data = ffs_blocks.at(data_id);
-    
-    for (size_t i = 0; i < dir_data.data.get_size(); i += 2) {
-        uint16_t id;
-
-        dir_data.data.read<uint16_t>(i, reinterpret_cast<char *>(&id), 1);
-
-        if (id == 0x0000) {
-            continue;
-        }
-        
-        if (id == 0xFFFF) {
-            break;
-        }
-
-        addrs.push_back(id);
-    }
-
-    if (file.header.next_part_id != 0xFFFF) {
-        FFSFile next_file = ffs_files.at(file.header.next_part_id);
-
-        read_catalog(ffs_blocks, ffs_files, next_file, addrs);
-    }
-}
-
-
 void EGOLD::scan(const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, std::filesystem::path path) {
     Log::Logger::debug("  {}", path.string());
+    RawData dir_data;
 
-    uint32_t data_id = file.block->header.block_id + 1;
+    read_full(ffs_blocks, ffs_files, file, dir_data);
 
-    if (!ffs_blocks.count(data_id)) {
-        throw Exception("Directory ID: {:04X} '{}' data not found {:04X}", file.block->header.block_id, file.header.name, data_id);
-    }
-
-    const auto &            dir_data = ffs_blocks.at(data_id);
     std::vector<uint16_t>   dir_id_list;
     
-    for (size_t i = 0; i < dir_data.data.get_size(); i += 2) {
+    for (size_t i = 0; i < dir_data.get_size(); i += 2) {
         uint16_t id;
 
-        dir_data.data.read<uint16_t>(i, reinterpret_cast<char *>(&id), 1);
+        dir_data.read<uint16_t>(i, reinterpret_cast<char *>(&id), 1);
 
         if (id == 0x0000) {
             continue;
         }
         
         if (id == 0xFFFF) {
-            break;
+            continue;
         }
 
         dir_id_list.push_back(id);
-    }
-
-    if (file.header.next_part_id != 0xFFFF) {
-        uint32_t n = file.header.next_part_id;
-        Log::Logger::debug("Next catalog id: {:04X}, this id: {}", n, file.header.id);
-
-        if (!ffs_files.count(n)) {
-            throw Exception("o-O");
-        }
-
-        const FFSFile &next_file = ffs_files.at(n);
-
-        read_catalog(ffs_blocks, ffs_files, next_file, dir_id_list);
     }
 
     for (const auto &id : dir_id_list) {

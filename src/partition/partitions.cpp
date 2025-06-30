@@ -129,6 +129,7 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, ui
 
     if (old_search_alghoritm) {
         switch (platform) {
+            case Platform::EGOLD_CE:    block_size = 0x10000; old_search_partitions_egold_ce(); break;
             case Platform::SGOLD:
             case Platform::SGOLD2:      block_size = 0x10000; old_search_partitions_sgold_sgold2(); break;
             case Platform::SGOLD2_ELKA: block_size = 0x10000; old_search_partitions_sgold2_elka(); break;
@@ -136,6 +137,15 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, ui
         }
     } else {
         switch (platform) {
+            case Platform::EGOLD_CE: {
+                Log::Logger::warn("New partitions search algorithm not implemented yet for EGOLD_CE");
+
+                block_size = 0x10000;
+
+                old_search_partitions_egold_ce();
+
+                break;
+            }
             case Platform::SGOLD:   search_partitions_sgold(search_start_addr); break;
             case Platform::SGOLD2:  search_partitions_sgold2(search_start_addr); break;
             case Platform::SGOLD2_ELKA:  {
@@ -540,6 +550,28 @@ void Partitions::detect_platform() {
 
         } else {
             platform = Platform::UNK;
+        }
+    }
+
+
+    if (platform == Platform::UNK) {
+        for (const auto &offset : EGOLD_INFO_OFFSETS) {
+            std::string magick;
+
+            data.read_string(offset + EGOLD_MAGICK_SIEMENS_OFFSET, magick);
+
+            fmt::print("{:04X} {}\n", offset, magick);
+
+            if (magick != "SIEMENS") {
+                continue;
+            }
+
+            data.read_string(offset + EGOLD_MODEL_OFFSET, model);
+            fmt::print("{:04X} {}\n", offset, model);
+
+            platform = Platform::EGOLD_CE;
+
+            break;
         }
     }
 

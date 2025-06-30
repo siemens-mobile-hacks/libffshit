@@ -28,6 +28,15 @@ static constexpr size_t     X85_IMEI_OFFSET     = 0x3E410;
 
 static constexpr uint32_t   FF_ADDRESS_MASK     = 0x0FFFFFFF;
 
+static constexpr size_t     EGOLD_INFO_OFFSET1          = 0x400300;
+static constexpr size_t     EGOLD_INFO_OFFSET2          = 0x600300;
+static constexpr size_t     EGOLD_INFO_OFFSET3          = 0x800300;
+
+static std::vector<size_t>  EGOLD_INFO_OFFSETS = { EGOLD_INFO_OFFSET1, EGOLD_INFO_OFFSET2, EGOLD_INFO_OFFSET3 };
+
+static constexpr size_t     EGOLD_MODEL_OFFSET          = 0x0C;
+static constexpr size_t     EGOLD_MAGICK_SIEMENS_OFFSET = 0x1C;
+
 class Partitions {
     public:
         using Ptr       = std::shared_ptr<Partitions>;

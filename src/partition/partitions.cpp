@@ -50,10 +50,10 @@ static const Patterns::Readable pattern_nsg {
 };
 
 static const Patterns::Readable pattern_egold {
-    "FF FF FF FF",
-    "FF FF FF FF",
-    "FF FF FF FF",
-    "FF FF FF FF",
+    // "FF FF FF FF",
+    // "FF FF FF FF",
+    // "FF FF FF FF",
+    // "FF FF FF FF",
     "FE FE ?? ??",
     "?? ?? ?? ??",
     "?? ?? ?? ??",
@@ -613,7 +613,11 @@ void Partitions::old_search_partitions_egold_ce() {
     std::map<uint32_t, Block::Header> headers;
 
     for (const auto &addr : addresses) {
-        char *      ptr         = data.get_data().get() + addr + 18;
+        if ((addr & 0xFF) != 0x80) {
+            continue;
+        }
+
+        char *      ptr         = data.get_data().get() + addr + 2;
         uint32_t    block_addr  = addr & 0xFFFFFF00;
         char *      block_ptr   = data.get_data().get() + block_addr;
 
@@ -631,7 +635,7 @@ void Partitions::old_search_partitions_egold_ce() {
         }
 
         if (headers.count(block_addr)) {
-            throw Exception("Block with address {:08X} already exists");
+            throw Exception("Block with address {:08X} already exists", block_addr);
         }
 
         headers[block_addr] = header;

@@ -360,6 +360,14 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
                 } else {
                     Block::Header header;
 
+                    // ну пусть будет
+                    size_t  block_rd_offset = masked_block_addr;
+
+                    data.read<char>(block_rd_offset, header.name, 8);
+                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
+                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
+                    data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
+
                     partitions_map[partition_name].add_block(
                         Block(  header, 
                                 RawData(data.get_data().get() + masked_block_addr, masked_block_size), 
@@ -499,6 +507,14 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                     );
                 } else {
                     Block::Header header;
+
+                    // ну пусть будет
+                    size_t  block_rd_offset = masked_block_addr;
+
+                    data.read<char>(block_rd_offset, header.name, 8);
+                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
+                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
+                    data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
 
                     partitions_map[partition_name].add_block(
                         Block(  header, 

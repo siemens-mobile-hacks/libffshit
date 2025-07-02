@@ -78,13 +78,15 @@ void EGOLD_CE::parse_FIT() {
         std::map<uint16_t, FFSBlock> ffs_blocks;
         std::map<uint16_t, FFSFile>  ffs_files;
 
+        Log::Logger::debug("Collecting FFS blocks");
+
         for (const auto &block : part_blocks) {
             const RawData & block_data = block.get_data();
             size_t          block_size = block.get_size();
 
             uint32_t block_addr = block.get_addr();
 
-            // Log::Logger::debug("  Block Offset: {:08X} ====", block_addr);
+            Log::Logger::debug("  Block: {:08X} ====", block_addr);
 
             for (ssize_t offset = block_size - 12; offset > 0; offset -= 12) {
                 FFSBlock    fs_block;
@@ -103,9 +105,6 @@ void EGOLD_CE::parse_FIT() {
                     break;
                 }
 
-                // print_block_header(fs_block);
-                // print_data(fs_block);
-
                 // if ((fs_block.header.marker1 != 0x00FC && fs_block.header.marker2 != 0xFC00) &&
                 //     (fs_block.header.marker1 != 0x00F0 && fs_block.header.marker2 != 0xF000)) {
                 //     break;
@@ -118,6 +117,13 @@ void EGOLD_CE::parse_FIT() {
                     continue;
                 }
                 
+                if ((fs_block.header.marker1 & 0x00FF) != 0xFC) {
+                    continue;
+                }
+
+                print_block_header(fs_block);
+                print_data(fs_block);
+
                 size_t addr_mask    = block.get_size() - 1;
                 size_t addr_data    = fs_block.header.offset & addr_mask;
 
@@ -126,12 +132,24 @@ void EGOLD_CE::parse_FIT() {
                 fs_block.data = RawData(block_data, addr_data, fs_block.header.size);
 
                 if (ffs_blocks.count(fs_block.header.block_id)) {
-                    throw Exception("Block already exists. {:04} {}",fs_block.header.block_id);
+                    const auto &exists_block = ffs_blocks.at(fs_block.header.block_id);
+
+                    Log::Logger::debug("  Exists block:");
+                    print_block_header(exists_block);
+                    print_data(exists_block);
+
+                    if (exists_block.header.size == fs_block.header.size && exists_block.header.offset == fs_block.header.offset) {
+                        Log::Logger::warn("Block already exists. {:04} {}", fs_block.header.block_id, fs_block.header.block_id);
+                    } else {
+                        throw Exception("Block already exists. {:04} {}",fs_block.header.block_id, fs_block.header.block_id);
+                    }
                 }
 
                 ffs_blocks[fs_block.header.block_id] = fs_block;
             }
         }
+
+        Log::Logger::debug("Collecting FFS files");
 
         for (const auto &pair : ffs_blocks) {
             auto        fs_block_id = pair.first;
@@ -192,7 +210,7 @@ void EGOLD_CE::parse_FIT() {
         }
 
         if (!ffs_files.count(6)) {
-            throw Exception("root block not found");
+            throw Exception("root block not found. Empty filesystem?");
         }
 
         const auto &        root_block = ffs_files.at(6);

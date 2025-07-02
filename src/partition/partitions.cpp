@@ -613,7 +613,7 @@ void Partitions::old_search_partitions_egold_ce() {
     std::map<uint32_t, Block::Header> headers;
 
     for (const auto &addr : addresses) {
-        if ((addr & 0xFF) != 0x80) {
+        if ((addr & 0xFFF) != 0x80) {
             continue;
         }
 

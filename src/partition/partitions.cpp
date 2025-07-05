@@ -153,6 +153,7 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
 
     this->data      = RawData(file, 0, data_size);
     this->platform  = platform;
+    this->model     = PlatformToString.at(platform);
 
     search_partitions(old_search_algorithm, search_start_addr);
 

@@ -18,7 +18,7 @@ class SGOLD : public Base {
             return std::make_shared<SGOLD>(partitions);
         }
 
-        void            load(bool skip_broken = false) override final;
+        void            load(bool skip_broken = false, bool skip_dup = false) override final;
         const FSMap &   get_filesystem_map() const override final;
 
     private:
@@ -63,7 +63,7 @@ class SGOLD : public Base {
 
         bool                        prototype_6000;
 
-        void                        parse_FIT(bool skip_broken);
+        void                        parse_FIT(bool skip_broken, bool skip_dup);
 
         void                        scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, bool skip_broken = false, std::string path = "/");
         void                        read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id);

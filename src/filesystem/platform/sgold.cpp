@@ -75,8 +75,8 @@ SGOLD::SGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions), p
     }
 }
 
-void SGOLD::load(bool skip_broken) {
-    parse_FIT(skip_broken);
+void SGOLD::load(bool skip_broken, bool skip_dup) {
+    parse_FIT(skip_broken, skip_dup);
 }
 
 const FSMap & SGOLD::get_filesystem_map() const {
@@ -150,7 +150,7 @@ SGOLD::FilePart SGOLD::read_file_part(const RawData &data) {
     return part;
 }
 
-void SGOLD::parse_FIT(bool skip_broken) {
+void SGOLD::parse_FIT(bool skip_broken, bool skip_dup) {
     const auto &part_map = partitions->get_partitions();
 
     for (const auto &pair : part_map) {
@@ -214,6 +214,12 @@ void SGOLD::parse_FIT(bool skip_broken) {
                 fs_block.data = RawData(block_data, fs_block.header.offset, fs_block.header.size);
 
                 if (ffs_map.count(fs_block.header.id)) {
+                    if (skip_dup) {
+                        Log::Logger::debug("Duplicate id {}", fs_block.header.id);
+
+                        continue;
+                    }
+
                     throw Exception("Duplicate id {}", fs_block.header.id);
                 }
 

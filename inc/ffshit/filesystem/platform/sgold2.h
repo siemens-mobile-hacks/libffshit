@@ -16,7 +16,7 @@ class SGOLD2 : public Base {
             return std::make_shared<SGOLD2>(partitions);
         }
 
-        void                        load(bool skip_broken = false) override final;
+        void                        load(bool skip_broken = false, bool skip_dup = false) override final;
         const FSMap &               get_filesystem_map() const override final;
 
     private:
@@ -59,7 +59,7 @@ class SGOLD2 : public Base {
         std::vector<uint32_t>       recourse_protector;
 
         static void                 print_fit_header(const SGOLD2::FITHeader &header);
-        void                        parse_FIT(bool skip_broken);
+        void                        parse_FIT(bool skip_broken, bool skip_dup);
 
         static void                 print_file_header(const FileHeader &header);
         static void                 print_file_part(const FilePart &part);

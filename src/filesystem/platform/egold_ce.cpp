@@ -9,8 +9,8 @@ namespace Filesystem {
 
 EGOLD_CE::EGOLD_CE(Partitions::Partitions::Ptr partitions) : partitions(partitions) { }
 
-void EGOLD_CE::load(bool skip_broken) {
-    parse_FIT(skip_broken);
+void EGOLD_CE::load(bool skip_broken, bool skip_dup) {
+    parse_FIT(skip_broken, skip_dup);
 }
 
 const FSMap &EGOLD_CE::get_filesystem_map() const {
@@ -61,7 +61,7 @@ void EGOLD_CE::print_data(const FFSBlock &block) {
     }
 }
 
-void EGOLD_CE::parse_FIT(bool skip_broken) {
+void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup) {
     const auto &part_map = partitions->get_partitions();
 
     for (const auto &pair : part_map) {
@@ -132,17 +132,13 @@ void EGOLD_CE::parse_FIT(bool skip_broken) {
                 fs_block.data = RawData(block_data, addr_data, fs_block.header.size);
 
                 if (ffs_blocks.count(fs_block.header.block_id)) {
-                    const auto &exists_block = ffs_blocks.at(fs_block.header.block_id);
-
-                    Log::Logger::debug("  Exists block:");
-                    print_block_header(exists_block);
-                    print_data(exists_block);
-
-                    if (exists_block.header.size == fs_block.header.size && exists_block.header.offset == fs_block.header.offset) {
+                    if (skip_dup) {
                         Log::Logger::warn("Block already exists. {:04} {}", fs_block.header.block_id, fs_block.header.block_id);
-                    } else {
-                        throw Exception("Block already exists. {:04} {}",fs_block.header.block_id, fs_block.header.block_id);
+
+                        continue;
                     }
+
+                    throw Exception("Block already exists. {:04} {}",fs_block.header.block_id, fs_block.header.block_id);
                 }
 
                 ffs_blocks[fs_block.header.block_id] = fs_block;
@@ -203,6 +199,12 @@ void EGOLD_CE::parse_FIT(bool skip_broken) {
             print_file_header(file);
 
             if (ffs_files.count(file.header.id)) {
+                if (skip_dup) {
+                    Log::Logger::warn("File id {:04X} already exists in map", file.header.id);
+
+                    continue;
+                }
+
                 throw Exception("File id {:04X} already exists in map", file.header.id);
             }
 

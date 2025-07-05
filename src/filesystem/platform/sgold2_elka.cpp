@@ -14,7 +14,7 @@ SGOLD2_ELKA::SGOLD2_ELKA(Partitions::Partitions::Ptr partitions) : partitions(pa
     }
 }
 
-void SGOLD2_ELKA::load(bool skip_broken) {
+void SGOLD2_ELKA::load(bool skip_broken, bool skip_dup) {
     parse_FIT();
 }
 

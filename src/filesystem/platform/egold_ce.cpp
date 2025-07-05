@@ -213,30 +213,49 @@ void EGOLD_CE::parse_FIT(bool skip_broken) {
             throw Exception("root block not found. Empty filesystem?");
         }
 
-        const auto &        root_block = ffs_files.at(6);
-        Directory::Ptr      root = Directory::build(part_name, "/");
+        try {
+            const auto &        root_block = ffs_files.at(6);
+            Directory::Ptr      root = Directory::build(part_name, "/");
 
-        scan(part_name, ffs_blocks, ffs_files, root_block, root, skip_broken);
+            fs_map[part_name] = root;
 
-        fs_map[part_name] = root;
+            scan(part_name, ffs_blocks, ffs_files, root_block, root, skip_broken);
+        } catch (const FULLFLASH::BaseException &e) {
+            if (skip_broken) {
+                Log::Logger::warn("Skip. Broken root directory: {}", e.what());
+            } else {
+                throw;
+            }
+        }
     }
 }
 
 void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, bool skip_broken, std::string path) {
+    if (skip_broken) {
+        for (const auto &p_id : recourse_protector) {
+            if (file.header.id == p_id) {
+                throw Exception("Directory id already in list");
+            }
+        }
+
+        recourse_protector.push_back(file.header.id);
+    }
+
     RawData dir_data;
 
     try {
         read_full(ffs_blocks, ffs_files, file, dir_data);
-    } catch (const Exception &e) {
+    } catch (const FULLFLASH::BaseException &e) {
         if (skip_broken) {
             Log::Logger::warn("Skip. Broken directory: {}", e.what());
+
+            recourse_protector.pop_back();
 
             return;
         } else {
             throw;
         }
     }
-
 
     std::vector<uint16_t>   dir_id_list;
     
@@ -270,14 +289,14 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
 
         Log::Logger::info("Found ID: {:5d} {:5d}, Path: {}{}{}", file.block->header.block_id, file.header.id, part_name, path, file.header.name);
 
-        if (file.header.flags & 0x10) {
-            Directory::Ptr dir_next = Directory::build(file.header.name, part_name + path, timestamp);
+        try {
+            if (file.header.flags & 0x10) {
+                Directory::Ptr dir_next = Directory::build(file.header.name, part_name + path, timestamp);
 
-            dir->add_subdir(dir_next);
+                dir->add_subdir(dir_next);
 
-            scan(part_name, ffs_blocks, ffs_files, file, dir_next, skip_broken, path + file.header.name + "/");
-        } else {
-            try {
+                scan(part_name, ffs_blocks, ffs_files, file, dir_next, skip_broken, path + file.header.name + "/");
+            } else {
                 RawData file_data;
 
                 read_full(ffs_blocks, ffs_files, file, file_data);
@@ -285,15 +304,18 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
                 File::Ptr file_ = File::build(file.header.name, part_name + path, timestamp, file_data);
 
                 dir->add_file(file_);
-            } catch (const Exception &e) {
-                if (skip_broken) {
-                    Log::Logger::info("Skip. Broken file: {}", e.what());
-                } else {
-                    throw;
-                }
             }
-
+        } catch (const FULLFLASH::BaseException &e) {
+            if (skip_broken) {
+                Log::Logger::warn("Skip. Broken file/directory: {}", e.what());
+            } else {
+                throw;
+            }
         }
+    }
+
+    if (skip_broken) {
+        recourse_protector.pop_back();
     }
 }
 

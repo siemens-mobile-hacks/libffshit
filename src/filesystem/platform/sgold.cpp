@@ -225,24 +225,44 @@ void SGOLD::parse_FIT(bool skip_broken) {
             throw Exception("Root block (ID: 6) not found. Broken filesystem?");
         }
 
-        const FFSBlock &    root_block      = ffs_map.at(6);
-        FileHeader          root_header     = read_file_header(root_block.data);
-        Directory::Ptr      root            = Directory::build(root_header.name, "/");
+        try {
+            const FFSBlock &    root_block      = ffs_map.at(6);
+            FileHeader          root_header     = read_file_header(root_block.data);
+            Directory::Ptr      root            = Directory::build(root_header.name, "/");
 
-        scan(part_name, ffs_map, root, root_header, skip_broken);
+            fs_map[part_name] = root;
 
-        fs_map[part_name] = root;
+            scan(part_name, ffs_map, root, root_header, skip_broken);
+        } catch (const FULLFLASH::BaseException &e) {
+            if (skip_broken) {
+                Log::Logger::warn("Skip. Broken root directory: {}", e.what());
+            } else {
+                throw;
+            }
+        }
     }
 }
 
 void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, bool skip_broken, std::string path) {
+    if (skip_broken) {
+        for (const auto &p_id : recourse_protector) {
+            if (header.id == p_id) {
+                throw Exception("Directory id already in list");
+            }
+        }
+
+        recourse_protector.push_back(header.id);
+    }
+
     RawData data;
 
     try {
         data = read_full_data(ffs_map, header);
-    } catch (const Exception &e) {
+    } catch (const FULLFLASH::BaseException &e) {
         if (skip_broken) {
             Log::Logger::warn("Skip. Broken directory: {}", e.what());
+
+            recourse_protector.pop_back();
 
             return;
         } else {
@@ -302,13 +322,17 @@ void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory:
 
                 dir->add_file(file);
             }
-        } catch (const Exception &e) {
+        } catch (const FULLFLASH::BaseException &e) {
             if (skip_broken) {
                 Log::Logger::warn("Skip. Broken file/directory: {}", e.what());
             } else {
                 throw;
             }
         }
+    }
+
+    if (skip_broken) {
+        recourse_protector.pop_back();
     }
 }
 

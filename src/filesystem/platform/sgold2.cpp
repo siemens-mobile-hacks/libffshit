@@ -228,13 +228,7 @@ void SGOLD2::parse_FIT(bool skip_broken) {
             fs_map[part_name] = root;
 
             scan(part_name, ffs_map, root, root_header, skip_broken);
-        } catch (const Exception &e) {
-            if (skip_broken) {
-                Log::Logger::warn("Skip. Broken root directory: {}", e.what());
-            } else {
-                throw;
-            }
-        } catch (const FULLFLASH::Exception &e) {
+        } catch (const FULLFLASH::BaseException &e) {
             if (skip_broken) {
                 Log::Logger::warn("Skip. Broken root directory: {}", e.what());
             } else {
@@ -292,7 +286,6 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
     RawData data;
 
     if (skip_broken) {
-
         for (const auto &p_id : recourse_protector) {
             if (header.id == p_id) {
                 throw Exception("Directory id already in list");
@@ -304,17 +297,7 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
 
     try {
         data = read_full_data(ffs_map, header);
-    } catch (const Exception &e) {
-        if (skip_broken) {
-            Log::Logger::warn("Skip. Broken directory: {}", e.what());
-
-            recourse_protector.pop_back();
-
-            return;
-        } else {
-            throw;
-        }
-    } catch (const FULLFLASH::Exception &e) {
+    } catch (const FULLFLASH::BaseException &e) {
         if (skip_broken) {
             Log::Logger::warn("Skip. Broken directory: {}", e.what());
 
@@ -367,9 +350,9 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
             if (file_header.unknown6 & 0x10) {
                 Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);
 
-                scan(block_name, ffs_map, dir_next, file_header, skip_broken, path + file_header.name + "/");
-
                 dir->add_subdir(dir_next);
+
+                scan(block_name, ffs_map, dir_next, file_header, skip_broken, path + file_header.name + "/");
             } else {
                 RawData     file_data;
                 uint32_t    data_id = file_header.id + 1;
@@ -382,13 +365,7 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
 
                 dir->add_file(file);
             }
-        } catch (const Exception &e) {
-            if (skip_broken) {
-                Log::Logger::warn("Skip. Broken file/directory: {}", e.what());
-            } else {
-                throw;
-            }
-        } catch (const FULLFLASH::Exception &e) {
+        } catch (const FULLFLASH::BaseException &e) {
             if (skip_broken) {
                 Log::Logger::warn("Skip. Broken file/directory: {}", e.what());
             } else {

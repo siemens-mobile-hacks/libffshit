@@ -4,21 +4,23 @@
 #include <fmt/format.h>
 #include <string>
 
+#include "ffshit/ex.h"
+
 namespace FULLFLASH {
 namespace Filesystem {
 
-class Exception {
+class Exception : public BaseException{
     public:
         template<typename Format, typename ...Args>
         Exception(Format format, const Args& ...args) {
             this->msg = fmt::format(format, args...);
         }
 
-        const std::string &what() const {
+        const std::string &what() const override final {
             return msg;
         }
 
-        const char *what_c() const {
+        const char *what_c() const override final {
             return msg.c_str();
         }
 

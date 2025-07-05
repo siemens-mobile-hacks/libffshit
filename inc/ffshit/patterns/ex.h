@@ -1,9 +1,8 @@
 #ifndef LIBFFSHIT_PATTERNS_EXCEPTION_H
 #define LIBFFSHIT_PATTERNS_EXCEPTION_H
 
-#include <string>
-
 #include <fmt/format.h>
+#include <string>
 
 namespace Patterns {
 

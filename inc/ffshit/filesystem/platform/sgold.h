@@ -59,6 +59,8 @@ class SGOLD : public Base {
         Partitions::Partitions::Ptr partitions;
         FSMap                       fs_map;
 
+        std::vector<uint32_t>       recourse_protector;
+
         void                        parse_FIT(bool skip_broken);
 
         void                        scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, bool skip_broken = false, std::string path = "/");

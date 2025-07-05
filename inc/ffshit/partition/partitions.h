@@ -47,8 +47,8 @@ class Partitions {
             return std::make_unique<Partitions>(args...);
         }
 
-        Partitions(std::string fullflash_path, bool old_search_alghoritm, uint32_t search_start_addr = 0);
-        Partitions(std::string fullflash_path, Platform platform, bool old_search_alghoritm, uint32_t search_start_addr = 0);
+        Partitions(std::string fullflash_path, bool old_search_algorithm, uint32_t search_start_addr = 0);
+        Partitions(std::string fullflash_path, Platform platform, bool old_search_algorithm, uint32_t search_start_addr = 0);
 
         const std::string &         get_file_path() const;
 
@@ -73,6 +73,8 @@ class Partitions {
         bool                        sl75_bober_kurwa;
 
         bool                        check_part_name(const std::string &name);
+
+        void                        search_partitions(bool old_search_algorithm, uint32_t start_addr);
 
         bool                        search_partitions_sgold(uint32_t start_addr);
         bool                        search_partitions_sgold2(uint32_t start_addr);

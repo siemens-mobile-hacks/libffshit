@@ -106,7 +106,7 @@ static bool is_empty(const char *buf, size_t size) {
 
 // =========================================================================
 
-Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, uint32_t search_start_addr) {
+Partitions::Partitions(std::string fullflash_path, bool old_search_algorithm, uint32_t search_start_addr) {
     sl75_bober_kurwa = false;
     
     this->fullflash_path = fullflash_path;
@@ -126,40 +126,7 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, ui
     this->data = RawData(file, 0, data_size);
 
     detect_platform();
-
-    if (old_search_alghoritm) {
-        switch (platform) {
-            case Platform::EGOLD_CE:    block_size = 0x10000; old_search_partitions_egold_ce(); break;
-            case Platform::SGOLD:
-            case Platform::SGOLD2:      block_size = 0x10000; old_search_partitions_sgold_sgold2(); break;
-            case Platform::SGOLD2_ELKA: block_size = 0x10000; old_search_partitions_sgold2_elka(); break;
-            default: throw Exception("Couldn't detect fullflash platform");
-        }
-    } else {
-        switch (platform) {
-            case Platform::EGOLD_CE: {
-                Log::Logger::warn("New partitions search algorithm not implemented yet for EGOLD_CE");
-
-                block_size = 0x10000;
-
-                old_search_partitions_egold_ce();
-
-                break;
-            }
-            case Platform::SGOLD:   search_partitions_sgold(search_start_addr); break;
-            case Platform::SGOLD2:  search_partitions_sgold2(search_start_addr); break;
-            case Platform::SGOLD2_ELKA:  {
-                Log::Logger::warn("New partitions search algorithm not implemented yet for SGOLD2_ELKA");
-
-                block_size = 0x10000; 
-
-                old_search_partitions_sgold2_elka(); 
-                
-                break;
-            }
-            default: throw Exception("Couldn't detect fullflash platform");
-        }
-    }
+    search_partitions(old_search_algorithm, search_start_addr);
 
     Log::Logger::debug("Found {} partitions", partitions_map.size());
 
@@ -169,7 +136,7 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_alghoritm, ui
 
 }
 
-Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_search_alghoritm, uint32_t search_start_addr) {
+Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_search_algorithm, uint32_t search_start_addr) {
     std::ifstream file;
 
     this->fullflash_path = fullflash_path;
@@ -187,32 +154,7 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
     this->data      = RawData(file, 0, data_size);
     this->platform  = platform;
 
-    if (old_search_alghoritm) {
-        switch (platform) {
-            case Platform::EGOLD_CE: block_size = 0x10000; old_search_partitions_egold_ce(); break;
-            case Platform::SGOLD:
-            case Platform::SGOLD2:      block_size = 0x10000; old_search_partitions_sgold_sgold2(); break;
-            case Platform::SGOLD2_ELKA: block_size = 0x10000; old_search_partitions_sgold2_elka(); break;
-            default: throw Exception("Couldn't detect fullflash platform");
-        }
-
-    } else {
-        switch (platform) {
-            case Platform::EGOLD_CE:    block_size = 0x10000; 
-                                        old_search_partitions_egold_ce(); break;
-            case Platform::SGOLD:       search_partitions_sgold(search_start_addr); break;
-            case Platform::SGOLD2:      search_partitions_sgold2(search_start_addr); break;
-            case Platform::SGOLD2_ELKA:  {
-                Log::Logger::warn("New partitions search algorithm not implemented yet for SGOLD2_ELKA");
-
-                block_size = 0x10000; 
-                old_search_partitions_sgold2_elka(); 
-                
-                break;
-            }
-            default: throw Exception("Couldn't detect fullflash platform");
-        }
-    }
+    search_partitions(old_search_algorithm, search_start_addr);
 
     for (const auto &pair : partitions_map) {
         Log::Logger::debug("{:10s} {}", pair.first, pair.second.get_blocks().size());
@@ -241,6 +183,74 @@ const std::string &Partitions::get_imei() const {
 
 const std::string &Partitions::get_model() const {
     return model;
+}
+
+void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_addr) {
+    auto old_search = [&]() {
+        switch (platform) {
+            case Platform::EGOLD_CE:    block_size = 0x10000; old_search_partitions_egold_ce(); break;
+            case Platform::SGOLD:
+            case Platform::SGOLD2:      block_size = 0x10000; old_search_partitions_sgold_sgold2(); break;
+            case Platform::SGOLD2_ELKA: block_size = 0x10000; old_search_partitions_sgold2_elka(); break;
+            default: throw Exception("Couldn't detect fullflash platform");
+        }
+    };
+
+    auto new_search = [&]() {
+        switch (platform) {
+            case Platform::EGOLD_CE: {
+                Log::Logger::warn("New partitions search algorithm not implemented yet for EGOLD_CE");
+
+                old_search();
+
+                break;
+            }
+            case Platform::SGOLD:   search_partitions_sgold(start_addr); break;
+            case Platform::SGOLD2:  search_partitions_sgold2(start_addr); break;
+            case Platform::SGOLD2_ELKA:  {
+                Log::Logger::warn("New partitions search algorithm not implemented yet for SGOLD2_ELKA");
+
+                block_size = 0x10000;
+
+                old_search_partitions_sgold2_elka();
+
+                break;
+            }
+            default: throw Exception("Couldn't detect fullflash platform");
+        }
+    };
+
+    if (old_search_algorithm) {
+        old_search();
+
+        return;
+    }
+
+    new_search();
+
+    if (!partitions_map.size()) {
+        Log::Logger::warn("Partitions not found. Trying to use old search algorithm");
+
+        old_search();
+    } else {
+        bool ffs_partitions_found = false;
+
+        for (const auto &name : partitions_map) {
+            if (name.first.find("FFS") != std::string::npos) {
+                ffs_partitions_found = true;
+            }
+        }
+
+        if (!ffs_partitions_found) {
+            Log::Logger::warn("FFS Partitions not found. Trying to use old search algorithm");
+
+            old_search();
+        }
+    }
+
+    if (!partitions_map.size()) {
+        throw Exception("Partitions not found");
+    }
 }
 
 bool Partitions::check_part_name(const std::string &name) {
@@ -603,6 +613,41 @@ void Partitions::detect_platform() {
             sl75_bober_kurwa = true;
         } else if (data.get_size() > 0x04000000) {
             sl75_bober_kurwa = true;
+        }
+    }
+
+    if (platform != Platform::UNK) {
+        bool borken_imei = false;
+        bool broken_model = false;
+
+        if (imei.size() != 15) {
+            borken_imei = true;
+        } else {
+            std::for_each(imei.cbegin(), imei.cend(), [&](char c) {
+                if (!isprint(c)) {
+                    borken_imei = true;
+                }
+            });
+        }
+
+        std::for_each(model.cbegin(), model.cend(), [&](char c) {
+            if (!isprint(c)) {
+                broken_model = true;
+            }
+        });
+
+
+        if (borken_imei) {
+            Log::Logger::warn("Couldn't detect IMEI");
+            Log::Logger::debug("IMEI broken: {}", imei);
+
+            imei.clear();
+        }
+
+        if (broken_model) {
+            Log::Logger::warn("Couldn't detect model");
+
+            model = PlatformToString.at(platform);
         }
     }
 }

@@ -75,8 +75,8 @@ SGOLD::SGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions) {
     }
 }
 
-void SGOLD::load() {
-    parse_FIT();
+void SGOLD::load(bool skip_broken) {
+    parse_FIT(skip_broken);
 }
 
 const FSMap & SGOLD::get_filesystem_map() const {
@@ -150,7 +150,7 @@ SGOLD::FilePart SGOLD::read_file_part(const RawData &data) {
     return part;
 }
 
-void SGOLD::parse_FIT() {
+void SGOLD::parse_FIT(bool skip_broken) {
     const auto &part_map = partitions->get_partitions();
 
     for (const auto &pair : part_map) {
@@ -229,14 +229,27 @@ void SGOLD::parse_FIT() {
         FileHeader          root_header     = read_file_header(root_block.data);
         Directory::Ptr      root            = Directory::build(root_header.name, "/");
 
-        scan(part_name, ffs_map, root, root_header);
+        scan(part_name, ffs_map, root, root_header, skip_broken);
 
         fs_map[part_name] = root;
     }
 }
 
-void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, std::string path) {
-    RawData data    = read_full_data(ffs_map, header);
+void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, bool skip_broken, std::string path) {
+    RawData data;
+
+    try {
+        data = read_full_data(ffs_map, header);
+    } catch (const Exception &e) {
+        if (skip_broken) {
+            Log::Logger::warn("Skip. Broken directory: {}", e.what());
+
+            return;
+        } else {
+            throw;
+        }
+    }
+
     size_t  offset  = 0;
 
     while (offset < data.get_size()) {
@@ -256,23 +269,29 @@ void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory:
         }
 
         if (!ffs_map.count(id)) {
-            throw Exception("FFS Block ID: {} not found", id);
+            if (skip_broken) {
+                Log::Logger::warn("Skip. FFS Block ID {} not found", id);
+
+                continue;
+            } else {
+                throw Exception("FFS Block ID: {} not found", id);
+            }
         }
 
-        const FFSBlock &tmp         = ffs_map.at(id);
-        FileHeader      file_header = read_file_header(tmp.data);
-        auto            timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
+        try {
+            const FFSBlock &tmp         = ffs_map.at(id);
+            FileHeader      file_header = read_file_header(tmp.data);
+            auto            timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
 
-        Log::Logger::info("Found ID: {:5d}, Path: {}{}{}", id, block_name, path, file_header.name);
+            Log::Logger::info("Found ID: {:5d}, Path: {}{}{}", id, block_name, path, file_header.name);
 
-        if (file_header.attributes & 0x10) {
-            Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);
+            if (file_header.attributes & 0x10) {
+                Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);
 
-            dir->add_subdir(dir_next);
+                dir->add_subdir(dir_next);
 
-            scan(block_name, ffs_map, dir_next, file_header, path + file_header.name + "/");
-        } else {
-            try {
+                scan(block_name, ffs_map, dir_next, file_header, skip_broken, path + file_header.name + "/");
+            } else {
                 RawData file_data;
 
                 if (ffs_map.count(file_header.data_id)) {
@@ -282,8 +301,12 @@ void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory:
                 File::Ptr file = File::build(file_header.name, block_name + path, timestamp, file_data);
 
                 dir->add_file(file);
-            } catch (const Exception &e) {
-                Log::Logger::warn("Warning! Broken file: {}", e.what());
+            }
+        } catch (const Exception &e) {
+            if (skip_broken) {
+                Log::Logger::warn("Skip. Broken file/directory: {}", e.what());
+            } else {
+                throw;
             }
         }
     }

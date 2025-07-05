@@ -9,8 +9,8 @@ namespace Filesystem {
 
 EGOLD_CE::EGOLD_CE(Partitions::Partitions::Ptr partitions) : partitions(partitions) { }
 
-void EGOLD_CE::load() {
-    parse_FIT();
+void EGOLD_CE::load(bool skip_broken) {
+    parse_FIT(skip_broken);
 }
 
 const FSMap &EGOLD_CE::get_filesystem_map() const {
@@ -61,7 +61,7 @@ void EGOLD_CE::print_data(const FFSBlock &block) {
     }
 }
 
-void EGOLD_CE::parse_FIT() {
+void EGOLD_CE::parse_FIT(bool skip_broken) {
     const auto &part_map = partitions->get_partitions();
 
     for (const auto &pair : part_map) {
@@ -216,16 +216,27 @@ void EGOLD_CE::parse_FIT() {
         const auto &        root_block = ffs_files.at(6);
         Directory::Ptr      root = Directory::build(part_name, "/");
 
-        scan(part_name, ffs_blocks, ffs_files, root_block, root);
+        scan(part_name, ffs_blocks, ffs_files, root_block, root, skip_broken);
 
         fs_map[part_name] = root;
     }
 }
 
-void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, std::string path) {
+void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks, const FFSFilesMap &ffs_files, const FFSFile &file, Directory::Ptr dir, bool skip_broken, std::string path) {
     RawData dir_data;
 
-    read_full(ffs_blocks, ffs_files, file, dir_data);
+    try {
+        read_full(ffs_blocks, ffs_files, file, dir_data);
+    } catch (const Exception &e) {
+        if (skip_broken) {
+            Log::Logger::warn("Skip. Broken directory: {}", e.what());
+
+            return;
+        } else {
+            throw;
+        }
+    }
+
 
     std::vector<uint16_t>   dir_id_list;
     
@@ -247,7 +258,11 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
 
     for (const auto &id : dir_id_list) {
         if (!ffs_files.count(id)) {
-            throw Exception("File {:04X} not found", id);
+            if (skip_broken) {
+                Log::Logger::warn("Skip. File record ID {} not found", id);
+            } else {
+                throw Exception("File record ID {} not found", id);
+            }
         }
 
         const auto &file        = ffs_files.at(id);
@@ -260,16 +275,24 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
 
             dir->add_subdir(dir_next);
 
-            scan(part_name, ffs_blocks, ffs_files, file, dir_next, path + file.header.name + "/");
+            scan(part_name, ffs_blocks, ffs_files, file, dir_next, skip_broken, path + file.header.name + "/");
         } else {
+            try {
+                RawData file_data;
 
-            RawData file_data;
+                read_full(ffs_blocks, ffs_files, file, file_data);
 
-            read_full(ffs_blocks, ffs_files, file, file_data);
+                File::Ptr file_ = File::build(file.header.name, part_name + path, timestamp, file_data);
 
-            File::Ptr file_ = File::build(file.header.name, part_name + path, timestamp, file_data);
+                dir->add_file(file_);
+            } catch (const Exception &e) {
+                if (skip_broken) {
+                    Log::Logger::info("Skip. Broken file: {}", e.what());
+                } else {
+                    throw;
+                }
+            }
 
-            dir->add_file(file_);
         }
     }
 }

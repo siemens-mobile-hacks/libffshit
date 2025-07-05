@@ -18,7 +18,7 @@ class SGOLD : public Base {
             return std::make_shared<SGOLD>(partitions);
         }
 
-        void            load() override final;
+        void            load(bool skip_broken = false) override final;
         const FSMap &   get_filesystem_map() const override final;
 
     private:
@@ -59,9 +59,9 @@ class SGOLD : public Base {
         Partitions::Partitions::Ptr partitions;
         FSMap                       fs_map;
 
-        void                        parse_FIT();
+        void                        parse_FIT(bool skip_broken);
 
-        void                        scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, std::string path = "/");
+        void                        scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, bool skip_broken = false, std::string path = "/");
         void                        read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id);
         RawData                     read_full_data(FSBlocksMap &ffs_map, const FileHeader &header);
 

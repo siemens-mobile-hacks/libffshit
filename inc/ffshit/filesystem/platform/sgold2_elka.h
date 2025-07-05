@@ -16,7 +16,7 @@ class SGOLD2_ELKA : public Base {
             return std::make_shared<SGOLD2_ELKA>(partitions);
         }
 
-        void                        load() override final;
+        void                        load(bool skip_broken = false) override final;
         const FSMap &               get_filesystem_map() const override final;
 
     private:

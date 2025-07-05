@@ -14,8 +14,7 @@ class Base {
 
         Base() { }
 
-        virtual void            load() = 0;
-        // virtual void            extract(std::string path, bool overwrite) = 0;
+        virtual void            load(bool skip_broken = false) = 0;
         virtual const FSMap &   get_filesystem_map() const = 0;
 
     private:

@@ -14,7 +14,7 @@ SGOLD2_ELKA::SGOLD2_ELKA(Partitions::Partitions::Ptr partitions) : partitions(pa
     }
 }
 
-void SGOLD2_ELKA::load() {
+void SGOLD2_ELKA::load(bool skip_broken) {
     parse_FIT();
 }
 
@@ -33,7 +33,6 @@ void SGOLD2_ELKA::print_fit_header(const SGOLD2_ELKA::FITHeader &header) {
     Log::Logger::debug("      Unk2:       {:08X} {:d}", header.unk2, header.unk2);
     Log::Logger::debug("      Unk3:       {:08X} {:d}", header.unk3, header.unk3);
     Log::Logger::debug("      Unk4:       {:08X} {:d}", header.unk4, header.unk4);
-
 }
 
 void SGOLD2_ELKA::print_dir_header(const DirHeader &header) {

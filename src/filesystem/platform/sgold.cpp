@@ -230,7 +230,7 @@ void SGOLD::parse_FIT(bool skip_broken) {
                 root_block_id += 6000;
 
                 if (!ffs_map.count(root_block_id)) {
-                    throw Exception("Root block (ID: 6000) not found. Broken filesystem?");
+                    throw Exception("Root block (ID: 6006) not found. Broken filesystem?");
                 }
 
                 prototype_6000 = true;

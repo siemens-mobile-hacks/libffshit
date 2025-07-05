@@ -106,7 +106,7 @@ static bool is_empty(const char *buf, size_t size) {
 
 // =========================================================================
 
-Partitions::Partitions(std::string fullflash_path, bool old_search_algorithm, uint32_t search_start_addr) {
+Partitions::Partitions(std::filesystem::path fullflash_path, bool old_search_algorithm, uint32_t search_start_addr) {
     sl75_bober_kurwa = false;
     
     this->fullflash_path = fullflash_path;
@@ -116,7 +116,7 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_algorithm, ui
     file.open(fullflash_path, std::ios_base::binary | std::ios_base::in);
 
     if (!file.is_open()) {
-        throw Exception("Couldn't open file '{}': {}\n", fullflash_path, std::string(strerror(errno)));
+        throw Exception("Couldn't open file '{}': {}\n", fullflash_path.string(), std::string(strerror(errno)));
     }
 
     file.seekg(0, std::ios_base::end);
@@ -136,7 +136,7 @@ Partitions::Partitions(std::string fullflash_path, bool old_search_algorithm, ui
 
 }
 
-Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_search_algorithm, uint32_t search_start_addr) {
+Partitions::Partitions(std::filesystem::path fullflash_path, Platform platform, bool old_search_algorithm, uint32_t search_start_addr) {
     std::ifstream file;
 
     this->fullflash_path = fullflash_path;
@@ -144,7 +144,7 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
     file.open(fullflash_path, std::ios_base::binary | std::ios_base::in);
 
     if (!file.is_open()) {
-        throw Exception("Couldn't open file '{}': {}\n", fullflash_path, std::string(strerror(errno)));
+        throw Exception("Couldn't open file '{}': {}\n", fullflash_path.string(), std::string(strerror(errno)));
     }
 
     file.seekg(0, std::ios_base::end);
@@ -162,7 +162,7 @@ Partitions::Partitions(std::string fullflash_path, Platform platform, bool old_s
     }
 }
 
-const std::string &Partitions::get_file_path() const {
+const std::filesystem::path &Partitions::get_file_path() const {
     return fullflash_path;
 }
 

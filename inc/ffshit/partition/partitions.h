@@ -10,6 +10,7 @@
 #include <memory>
 #include <map>
 #include <regex>
+#include <filesystem>
 
 namespace FULLFLASH {
 namespace Partitions {
@@ -47,20 +48,20 @@ class Partitions {
             return std::make_unique<Partitions>(args...);
         }
 
-        Partitions(std::string fullflash_path, bool old_search_algorithm, uint32_t search_start_addr = 0);
-        Partitions(std::string fullflash_path, Platform platform, bool old_search_algorithm, uint32_t search_start_addr = 0);
+        Partitions(std::filesystem::path fullflash_path, bool old_search_algorithm, uint32_t search_start_addr = 0);
+        Partitions(std::filesystem::path fullflash_path, Platform platform, bool old_search_algorithm, uint32_t search_start_addr = 0);
 
-        const std::string &         get_file_path() const;
+        const std::filesystem::path &   get_file_path() const;
 
-        const Map &                 get_partitions() const;
-        const RawData &             get_data() const;
+        const Map &                     get_partitions() const;
+        const RawData &                 get_data() const;
 
-        const Platform              get_platform() const;
-        const std::string &         get_imei() const;
-        const std::string &         get_model() const;
+        const Platform                  get_platform() const;
+        const std::string &             get_imei() const;
+        const std::string &             get_model() const;
 
     private:
-        std::string                 fullflash_path;
+        std::filesystem::path       fullflash_path;
 
         uint32_t                    block_size;
         Map                         partitions_map;

@@ -61,6 +61,8 @@ class SGOLD : public Base {
 
         std::vector<uint32_t>       recourse_protector;
 
+        bool                        prototype_6000;
+
         void                        parse_FIT(bool skip_broken);
 
         void                        scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, bool skip_broken = false, std::string path = "/");

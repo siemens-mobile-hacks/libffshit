@@ -69,7 +69,7 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-SGOLD::SGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions) {
+SGOLD::SGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions), prototype_6000(false) {
     if (!partitions) {
         throw Exception("SGOLD partitions == nullptr o_O");
     }
@@ -181,7 +181,7 @@ void SGOLD::parse_FIT(bool skip_broken) {
                 block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.size), 1);
                 block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.offset), 1);
 
-                // Log::Logger::debug("    ==== Offset: {:08X} ====", block.offset + offset);
+                // Log::Logger::debug("    ==== Offset: {:08X} ====", block.get_addr() + offset);
                 // Log::Logger::debug("    ID:     {:08X}", fs_block.header.id);
                 // Log::Logger::debug("    Size:   {:08X} {}", fs_block.header.size, fs_block.header.size);
                 // Log::Logger::debug("    Offset: {:08X}", fs_block.header.offset);
@@ -221,12 +221,26 @@ void SGOLD::parse_FIT(bool skip_broken) {
             }
         }
 
-        if (!ffs_map.count(6)) {
-            throw Exception("Root block (ID: 6) not found. Broken filesystem?");
+        uint16_t root_block_id = 6;
+
+        if (!ffs_map.count(root_block_id)) {
+            if (skip_broken) {
+                Log::Logger::debug("Root block (ID: 6) not found. Prototype? Trying add 6000");
+
+                root_block_id += 6000;
+
+                if (!ffs_map.count(root_block_id)) {
+                    throw Exception("Root block (ID: 6000) not found. Broken filesystem?");
+                }
+
+                prototype_6000 = true;
+            } else {
+                Log::Logger::debug("Root block (ID: 6) not found. Broken filesystem?");
+            }
         }
 
         try {
-            const FFSBlock &    root_block      = ffs_map.at(6);
+            const FFSBlock &    root_block      = ffs_map.at(root_block_id);
             FileHeader          root_header     = read_file_header(root_block.data);
             Directory::Ptr      root            = Directory::build(root_header.name, "/");
 
@@ -288,6 +302,10 @@ void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory:
             continue;
         }
 
+        if (prototype_6000) {
+            id += 6000;
+        }
+
         if (!ffs_map.count(id)) {
             if (skip_broken) {
                 Log::Logger::warn("Skip. FFS Block ID {} not found", id);
@@ -347,6 +365,10 @@ void SGOLD::read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id) 
 
     print_file_part(part);
 
+    if (prototype_6000) {
+        part.data_id += 6000;
+    }
+
     if (!ffs_map.count(part.data_id)) {
         throw Exception("Reading part data. Couldn't find block with id: {}", part.data_id);
     }
@@ -363,11 +385,17 @@ void SGOLD::read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id) 
 RawData SGOLD::read_full_data(FSBlocksMap &ffs_map, const FileHeader &header) {
     print_file_header(header);
 
-    if (!ffs_map.count(header.data_id)) {
-        throw Exception("Reading file data. Couldn't find block with id: {}", header.data_id);
+    uint16_t data_id = header.data_id;
+
+    if (prototype_6000) {
+        data_id += 6000;
     }
 
-    const FFSBlock &block = ffs_map.at(header.data_id);
+    if (!ffs_map.count(data_id)) {
+        throw Exception("Reading file data. Couldn't find block with id: {}", data_id);
+    }
+
+    const FFSBlock &block = ffs_map.at(data_id);
     RawData         data_full(block.data);
 
     if (header.next_part != 0xFFFF) {

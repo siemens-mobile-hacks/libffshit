@@ -17,6 +17,8 @@ static std::string getParentDir(const std::string &path);
 static std::string getBaseName(const std::string &path);
 static std::string toLower(const std::string &s);
 
+static const auto logger = FFSLogInterface::build();
+
 EMSCRIPTEN_BINDINGS(libffshit) {
     class_<FFS>("FFS")
         .constructor<>()
@@ -47,7 +49,8 @@ EMSCRIPTEN_BINDINGS(libffshit) {
         .field("searchStartAddress", &FFS::Options::searchStartAddress)
         .field("platform", &FFS::Options::platform)
         .field("skipBroken", &FFS::Options::skipBroken)
-        .field("skipDuplicates", &FFS::Options::skipDuplicates);
+        .field("skipDuplicates", &FFS::Options::skipDuplicates)
+        .field("debug", &FFS::Options::debug);
 };
 
 FFS::FFS() {
@@ -55,6 +58,12 @@ FFS::FFS() {
 }
 
 void FFS::open(uintptr_t ptr, size_t size, const FFS::Options &options) {
+    if (options.debug) {
+        FULLFLASH::Log::Logger::init(logger);
+    } else {
+        FULLFLASH::Log::Logger::init(nullptr);
+    }
+
     try {
         char *data = reinterpret_cast<char *>(ptr);
         m_partitions = FULLFLASH::Partitions::Partitions::build(data, size, options.isOldSearchAlgorithm, options.searchStartAddress);
@@ -67,10 +76,14 @@ void FFS::open(uintptr_t ptr, size_t size, const FFS::Options &options) {
         m_filesystem->load(options.skipBroken, options.skipDuplicates);
 
         m_rootDir = FULLFLASH::Filesystem::Directory::build("", "");
-        for (const auto &it: m_filesystem->get_filesystem_map()) {
+        m_map = m_filesystem->get_filesystem_map();
+
+        for (const auto it: m_map) {
             auto disk = FULLFLASH::Filesystem::Directory::build(it.first, "/", it.second->get_timestamp());
-            for (const auto &subdir: it.second->get_subdirs())
+            for (const auto subdir: it.second->get_subdirs())
                 disk->add_subdir(subdir);
+            for (const auto file: it.second->get_files())
+                disk->add_file(file);
             m_rootDir->add_subdir(disk);
         }
     } catch (const FULLFLASH::Partitions::Exception &e) {
@@ -92,12 +105,15 @@ void FFS::open(uintptr_t ptr, size_t size, const FFS::Options &options) {
 }
 
 void FFS::close() {
+    m_rootDir.reset();
+    m_map = {};
     m_filesystem.reset();
     m_partitions.reset();
 }
 
 FFS::~FFS() {
     close();
+    FULLFLASH::Log::Logger::init(nullptr);
 }
 
 std::string FFS::getPlatform() {
@@ -119,12 +135,16 @@ std::string FFS::getModel() {
 }
 
 FFS::FileData FFS::readFile(const std::string &path) {
+    if (!m_partitions)
+        throw std::runtime_error("FFS is closed.");
     const auto dirOrFile = getDirOrFilePtr(path);
     if (!dirOrFile.file)
         return { .data = 0, .size = 0 };
-    const auto data = dirOrFile.file->get_data().get_data().get();
-    auto dataSize = dirOrFile.file->get_data().get_size();
-    return { .data = reinterpret_cast<uintptr_t>(data), .size = dataSize };
+    const auto data = dirOrFile.file->get_data();
+    auto dataSize = data.get_size();
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(malloc(dataSize));
+    memcpy(buffer, data.get_data().get(), dataSize);
+    return { .data = reinterpret_cast<uintptr_t>(buffer), .size = dataSize };
 }
 
 FULLFLASH::Filesystem::Directory::Ptr FFS::getDirPtr(const std::string &path) {
@@ -146,7 +166,9 @@ FULLFLASH::Filesystem::Directory::Ptr FFS::getDirPtr(const std::string &path) {
 }
 
 FFS::Entry FFS::stat(const std::string &path) {
-    const auto dirOrFile = getDirOrFilePtr(getParentDir(path));
+    if (!m_partitions)
+        throw std::runtime_error("FFS is closed.");
+    const auto dirOrFile = getDirOrFilePtr(path);
     if (dirOrFile.dir) {
         Entry entry = {};
         entry.name = dirOrFile.dir->get_name();
@@ -181,6 +203,8 @@ FFS::DirOrFile FFS::getDirOrFilePtr(const std::string &path) {
 }
 
 std::vector<FFS::Entry> FFS::readDir(const std::string &path) {
+    if (!m_partitions)
+        throw std::runtime_error("FFS is closed.");
     const auto parentDir = getDirPtr(path);
     std::vector<Entry> entries;
     if (parentDir) {

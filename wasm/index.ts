@@ -9,13 +9,9 @@ export type FFSOpenOptions = Partial<Options> & {
 export class FFS {
     private handle = new libffshit.FFS();
 
-    constructor() {
-
-    }
-
     open(buffer: Buffer, options: FFSOpenOptions = {}) {
         const ptr = libffshit._malloc(buffer.length);
-        libffshit.HEAPU8.set(buffer, ptr);
+        libffshit.HEAPU8.set(new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength), ptr);
         try {
             this.handle.open(ptr, buffer.length, {
                 isOldSearchAlgorithm: false,
@@ -23,6 +19,7 @@ export class FFS {
                 platform: "auto",
                 skipBroken: true,
                 skipDuplicates: true,
+                debug: false,
                 ...options
             });
         } finally {
@@ -53,7 +50,11 @@ export class FFS {
 
     readFile(path: string): Buffer | undefined {
         const result = this.handle.readFile(path);
-        return result.data ? Buffer.from(new Uint8Array(libffshit.HEAPU8.buffer, result.data, result.size)) : undefined;
+        if (result.data) {
+            const buffer = Buffer.from(new Uint8Array(libffshit.HEAPU8.buffer, result.data, result.size));
+            libffshit._free(result.data);
+            return buffer;
+        }
     }
 
     readDir(path: string): Entry[] {

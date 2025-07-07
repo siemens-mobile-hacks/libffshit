@@ -216,8 +216,9 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup) {
         }
 
         try {
-            const auto &        root_block = ffs_files.at(6);
-            Directory::Ptr      root = Directory::build(part_name, "/");
+            const auto &        root_block  = ffs_files.at(6);
+            auto                timestamp   = fat_timestamp_to_unix(root_block.header.fat_timestamp);
+            Directory::Ptr      root        = Directory::build(part_name, "/", timestamp);
 
             fs_map[part_name] = root;
 

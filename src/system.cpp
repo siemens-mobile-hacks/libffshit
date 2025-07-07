@@ -24,18 +24,18 @@ bool is_directory_exists(const std::filesystem::path path) {
     return false;
 }
 
-bool remove_directory(const std::filesystem::path path) {
+bool remove_directory(const std::filesystem::path path, std::error_code &error_code) {
     if (!std::filesystem::exists(path)) {
         return true;
     }
 
     for (const auto& entry : std::filesystem::directory_iterator(path)) {
         if (std::filesystem::is_directory(entry)) {
-            if (!remove_directory(entry)) {
+            if (!remove_directory(entry, error_code)) {
                 return false;
             }
         } else {
-            if (!std::filesystem::remove(entry)) {
+            if (!std::filesystem::remove(entry, error_code)) {
                 return false;
             }
         }
@@ -44,10 +44,9 @@ bool remove_directory(const std::filesystem::path path) {
     return std::filesystem::remove(path);
 }
 
-
-bool create_directory(const std::filesystem::path path, std::filesystem::perms perms) {
-    if (std::filesystem::create_directory(path)) {
-        std::filesystem::permissions(path, perms, std::filesystem::perm_options::replace);
+bool create_directory(const std::filesystem::path path, std::filesystem::perms perms, std::error_code &error_code) {
+    if (std::filesystem::create_directory(path, error_code)) {
+        std::filesystem::permissions(path, perms, std::filesystem::perm_options::replace, error_code);
 
         return true;
     }

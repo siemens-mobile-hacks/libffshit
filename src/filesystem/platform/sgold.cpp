@@ -248,7 +248,9 @@ void SGOLD::parse_FIT(bool skip_broken, bool skip_dup) {
         try {
             const FFSBlock &    root_block      = ffs_map.at(root_block_id);
             FileHeader          root_header     = read_file_header(root_block.data);
-            Directory::Ptr      root            = Directory::build(root_header.name, "/");
+            auto                timestamp       = fat_timestamp_to_unix(root_header.fat_timestamp);
+
+            Directory::Ptr      root            = Directory::build(root_header.name, "/", timestamp);
 
             fs_map[part_name] = root;
 

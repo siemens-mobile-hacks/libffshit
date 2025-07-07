@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
 project(ffshit VERSION 0.0.2 DESCRIPTION "Siemens filesystem library" LANGUAGES CXX)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -10,6 +12,7 @@ endif()
 
 option(BUILD_DEV "Development build" ON)
 option(BUILD_DEB_PACKAGE "Build debian-like package" OFF)
+option(USE_BUILTIN_LIBFMT "Use built-in libfmt instead of system library" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,7 +23,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     endif()
 endif()
 
-find_package(fmt REQUIRED)
+if (USE_BUILTIN_LIBFMT)
+    add_subdirectory(third_party/fmt)
+else()
+    find_package(fmt REQUIRED)
+endif()
+
 find_package(Iconv REQUIRED)
 find_package(Git QUIET)
 
@@ -152,6 +160,29 @@ write_basic_package_version_file(
 install(
     FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     DESTINATION lib/cmake/${PROJECT_NAME})
+
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
+    add_executable(libffshit_wasm wasm/main.cpp)
+    target_link_libraries(libffshit_wasm PRIVATE fmt::fmt ${PROJECT_NAME})
+    target_link_options(libffshit_wasm PUBLIC
+        -sWASM=1
+        -sEXPORT_ES6=1
+        -sMODULARIZE
+        -sINVOKE_RUN=0
+        -sSINGLE_FILE=0
+        -sASSERTIONS=1
+        -sEXIT_RUNTIME=1
+        -sFILESYSTEM=0
+        -sSTACK_OVERFLOW_CHECK=0
+        -sALLOW_MEMORY_GROWTH
+        -sEXPORTED_FUNCTIONS=['_malloc','_free']
+        -sEXPORTED_RUNTIME_METHODS=['ccall','wasmMemory','HEAPU8']
+        -fwasm-exceptions
+        --bind
+    )
+    target_link_options(libffshit_wasm PRIVATE --emit-tsd "$<TARGET_FILE_DIR:libffshit_wasm>/libffshit_wasm.d.ts")
+    target_compile_options(libffshit_wasm PUBLIC -O3 -fwasm-exceptions)
+endif()
 
 if (BUILD_DEB_PACKAGE)
     if (NOT DEFINED DEB_DIST_ARCH)

@@ -1,0 +1,33 @@
+{
+    "name": "@sie-js/libffshit",
+    "version": "0.0.2",
+    "description": "Siemens filesystem library",
+    "repository": {
+        "url": "git+https://github.com/siemens-mobile-hacks/libffshit.git"
+    },
+    "type": "module",
+    "main": "dist/wasm/index.js",
+    "types": "dist/wasm/index.d.ts",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "tsc",
+        "watch": "tsc -w"
+    },
+    "files": [
+        "./dist/wasm/*",
+        "./build_wasm/*.wasm",
+        "./build_wasm/*.js"
+    ],
+    "imports": {
+        "#build/*.js": "./build_wasm/*.js"
+    },
+    "keywords": [],
+    "author": "Siemens Mobile Hackers",
+    "license": "MIT",
+    "packageManager": "pnpm@10.12.4+sha512.5ea8b0deed94ed68691c9bad4c955492705c5eeb8a87ef86bc62c74a26b037b08ff9570f108b2e4dbd1dd1a9186fea925e527f141c648e85af45631074680184",
+    "devDependencies": {
+        "@types/node": "^24.0.10",
+        "tsx": "^4.20.3",
+        "typescript": "^5.8.3"
+    }
+}

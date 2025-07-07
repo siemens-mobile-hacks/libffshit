@@ -1,6 +1,11 @@
 build
 build_*/
+dist/
+node_modules/
 .vscode/
+.idea/
 target
 target_*
 _packages_deb/
+.clangd
+.cache

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
 project(ffshit VERSION 0.0.2 DESCRIPTION "Siemens filesystem library" LANGUAGES CXX)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -160,8 +162,8 @@ install(
     DESTINATION lib/cmake/${PROJECT_NAME})
 
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
-    add_executable(libffshit_wasm src/wasm.cpp)
-    target_link_libraries(libffshit_wasm PRIVATE ${PROJECT_NAME})
+    add_executable(libffshit_wasm wasm/main.cpp)
+    target_link_libraries(libffshit_wasm PRIVATE fmt::fmt ${PROJECT_NAME})
     target_link_options(libffshit_wasm PUBLIC
         -sWASM=1
         -sEXPORT_ES6=1
@@ -174,7 +176,7 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
         -sSTACK_OVERFLOW_CHECK=0
         -sALLOW_MEMORY_GROWTH
         -sEXPORTED_FUNCTIONS=['_malloc','_free']
-        -sEXPORTED_RUNTIME_METHODS=['ccall']
+        -sEXPORTED_RUNTIME_METHODS=['ccall','wasmMemory','HEAPU8']
         -fwasm-exceptions
         --bind
     )

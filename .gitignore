@@ -7,3 +7,5 @@ node_modules/
 target
 target_*
 _packages_deb/
+.clangd
+.cache

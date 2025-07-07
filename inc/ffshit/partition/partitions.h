@@ -51,6 +51,9 @@ class Partitions {
         Partitions(std::filesystem::path fullflash_path, bool old_search_algorithm, uint32_t search_start_addr = 0);
         Partitions(std::filesystem::path fullflash_path, Platform platform, bool old_search_algorithm, uint32_t search_start_addr = 0);
 
+        Partitions(char *ff_data, size_t ff_data_size, bool old_search_algorithm, uint32_t search_start_addr = 0);
+        Partitions(char *ff_data, size_t ff_data_size, Platform platform, bool old_search_algorithm, uint32_t search_start_addr = 0);
+
         const std::filesystem::path &   get_file_path() const;
 
         const Map &                     get_partitions() const;

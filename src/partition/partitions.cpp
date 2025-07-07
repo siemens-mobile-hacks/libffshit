@@ -162,6 +162,36 @@ Partitions::Partitions(std::filesystem::path fullflash_path, Platform platform, 
     }
 }
 
+
+Partitions::Partitions(char *ff_data, size_t ff_data_size, bool old_search_algorithm, uint32_t search_start_addr) {
+    sl75_bober_kurwa = false;
+    
+    this->data = RawData(ff_data, ff_data_size);
+
+    detect_platform();
+    search_partitions(old_search_algorithm, search_start_addr);
+
+    Log::Logger::debug("Found {} partitions", partitions_map.size());
+
+    for (const auto &pair : partitions_map) {
+        Log::Logger::debug("  {:8s} {}", pair.first, pair.second.get_blocks().size());
+    }
+}
+
+Partitions::Partitions(char *ff_data, size_t ff_data_size, Platform platform, bool old_search_algorithm, uint32_t search_start_addr) {
+    std::ifstream file;
+
+    this->data      = RawData(ff_data, ff_data_size);
+    this->platform  = platform;
+    this->model     = PlatformToString.at(platform);
+
+    search_partitions(old_search_algorithm, search_start_addr);
+
+    for (const auto &pair : partitions_map) {
+        Log::Logger::debug("{:10s} {}", pair.first, pair.second.get_blocks().size());
+    }
+}
+
 const std::filesystem::path &Partitions::get_file_path() const {
     return fullflash_path;
 }

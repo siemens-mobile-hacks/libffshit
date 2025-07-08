@@ -21,7 +21,7 @@ class EGOLD_CE : public Base {
         }
 
         void                        load(bool skip_broken = false, bool skip_dup = false) override final;
-        const FSMap &               get_filesystem_map() const override final;
+        const Directory::Ptr        get_root() const override final;
 
     private:
         typedef struct {
@@ -61,7 +61,7 @@ class EGOLD_CE : public Base {
         static constexpr uint32_t   ID_ADD = 6000;
 
         Partitions::Partitions::Ptr partitions;
-        FSMap                       fs_map;
+        Directory::Ptr              root_dir;
 
         std::vector<uint32_t>       recourse_protector;
 

@@ -17,7 +17,7 @@ class SGOLD2 : public Base {
         }
 
         void                        load(bool skip_broken = false, bool skip_dup = false) override final;
-        const FSMap &               get_filesystem_map() const override final;
+        const Directory::Ptr        get_root() const override final;
 
     private:
         typedef struct {
@@ -54,7 +54,7 @@ class SGOLD2 : public Base {
         using FSBlocksMap   = std::map<uint16_t, FFSBlock>;
 
         Partitions::Partitions::Ptr partitions;
-        FSMap                       fs_map;
+        Directory::Ptr              root_dir;
 
         std::vector<uint32_t>       recourse_protector;
 

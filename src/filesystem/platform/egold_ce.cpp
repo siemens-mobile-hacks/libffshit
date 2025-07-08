@@ -7,14 +7,20 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-EGOLD_CE::EGOLD_CE(Partitions::Partitions::Ptr partitions) : partitions(partitions) { }
+EGOLD_CE::EGOLD_CE(Partitions::Partitions::Ptr partitions) : partitions(partitions) {
+    if (!partitions) {
+        throw Exception("EGOLD_CE partitions == nullptr o_O");
+    }
+
+    root_dir = Directory::build(ROOT_NAME, "/");
+}
 
 void EGOLD_CE::load(bool skip_broken, bool skip_dup) {
     parse_FIT(skip_broken, skip_dup);
 }
 
-const FSMap &EGOLD_CE::get_filesystem_map() const {
-    return fs_map;
+const Directory::Ptr EGOLD_CE::get_root() const {
+    return root_dir;
 }
 
 void EGOLD_CE::print_block_header(const FFSBlock &block) {
@@ -218,9 +224,9 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup) {
         try {
             const auto &        root_block  = ffs_files.at(6);
             auto                timestamp   = fat_timestamp_to_unix(root_block.header.fat_timestamp);
-            Directory::Ptr      root        = Directory::build(part_name, "/", timestamp);
-
-            fs_map[part_name] = root;
+            Directory::Ptr      root        = Directory::build(part_name, ROOT_PATH, timestamp);
+            
+            root_dir->add_subdir(root);
 
             scan(part_name, ffs_blocks, ffs_files, root_block, root, skip_broken);
         } catch (const FULLFLASH::BaseException &e) {

@@ -2,8 +2,10 @@
 #define LIBFFSHIT_FULLFLASH_FILESYSTEM_PLATFORM_BASE_H
 
 #include <memory>
+#include <fmt/format.h>
 
 #include "ffshit/filesystem/structure/structure.h"
+
 
 namespace FULLFLASH {
 namespace Filesystem  {
@@ -14,11 +16,14 @@ class Base {
 
         Base() { }
 
-        virtual void            load(bool skip_broken = false, bool skip_dup = false) = 0;
-        virtual const FSMap &   get_filesystem_map() const = 0;
+        virtual void                    load(bool skip_broken = false, bool skip_dup = false) = 0;
+        virtual const Directory::Ptr    get_root() const = 0;
 
     private:
 };
+
+static const std::string ROOT_NAME = "FFS";
+static const std::string ROOT_PATH = fmt::format("/{}/", ROOT_NAME);
 
 };
 };

@@ -12,14 +12,16 @@ SGOLD2_ELKA::SGOLD2_ELKA(Partitions::Partitions::Ptr partitions) : partitions(pa
     if (!partitions) {
         throw Exception("SGOLD2_ELKA partitions == nullptr o_O");
     }
+
+    root_dir = Directory::build(ROOT_NAME, "/");
 }
 
 void SGOLD2_ELKA::load(bool skip_broken, bool skip_dup) {
     parse_FIT();
 }
 
-const FSMap & SGOLD2_ELKA::get_filesystem_map() const {
-    return fs_map;
+const Directory::Ptr SGOLD2_ELKA::get_root() const {
+    return root_dir;
 }
 
 void SGOLD2_ELKA::print_fit_header(const SGOLD2_ELKA::FITHeader &header) {
@@ -468,12 +470,11 @@ void SGOLD2_ELKA::parse_FIT() {
 
         dump_block(root_block);
 
-        Directory::Ptr      root            = Directory::build(root_header.name, "/");
+        Directory::Ptr      root            = Directory::build(part_name, ROOT_PATH);
+
+        root_dir->add_subdir(root);
 
         scan(part_name, ffs_map_C0, ffs_map_00, root, root_block);
-
-        fs_map[part_name] = root;
-
     }
 }
 

@@ -17,7 +17,7 @@ class SGOLD2_ELKA : public Base {
         }
 
         void                        load(bool skip_broken = false, bool skip_dup = false) override final;
-        const FSMap &               get_filesystem_map() const override final;
+        const Directory::Ptr        get_root() const override final;
 
     private:
         typedef struct {
@@ -75,7 +75,7 @@ class SGOLD2_ELKA : public Base {
         using FSBlocksMapList   = std::map<uint16_t, std::vector<FFSBlock>>;
 
         Partitions::Partitions::Ptr partitions;
-        FSMap                       fs_map;
+        Directory::Ptr              root_dir;
 
         static void                 dump_data(const RawData &raw_data);
         static void                 dump_block(const SGOLD2_ELKA::FFSBlock &block, bool is_dump_data = true);

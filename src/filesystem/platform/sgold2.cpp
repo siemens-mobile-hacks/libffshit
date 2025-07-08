@@ -20,14 +20,16 @@ SGOLD2::SGOLD2(Partitions::Partitions::Ptr partitions) : partitions(partitions) 
     if (!partitions) {
         throw Exception("SGOLD2 partitions == nullptr o_O");
     }
+
+    root_dir = Directory::build(ROOT_NAME, "/");
 }
 
 void SGOLD2::load(bool skip_broken, bool skip_dup) {
     parse_FIT(skip_broken, skip_dup);
 }
 
-const FSMap & SGOLD2::get_filesystem_map() const {
-    return fs_map;
+const Directory::Ptr SGOLD2::get_root() const {
+    return root_dir;
 }
 
 void SGOLD2::print_fit_header(const SGOLD2::FITHeader &header) {
@@ -230,9 +232,9 @@ void SGOLD2::parse_FIT(bool skip_broken, bool skip_dup) {
             const FFSBlock &    root_block      = ffs_map.at(10);
             FileHeader          root_header     = read_file_header(root_block.data);
             auto                timestamp       = fat_timestamp_to_unix(root_header.fat_timestamp);
-            Directory::Ptr      root            = Directory::build(root_header.name, "/", timestamp);
+            Directory::Ptr      root            = Directory::build(part_name, ROOT_PATH, timestamp);
 
-            fs_map[part_name] = root;
+            root_dir->add_subdir(root);
 
             scan(part_name, ffs_map, root, root_header, skip_broken);
         } catch (const FULLFLASH::BaseException &e) {

@@ -356,7 +356,7 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
                 continue;
             }
 
-            Log::Logger::debug("Name addr: {:08X}, Table addr: {:08X}, size {:08X}, {}", name_addr, table_addr, table_size, partition_name);
+            Log::Logger::debug("Header. Name addr: {:08X}, Table addr: {:08X}, size {:08X}, {}", name_addr, table_addr, table_size, partition_name);
 
             for (size_t i = 0; i < table_size * 8; i += 8) {
                 uint32_t block_addr;
@@ -368,7 +368,7 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
                 uint32_t masked_block_addr = block_addr & FF_ADDRESS_MASK;
                 uint32_t masked_block_size = block_size & FF_ADDRESS_MASK;
 
-                Log::Logger::debug("  Name: {}, Addr: {:08X}, size: {:08X}, table: {:08X}", partition_name, masked_block_addr, masked_block_size, table_addr + i);
+                Log::Logger::debug("  Block:        Name: {}, Addr: {:08X}, size: {:08X}, table: {:08X}", partition_name, masked_block_addr, masked_block_size, table_addr + i);
 
                 if (!partitions_map.count(partition_name)) {
                     partitions_map[partition_name] = Partition(partition_name);
@@ -383,14 +383,17 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
                     data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
                     data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
                     data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
-
-                    Log::Logger::debug("    {} {:08X} {:08X} {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
+                    header.unknown_4 = 0x0;
 
                     if (header.unknown_3 != 0xFFFFFFF0) {
-                        Log::Logger::warn("Broken partition record? Name: {}, {:08X}, {:08X}, {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
+                        memset(header.name, 0x0, 8);
+
+                        Log::Logger::warn("Skip. The patch for increasing the disk size has been installed, but the blocks have not been formatted? ");
 
                         continue;
                     }
+
+                    Log::Logger::debug("  Block header: Name: {}, Unk1: {:04X}, Unk2: {:04X}, Unk3: {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
 
                     partitions_map[partition_name].add_block(
                         Block(  header, 
@@ -490,7 +493,7 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                 continue;
             }
 
-            Log::Logger::debug("Name addr: {:08X}, Table addr: {:08X}, size {:08X}, {}", name_addr, table_addr, table_size, partition_name);
+            Log::Logger::debug("Header. Name addr: {:08X}, Table addr: {:08X}, size {:08X}, {}", name_addr, table_addr, table_size, partition_name);
 
             for (size_t i = 0; i < table_size * 8; i += 8) {
                 uint32_t block_addr;
@@ -522,7 +525,7 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                 uint32_t masked_block_addr = block_addr & FF_ADDRESS_MASK;
                 uint32_t masked_block_size = block_size & FF_ADDRESS_MASK;
 
-                Log::Logger::debug("  Name: {}, Addr: {:08X}, size: {:08X}", partition_name, masked_block_addr, masked_block_size);
+                Log::Logger::debug("  Block:        Name: {}, Addr: {:08X}, size: {:08X}, table: {:08X}", partition_name, masked_block_addr, masked_block_size, table_addr + i);
 
                 if (!partitions_map.count(partition_name)) {
                     partitions_map[partition_name] = Partition(partition_name);
@@ -538,7 +541,15 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                     data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
                     data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
 
-                    Log::Logger::debug("    {} {:08X} {:08X} {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
+                    if (header.unknown_3 != 0xFFFFFFF0) {
+                        memset(header.name, 0x0, 8);
+
+                        Log::Logger::warn("Skip. The patch for increasing the disk size has been installed, but the blocks have not been formatted? ");
+
+                        continue;
+                    }
+
+                    Log::Logger::debug("  Block header: Name: {}, Unk1: {:04X}, Unk2: {:04X}, Unk3: {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
 
                     partitions_map[partition_name].add_block(
                         Block(  header, 
@@ -566,7 +577,6 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                 }
             }
         }
-
 
         if (!partitions_map.empty()) {
             break;

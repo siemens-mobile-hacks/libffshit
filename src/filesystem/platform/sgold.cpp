@@ -169,7 +169,7 @@ void SGOLD::parse_FIT(bool skip_broken, bool skip_dup) {
         FSBlocksMap ffs_map;
 
         for (const auto &block : part_blocks) {
-            Log::Logger::debug("  Block {:08X} Size: {}", block.get_addr(), block.get_size());
+            Log::Logger::debug("  Block {:08X} Size: {}, end: {:08X}", block.get_addr(), block.get_size(), block.get_addr() + block.get_size());
 
             const RawData & block_data = block.get_data();
             size_t          block_size = block.get_size();
@@ -196,6 +196,10 @@ void SGOLD::parse_FIT(bool skip_broken, bool skip_dup) {
                 if (fs_block.header.flags == 0xFFFFFF00) {
                     continue;
                 }
+
+                // if (fs_block.header.offset >= block_size) {
+                //     continue;
+                // }
 
                 print_fit_header(fs_block.header);
 

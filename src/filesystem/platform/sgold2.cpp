@@ -332,7 +332,7 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
         uint16_t    unk = (raw >> 16) & 0xFFFF;
 
         if (id == 0xFFFF) {
-            break;
+            continue;
         }
         
         if (id == 0) {

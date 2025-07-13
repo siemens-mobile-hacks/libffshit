@@ -15,8 +15,8 @@ EGOLD_CE::EGOLD_CE(Partitions::Partitions::Ptr partitions) : partitions(partitio
     root_dir = Directory::build(ROOT_NAME, "/");
 }
 
-void EGOLD_CE::load(bool skip_broken, bool skip_dup) {
-    parse_FIT(skip_broken, skip_dup);
+void EGOLD_CE::load(bool skip_broken, bool skip_dup, bool dump_data) {
+    parse_FIT(skip_broken, skip_dup, dump_data);
 }
 
 const Directory::Ptr EGOLD_CE::get_root() const {
@@ -67,7 +67,7 @@ void EGOLD_CE::print_data(const FFSBlock &block) {
     }
 }
 
-void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup) {
+void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
     const auto &part_map = partitions->get_partitions();
 
     for (const auto &pair : part_map) {
@@ -128,7 +128,10 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup) {
                 }
 
                 print_block_header(fs_block);
-                print_data(fs_block);
+
+                if (dump_data) {
+                    print_data(fs_block);
+                }
 
                 size_t addr_mask    = block.get_size() - 1;
                 size_t addr_data    = fs_block.header.offset & addr_mask;
@@ -160,7 +163,10 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup) {
             bool is_header = !(fs_block.header.block_id & 1);
 
             print_block_header(fs_block);
-            print_data(fs_block);
+
+            if (dump_data) {
+                print_data(fs_block);
+            }
 
             if (!is_header) {
                 continue;

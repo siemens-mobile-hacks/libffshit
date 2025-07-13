@@ -16,7 +16,7 @@ SGOLD2_ELKA::SGOLD2_ELKA(Partitions::Partitions::Ptr partitions) : partitions(pa
     root_dir = Directory::build(ROOT_NAME, "/");
 }
 
-void SGOLD2_ELKA::load(bool skip_broken, bool skip_dup) {
+void SGOLD2_ELKA::load(bool skip_broken, bool skip_dup, bool dump_data) {
     parse_FIT();
 }
 

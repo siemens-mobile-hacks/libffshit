@@ -16,7 +16,7 @@ class SGOLD2_ELKA : public Base {
             return std::make_shared<SGOLD2_ELKA>(partitions);
         }
 
-        void                        load(bool skip_broken = false, bool skip_dup = false) override final;
+        void                        load(bool skip_broken = false, bool skip_dup = false, bool dump_data = false) override final;
         const Directory::Ptr        get_root() const override final;
 
     private:

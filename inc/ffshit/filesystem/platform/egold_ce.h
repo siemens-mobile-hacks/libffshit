@@ -20,7 +20,7 @@ class EGOLD_CE : public Base {
             return std::make_shared<EGOLD_CE>(partitions);
         }
 
-        void                        load(bool skip_broken = false, bool skip_dup = false) override final;
+        void                        load(bool skip_broken = false, bool skip_dup = false, bool dump_data = false) override final;
         const Directory::Ptr        get_root() const override final;
 
     private:
@@ -65,7 +65,7 @@ class EGOLD_CE : public Base {
 
         std::vector<uint32_t>       recourse_protector;
 
-        void                        parse_FIT(bool skip_broken, bool skip_dup);
+        void                        parse_FIT(bool skip_broken, bool skip_dup, bool dump_data);
 
         void                        print_block_header(const FFSBlock &block);
         void                        print_file_header(const FFSFile &file);

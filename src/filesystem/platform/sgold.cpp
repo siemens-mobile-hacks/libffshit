@@ -77,8 +77,8 @@ SGOLD::SGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions), p
     root_dir = Directory::build(ROOT_NAME, "/");
 }
 
-void SGOLD::load(bool skip_broken, bool skip_dup) {
-    parse_FIT(skip_broken, skip_dup);
+void SGOLD::load(bool skip_broken, bool skip_dup, bool dump_data) {
+    parse_FIT(skip_broken, skip_dup, dump_data);
 }
 
 const Directory::Ptr SGOLD::get_root() const {
@@ -152,7 +152,30 @@ SGOLD::FilePart SGOLD::read_file_part(const RawData &data) {
     return part;
 }
 
-void SGOLD::parse_FIT(bool skip_broken, bool skip_dup) {
+void SGOLD::print_data(const FFSBlock &block) {
+    std::string data_print;
+
+    const auto &block_data = block.data;
+
+    for (size_t i = 0; i < block.data.get_size(); ++i) {
+        char *c = block.data.get_data().get() + i;
+
+        data_print += fmt::format("{:02X} ", static_cast<uint8_t>(*c));
+
+        if ((!((i + 1) % 16)) ||
+            (block.data.get_size() < 16 && i + 1 == block.data.get_size())) {
+            Log::Logger::debug("    {}", data_print);
+
+            data_print.clear();
+        }
+    }
+
+    if ((block.data.get_size() % 16)) {
+        Log::Logger::debug("    {}", data_print);
+    }
+}
+
+void SGOLD::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
     const auto &part_map = partitions->get_partitions();
 
     for (const auto &pair : part_map) {
@@ -203,21 +226,11 @@ void SGOLD::parse_FIT(bool skip_broken, bool skip_dup) {
 
                 print_fit_header(fs_block.header);
 
-                std::string data_print;
-
-                for (size_t i = 0; i < 16; ++i) {
-                    char *c = block_data.get_data().get() + offset + i;
-                    
-                    data_print += fmt::format("{:02X} ", (unsigned char) *c);
-
-                    if ((i + 1) % 4 == 0) {
-                        Log::Logger::debug(data_print);
-
-                        data_print.clear();
-                    }
-                }
-
                 fs_block.data = RawData(block_data, fs_block.header.offset, fs_block.header.size);
+
+                if (dump_data) {
+                    print_data(fs_block);
+                }
 
                 if (ffs_map.count(fs_block.header.id)) {
                     if (skip_dup) {

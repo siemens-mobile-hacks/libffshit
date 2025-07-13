@@ -50,7 +50,7 @@ void SGOLD2::print_file_header(const SGOLD2::FileHeader &header) {
     Log::Logger::debug("Unknown2:      {:04X} {}",      header.unknown2, header.unknown2);
     Log::Logger::debug("Unknown3:      {:04X} {}",      header.unknown3, header.unknown3);
     Log::Logger::debug("FAT timestamp: {:08X} {}",      header.fat_timestamp, header.fat_timestamp);
-    Log::Logger::debug("Unknown6:      {:04X} {}",      header.unknown6, header.unknown6);
+    Log::Logger::debug("Attributes:    {:04X} {}",      header.attributes, header.attributes);
     Log::Logger::debug("Unknown7:      {:04X} {}",      header.unknown7, header.unknown7);
     Log::Logger::debug("Name:          {}",      header.name);
 }
@@ -97,7 +97,7 @@ SGOLD2::FileHeader SGOLD2::read_file_header(const RawData &data) {
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown2), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown3), 1);
     data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.fat_timestamp), 1);
-    data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown6), 1);
+    data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.attributes), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown7), 1);
 
     iconv_t iccd = iconv_open("UTF-8", "UTF-16LE");
@@ -361,7 +361,7 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
 
             Log::Logger::info("Found ID: {:5d}, Path: {}{}", id, block_name, path + file_header.name);
 
-            if (file_header.unknown6 & 0x10) {
+            if (file_header.attributes & 0x10) {
                 Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);
 
                 dir->add_subdir(dir_next);

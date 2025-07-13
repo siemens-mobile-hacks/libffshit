@@ -40,7 +40,7 @@ class SGOLD2 : public Base {
             uint16_t    unknown2;
             uint16_t    unknown3;
             uint32_t    fat_timestamp;
-            uint16_t    unknown6;
+            uint16_t    attributes;
             uint16_t    unknown7;
             std::string name;
         } FileHeader;

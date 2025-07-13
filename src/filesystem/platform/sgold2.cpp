@@ -230,7 +230,13 @@ void SGOLD2::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
         }
 
         if (!ffs_map.count(10)) {
-            throw Exception("Root block (ID: 10) not found. Broken filesystem?");
+            if (skip_broken) {
+                Log::Logger::warn("{} Root block (ID: 10) not found. Broken filesystem?", part_name);
+
+                continue;
+            } else {
+                throw Exception("{} Root block (ID: 10) not found. Broken filesystem?", part_name);
+            }
         }
 
         try {
@@ -244,7 +250,7 @@ void SGOLD2::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
             scan(part_name, ffs_map, root, root_header, skip_broken);
         } catch (const FULLFLASH::BaseException &e) {
             if (skip_broken) {
-                Log::Logger::warn("Skip. Broken root directory: {}", e.what());
+                Log::Logger::warn("{} Skip. Broken root directory: {}", part_name, e.what());
             } else {
                 throw;
             }

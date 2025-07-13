@@ -249,18 +249,20 @@ void SGOLD::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
         uint16_t root_block_id = 6;
 
         if (!ffs_map.count(root_block_id)) {
-            if (skip_broken) {
-                Log::Logger::debug("Root block (ID: 6) not found. Prototype? Trying add 6000");
+            Log::Logger::warn("{} Root block (ID: 6) not found. Prototype? Trying add 6000", part_name);
 
-                root_block_id += 6000;
+            root_block_id += 6000;
 
-                if (!ffs_map.count(root_block_id)) {
-                    throw Exception("Root block (ID: 6006) not found. Broken filesystem?");
+            if (!ffs_map.count(root_block_id)) {
+                if (skip_broken) {
+                    Log::Logger::warn("{} Root block (ID: 6006) not found. Broken filesystem?", part_name);
+
+                    continue;
+                } else {
+                    throw Exception("{} Root block (ID: 6006) not found. Broken filesystem?", part_name);
                 }
-
-                prototype_6000 = true;
             } else {
-                Log::Logger::debug("Root block (ID: 6) not found. Broken filesystem?");
+                prototype_6000 = true;
             }
         }
 

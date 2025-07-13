@@ -68,6 +68,7 @@ static const std::vector<std::string> possible_part_names {
     "FFS",
     "UNUSED",
     "__FM__",
+    "RIM",
 };
 
 static size_t search_end(const char *buf, size_t size) {
@@ -302,7 +303,7 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
     Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
     Log::Logger::debug("Searching pattern");
 
-    auto    addresses       = find_pattern(pattern_sg, start_addr, false);
+    auto addresses = find_pattern(pattern_sg, start_addr, false);
 
     Log::Logger::debug("Pattern searching end");
 

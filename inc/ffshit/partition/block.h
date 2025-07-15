@@ -12,13 +12,13 @@ namespace Partitions {
 class Block {
     public:
         typedef struct {
-            char        name[8];
-            uint16_t    unknown_1;
-            uint16_t    unknown_2;
-            uint32_t    unknown_3;
+            char        name[8] = { '\0', '\0', '\0', '\0', '\0','\0', '\0', '\0' };
+            uint16_t    unknown_1 = 0x0;
+            uint16_t    unknown_2 = 0x0;
+            uint32_t    unknown_3 = 0x0;
 
             //x55
-            uint16_t    unknown_4;
+            uint16_t    unknown_4 = 0x0;
 
         } Header;
 

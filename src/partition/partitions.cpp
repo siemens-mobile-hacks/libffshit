@@ -237,17 +237,10 @@ void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_add
 
                 break;
             }
-            case Platform::SGOLD:   search_partitions_sgold(start_addr); break;
-            case Platform::SGOLD2:  search_partitions_sgold2(start_addr); break;
-            case Platform::SGOLD2_ELKA:  {
-                Log::Logger::warn("New partitions search algorithm not implemented yet for SGOLD2_ELKA");
+            case Platform::SGOLD:       search_partitions_sgold(start_addr); break;
+            case Platform::SGOLD2:      search_partitions_sgold2(start_addr); break;
+            case Platform::SGOLD2_ELKA: search_partitions_sgold2_elka(start_addr); break;
 
-                block_size = 0x10000;
-
-                old_search_partitions_sgold2_elka();
-
-                break;
-            }
             default: throw Exception("Couldn't detect fullflash platform");
         }
     };
@@ -384,7 +377,6 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
                     data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
                     data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
                     data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
-                    header.unknown_4 = 0x0;
 
                     if (header.unknown_3 != 0xFFFFFFF0) {
                         memset(header.name, 0x0, 8);
@@ -588,7 +580,146 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
 }
 
 bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
-    return false;
+    Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
+
+    // auto address_list    = find_pattern(pattern_nsg);
+    auto address_list    = find_pattern(pattern_nsg, start_addr);
+    
+    if (sl75_bober_kurwa) {
+        Log::Logger::warn("SL75 ja pierdole!");
+    }
+
+    if (!address_list.size()) {
+        return false;
+    }
+
+    for (auto &addr : address_list) {
+        Log::Logger::debug("Pattern find, addr: {:08X}", addr);
+
+        size_t struct_size = 0x34;
+
+        for (size_t offset = addr; offset < addr + 64 * struct_size; offset += struct_size) {
+            uint32_t name_addr;
+            uint32_t table_size;
+            uint32_t table_addr;
+
+            if (offset + struct_size >= data.get_size()) {
+                break;
+            }
+
+            data.read_type<uint32_t>(offset + 0x00, &name_addr);
+            data.read_type<uint32_t>(offset + 0x20, &table_size);
+            data.read_type<uint32_t>(offset + 0x24, &table_addr);
+
+            if ((name_addr  & 0xF0000000) != 0xA0000000) {
+                break;
+            }
+            if ((table_addr & 0xF0000000) != 0xA0000000) {
+                break;
+            }
+
+            if (!table_size) {
+                continue;
+            }
+
+            name_addr   &= FF_ADDRESS_MASK;
+            table_addr  &= FF_ADDRESS_MASK;
+
+            std::string partition_name;
+
+            data.read_string(name_addr, partition_name);
+
+            if (!is_printable(partition_name.data(), partition_name.size())) {
+                continue;
+            }
+
+            if (partition_name.find(" ") != std::string::npos) {
+                continue;
+            }
+
+            if (!check_part_name(partition_name)) {
+                continue;
+            }
+
+            Log::Logger::debug("Header. Name addr: {:08X}, Table addr: {:08X}, size {:08X}, {}", name_addr, table_addr, table_size, partition_name);
+
+            for (size_t i = 0; i < table_size * 8; i += 8) {
+                uint32_t block_addr;
+                uint32_t block_size;
+
+                if (table_addr + i >= data.get_size()) {
+                    break;
+                }
+
+                if (table_addr + i + 4>= data.get_size()) {
+                    break;
+                }
+
+                data.read_type<uint32_t>(table_addr + i, &block_addr);
+                data.read_type<uint32_t>(table_addr + i + 4, &block_size);
+
+                uint32_t masked_block_addr = block_addr & FF_ADDRESS_MASK;
+                uint32_t masked_block_size = block_size & FF_ADDRESS_MASK;
+
+                Log::Logger::debug("  Block:        Name: {}, Addr: {:08X}, size: {:08X}, table: {:08X}", partition_name, masked_block_addr, masked_block_size, table_addr + i);
+
+                if (!partitions_map.count(partition_name)) {
+                    partitions_map[partition_name] = Partition(partition_name);
+                }
+
+                if (partition_name.find("FFS") != std::string::npos) {
+                    Block::Header header;
+
+                    size_t  block_rd_offset = masked_block_addr + masked_block_size - 0x20;
+
+                    data.read<char>(block_rd_offset, header.name, 8);
+                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
+                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
+                    data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
+
+                    if (header.unknown_3 != 0xFFFFFFF0) {
+                        memset(header.name, 0x0, 8);
+
+                        Log::Logger::warn("Skip. The patch for increasing the disk size has been installed, but the blocks have not been formatted? ");
+
+                        continue;
+                    }
+
+                    Log::Logger::debug("  Block header: Name: {}, Unk1: {:04X}, Unk2: {:04X}, Unk3: {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
+
+                    partitions_map[partition_name].add_block(
+                        Block(  header, 
+                                RawData(data.get_data().get() + masked_block_addr, masked_block_size), 
+                                masked_block_addr, 
+                                masked_block_size)
+                    );
+                } else {
+                    Block::Header header;
+
+                    // ну пусть будет
+                    size_t  block_rd_offset = masked_block_addr;
+
+                    data.read<char>(block_rd_offset, header.name, 8);
+                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
+                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
+                    data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
+
+                    partitions_map[partition_name].add_block(
+                        Block(  header, 
+                                RawData(data.get_data().get() + masked_block_addr, masked_block_size), 
+                                masked_block_addr, 
+                                masked_block_size)
+                    );
+                }
+            }
+        }
+
+        if (!partitions_map.empty()) {
+            break;
+        }
+    }
+
+    return true;
 }
 
 void Partitions::detect_platform() {

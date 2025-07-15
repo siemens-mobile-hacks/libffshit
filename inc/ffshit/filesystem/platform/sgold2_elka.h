@@ -25,10 +25,10 @@ class SGOLD2_ELKA : public Base {
             uint32_t    id;
             uint32_t    size;
             uint32_t    offset;
-            uint32_t    unk1;
-            uint32_t    unk2;
-            uint32_t    unk3;
-            uint32_t    unk4;
+            uint32_t    unk1 = 0x0;
+            uint32_t    unk2 = 0x0;
+            uint32_t    unk3 = 0x0;
+            uint32_t    unk4 = 0x0;
         } FITHeader;
 
         typedef struct {
@@ -38,6 +38,7 @@ class SGOLD2_ELKA : public Base {
             RawData                 data_from_header;
             const Partitions::Block * block_ptr;
             uint32_t                ff_boffset;
+            uint32_t                ff_bsize;
             uint32_t                ff_offset;
             uint16_t                fit_size;
         } FFSBlock;
@@ -82,22 +83,24 @@ class SGOLD2_ELKA : public Base {
 
         static void                 print_dir_header(const DirHeader &header);
         static void                 print_file_header(const FileHeader &header);
+        static void                 print_file_header2(const FileHeader &header);
         static void                 print_file_part(const FilePart &part);
 
         static RawData              read_aligned(const FFSBlock &block);
+        static RawData              read_aligned(const FFSBlock &block, size_t size);
         static RawData              read_aligned(char *data, size_t size);
+
         static FileHeader           read_file_header(const FFSBlock &block);
-        // static FileHeader           read_file_header2(const FFSBlock &block);
         static FilePart             read_file_part(const FFSBlock &block);
 
-        uint32_t                    read_part(const FFSBlock &prev_part, const FileHeader &file_header, const FSBlocksMap &ffs_map_C0, const FSBlocksMapList &ffs_map_00, uint32_t next_part, uint32_t last_offset, RawData &data, size_t start_offset);
-        void                        read_file(const FSBlocksMap &ffs_map_C0, const FSBlocksMapList &ffs_map_00, const FFSBlock &file_block, RawData &data);
+        uint32_t                    read_part(const FFSBlock &prev_part, const FileHeader &file_header, const FSBlocksMap &ffs_map_C0, uint32_t next_part, uint32_t last_offset, RawData &data, size_t start_offset);
+        void                        read_file(const FSBlocksMap &ffs_map_C0, const FFSBlock &file_block, RawData &data);
 
         static void                 print_fit_header(const SGOLD2_ELKA::FITHeader &header);
-        void                        parse_FIT();
+        void                        parse_FIT(bool skip_broken, bool skip_dup, bool dump_data);
 
-        DirList                     get_directory(FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, const FFSBlock &block);
-        void                        scan(const std::string &block_name, FSBlocksMap &ffs_map_C0, FSBlocksMapList &ffs_map_00, Directory::Ptr dir, const FFSBlock &block, std::string path = "/");
+        DirList                     get_directory(FSBlocksMap &ffs_map_C0, const FFSBlock &block);
+        void                        scan(const std::string &block_name, FSBlocksMap &ffs_map_C0, Directory::Ptr dir, const FFSBlock &block, std::string path = "/");
 
 };
 

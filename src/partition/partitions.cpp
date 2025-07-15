@@ -753,7 +753,13 @@ void Partitions::old_search_partitions_egold_ce() {
             partitions_map[block_name] = Partition(block_name);
         }
 
-        partitions_map[block_name].add_block(Block(header, RawData(block_ptr, block_size), block_addr, block_size));
+        if (block_addr + block_size > data.get_size()) {
+            continue;
+        }
+
+        RawData block_data(block_ptr, block_size);
+
+        partitions_map[block_name].add_block(Block(header, block_data, block_addr, block_size));
 
         Log::Logger::debug("Block: {:08X} {} {:04X} {:04X} {:04X}", block_addr, header.name, header.unknown_1, header.unknown_2, header.unknown_4);
     }

@@ -45,16 +45,15 @@ void SGOLD2_ELKA::print_dir_header(const DirHeader &header) {
 void SGOLD2_ELKA::print_file_header(const SGOLD2_ELKA::FileHeader &header) {
     Log::Logger::debug("===========================");
     Log::Logger::debug("File:");
-    Log::Logger::debug("  ID:           {:04X} {}",     header.id, header.id);
-    Log::Logger::debug("  Unknown1:     {:04X} {}",     header.unknown1, header.unknown1);
-    Log::Logger::debug("  Parent ID:    {:04X} {}",     header.parent_id, header.parent_id);
-    Log::Logger::debug("  Next part ID: {:04X} {}",     header.next_part, header.next_part);
-    Log::Logger::debug("  Size:         {:08X} {}",     header.unknown2, header.unknown2);
-    Log::Logger::debug("  Unknown4:     {:04X} {}",     header.unknown4, header.unknown4);
-    Log::Logger::debug("  Unknown5:     {:04X} {}",     header.unknown5, header.unknown5);
-    Log::Logger::debug("  Unknown6:     {:04X} {}",     header.unknown6, header.unknown6);
-    Log::Logger::debug("  Unknown7:     {:04X} {}",     header.unknown7, header.unknown7);
-    Log::Logger::debug("  Name:         {}",            header.name);
+    Log::Logger::debug("  ID:            {:04X} {}",     header.id, header.id);
+    Log::Logger::debug("  Unknown1:      {:04X} {}",     header.unknown1, header.unknown1);
+    Log::Logger::debug("  Parent ID:     {:04X} {}",     header.parent_id, header.parent_id);
+    Log::Logger::debug("  Next part ID:  {:04X} {}",     header.next_part, header.next_part);
+    Log::Logger::debug("  Size:          {:08X} {}",     header.unknown2, header.unknown2);
+    Log::Logger::debug("  FAT timestamp: {:08X} {}",     header.fat_timestamp, header.fat_timestamp);
+    Log::Logger::debug("  Attributes:    {:04X} {}",     header.attributes, header.attributes);
+    Log::Logger::debug("  Unknown7:      {:04X} {}",     header.unknown7, header.unknown7);
+    Log::Logger::debug("  Name:          {}",            header.name);
 }
 
 void SGOLD2_ELKA::print_file_part(const FilePart &part) {
@@ -101,13 +100,11 @@ SGOLD2_ELKA::FileHeader SGOLD2_ELKA::read_file_header(const FFSBlock &block) {
 
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.id), 1);
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.unknown1), 1);
-    // offset += 4;
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.next_part), 1);
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.parent_id), 1);
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.unknown2), 1);
-    header_data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown4), 1);
-    header_data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown5), 1);
-    header_data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown6), 1);
+    header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.fat_timestamp), 1);
+    header_data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.attributes), 1);
     header_data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown7), 1);
 
     // ======================================================================
@@ -250,10 +247,10 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
                     continue;
                 }
 
-                uint32_t    ff_boffset = block.get_addr();
-                size_t      size_data    = ((fs_block.header.size / 16) + 1) * 32;
-                size_t      offset_data  = offset - size_data;
-                size_t      size_diff    = fs_block.header.size - 0x400;
+                uint32_t    ff_boffset      = block.get_addr();
+                size_t      size_data       = ((fs_block.header.size / 16) + 1) * 32;
+                size_t      offset_data     = offset - size_data;
+                size_t      size_diff       = fs_block.header.size - 0x400;
 
                 if (fs_block.header.size < 0x200) {
                     // RawData tmp_data(block_data, offset_data, size_data);
@@ -296,7 +293,8 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
 
         const FFSBlock &    root_block      = ffs_map.at(10);
         FileHeader          root_header     = read_file_header(root_block);
-        Directory::Ptr      root            = Directory::build(part_name, ROOT_PATH);
+        auto                timestamp       = fat_timestamp_to_unix(root_header.fat_timestamp);
+        Directory::Ptr      root            = Directory::build(part_name, ROOT_PATH, timestamp);
 
         scan(part_name, ffs_map, root, root_header, skip_broken);
 
@@ -390,9 +388,10 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
         const auto &        file_block  = ffs_map.at(dir_info.id);
         const FITHeader &   fit_header  = file_block.header;
         FileHeader          file_header = read_file_header(file_block);;
+        TimePoint           timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
 
-        if (file_header.unknown6 & 0x10) {
-            Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path);
+        if (file_header.attributes & 0x10) {
+            Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);
 
             dir->add_subdir(dir_next);
 
@@ -405,7 +404,7 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
                 file_data = read_full_data(ffs_map, file_header);
             }
 
-            File::Ptr file = File::build(file_header.name, block_name + path, file_data);
+            File::Ptr file = File::build(file_header.name, block_name + path, timestamp, file_data);
 
             dir->add_file(file);
         }

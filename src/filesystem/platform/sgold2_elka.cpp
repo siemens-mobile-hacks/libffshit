@@ -191,6 +191,39 @@ void SGOLD2_ELKA::dump_data(const RawData &raw_data) {
 void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
     const auto &part_map = partitions->get_partitions();
 
+    // Нужен лайтфак на поиск конца таблицы, это пиздец
+    auto check_block = [](const FITHeader &header, uint32_t block_size) -> bool {
+        if (header.flags != 0xFFFFFFC0) {
+            return false;
+        }
+
+        if (header.flags == 0xFFFFFFFF) {
+            return false;
+        }
+
+        if (header.id == 0xFFFFFFFF) {
+            return false;
+        }
+
+        if (header.size == 0xFFFFFFFF) {
+            return false;
+        }
+
+        if (header.offset == 0xFFFFFFFF) {
+            return false;
+        }
+
+        if (header.size > 0x800) {
+            return false;
+        }
+
+        if (header.offset > block_size) {
+            return false;
+        }
+
+        return true;
+    };
+
     for (const auto &pair : part_map) {
         const std::string & part_name   = pair.first;
         const auto &        part_info   = pair.second;
@@ -216,7 +249,6 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
 
             const RawData & block_data = block.get_data();
             size_t          block_size = block.get_size();
-            size_t          fit_size = 0;
 
             for (ssize_t offset = block_size - 64; offset > 0; offset -= 16) {
                 FFSBlock    fs_block;
@@ -227,25 +259,11 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
                 block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.size), 1);
                 block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.offset), 1);
 
-                if (fs_block.header.flags != 0xFFFFFFC0) {
+                if (!check_block(fs_block.header, block_size)) {
                     continue;
                 }
 
-                if (fs_block.header.flags == 0xFFFFFFFF) {
-                    continue;
-                }
-
-                if (fs_block.header.id == 0xFFFFFFFF) {
-                    continue;
-                }
-
-                if (fs_block.header.size == 0xFFFFFFFF) {
-                    continue;
-                }
-
-                if (fs_block.header.offset == 0xFFFFFFFF) {
-                    continue;
-                }
+                print_fit_header(fs_block.header);
 
                 uint32_t    ff_boffset      = block.get_addr();
                 size_t      size_data       = ((fs_block.header.size / 16) + 1) * 32;
@@ -283,7 +301,6 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
                 }
 
                 ffs_map[fs_block.header.id] = fs_block;
-                
             }
         }
 

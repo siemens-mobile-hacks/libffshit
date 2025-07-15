@@ -139,13 +139,6 @@ SGOLD2::FileHeader SGOLD2::read_file_header(const RawData &data) {
         throw Exception("iconv(): {}", strerror(errno));
     }
 
-    // if (to_size == 0) {
-    //     delete []from;
-    //     delete []to;
-
-    //     throw Exception("Invalid name");
-    // }
-
     to[str_size - to_size] = 0x00;
 
     header.name = std::string(to);

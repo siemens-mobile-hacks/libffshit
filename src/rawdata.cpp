@@ -5,7 +5,8 @@
 
 namespace FULLFLASH {
 
-RawData::RawData() : size(0) { }
+RawData::RawData() : size(0) { 
+}
 
 RawData::RawData(char *data, size_t size) {
     this->data = Data(new char[size]);
@@ -15,6 +16,10 @@ RawData::RawData(char *data, size_t size) {
 }
 
 RawData::RawData(const RawData &prev) {
+    if (!prev.data) {
+        return;
+    }
+
     this->size = prev.size;
     this->data = Data(new char[prev.size]);
 
@@ -22,6 +27,10 @@ RawData::RawData(const RawData &prev) {
 }
 
 RawData::RawData(const RawData &prev, size_t offset, size_t size) {
+    if (!prev.data) {
+        return;
+    }
+
     if (offset + size > prev.get_size()) {
         throw Exception("RawData() offset + size > prev. size");
     }

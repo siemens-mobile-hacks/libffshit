@@ -69,11 +69,11 @@ class SGOLD2_ELKA : public Base {
         Partitions::Partitions::Ptr partitions;
         Directory::Ptr              root_dir;
 
-        static void                 dump_data(const RawData &raw_data);
-
+        static void                 print_fit_header(const SGOLD2_ELKA::FITHeader &header);
         static void                 print_dir_header(const DirHeader &header);
         static void                 print_file_header(const FileHeader &header);
         static void                 print_file_part(const FilePart &part);
+        static void                 print_data(const FFSBlock &block);
 
         static RawData              read_aligned(char *data, size_t size);
 
@@ -84,7 +84,6 @@ class SGOLD2_ELKA : public Base {
         RawData                     read_full_data(FSBlocksMap &ffs_map, const FileHeader &header);
         void                        read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id);
 
-        static void                 print_fit_header(const SGOLD2_ELKA::FITHeader &header);
 
         void                        parse_FIT(bool skip_broken, bool skip_dup, bool dump_data);
 

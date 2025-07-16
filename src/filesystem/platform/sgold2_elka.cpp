@@ -161,30 +161,26 @@ SGOLD2_ELKA::FilePart SGOLD2_ELKA::read_file_part(const RawData &data) {
     return part;
 }
 
-void SGOLD2_ELKA::dump_data(const RawData &raw_data) {
-    if (!raw_data.get_data()) {
-        throw Exception("raw_data == nullptr");
-    }
+void SGOLD2_ELKA::print_data(const FFSBlock &block) {
+    std::string data_print;
 
-    bool is_aligned = false;
+    const auto &block_data = block.data;
 
-    std::string bin_print;
+    for (size_t i = 0; i < block.data.get_size(); ++i) {
+        char *c = block.data.get_data().get() + i;
 
-    for (size_t i = 0; i < raw_data.get_size(); ++i) {
-        is_aligned = false;
+        data_print += fmt::format("{:02X} ", static_cast<uint8_t>(*c));
 
-        bin_print += fmt::format("{:02X} ", (unsigned char) *(raw_data.get_data().get() + i));
+        if ((!((i + 1) % 16)) ||
+            (block.data.get_size() < 16 && i + 1 == block.data.get_size())) {
+            Log::Logger::debug("    {}", data_print);
 
-        if ((i + 1) % 16 == 0) {
-            Log::Logger::debug("{}", bin_print);
-            bin_print.clear();
-
-            is_aligned = true;
+            data_print.clear();
         }
     }
 
-    if (!is_aligned) {
-        Log::Logger::debug("{}", bin_print);
+    if ((block.data.get_size() % 16)) {
+        Log::Logger::debug("    {}", data_print);
     }
 }
 
@@ -298,6 +294,10 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
 
                 if (ffs_map.count(fs_block.header.id)) {
                     throw Exception("Duplicate id {}", fs_block.header.id);
+                }
+
+                if (dump_data) {
+                    print_data(fs_block);
                 }
 
                 ffs_map[fs_block.header.id] = fs_block;

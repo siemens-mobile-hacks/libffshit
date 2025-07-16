@@ -37,9 +37,7 @@ RawData::RawData(const RawData &prev) {
 
 RawData::RawData(const RawData &prev, size_t offset, size_t size) {
     if (!prev.data) {
-        this->size = 0;
-
-        return;
+        throw Exception("RawData() prev.data invalid ptr");
     }
 
     if (offset + size > prev.get_size()) {

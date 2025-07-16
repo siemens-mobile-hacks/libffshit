@@ -103,11 +103,11 @@ void RawData::add(const RawData &data) {
 
 void RawData::write(size_t offset, char *data, size_t size) {
     if (offset >= this->size) {
-        throw Exception("Offset >= data size. Offset: {}, Data size: {}", offset, this->size);
+        throw Exception("RawData::write() Offset >= data size. Offset: {}, Data size: {}", offset, this->size);
     }
 
     if (offset + size > this->size) {
-        throw Exception("Write size + offset > data size; Offset: {}, Write size: {}, Data size: {}", offset, size, this->size);
+        throw Exception("RawData::write() Write size + offset > data size; Offset: {}, Write size: {}, Data size: {}", offset, size, this->size);
     }
 
     memcpy(this->data.get() + offset, data, size);
@@ -115,11 +115,11 @@ void RawData::write(size_t offset, char *data, size_t size) {
 
 void RawData::read(size_t offset, char *data, size_t size) const {
     if (offset >= this->size) {
-        throw Exception("Offset >= data size. Offset: {}, Data size: {}", offset, this->size);
+        throw Exception("RawData::read() Offset >= data size. Offset: {}, Data size: {}", offset, this->size);
     }
 
     if (offset + size > this->size) {
-        throw Exception("Read size + offset > data size; Offset: {}, Read size: {}, Data size: {}", offset, size, this->size);
+        throw Exception("RawData::read() Read size + offset > data size; Offset: {}, Read size: {}, Data size: {}", offset, size, this->size);
     }
 
     memcpy(data, this->data.get() + offset, size);

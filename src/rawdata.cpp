@@ -9,9 +9,11 @@ RawData::RawData() : size(0) {
 }
 
 RawData::RawData(char *data, size_t size) {
-    if (size == 0) {
-        this->size = 0;
+    if (data == nullptr) {
+        throw Exception("RawData() from raw ptr. ptr == nullptr");
+    }
 
+    if (size == 0) {
         throw Exception("RawData() from raw ptr. size == 0");
     }
 
@@ -73,6 +75,10 @@ void RawData::add(char *data, size_t size) {
         throw Exception("RawData::add() size == 0");
     }
 
+    if (data == nullptr) {
+        throw Exception("RawData:add() ptr == nullptr");
+    }
+
     size_t  size_new = this->size + size;
     Data    tmp_data;
 
@@ -95,7 +101,11 @@ void RawData::add(char *data, size_t size) {
 
 void RawData::add_top(char *data, size_t size) {
     if (size == 0) {
-        throw Exception("RawData::add() size == 0");
+        throw Exception("RawData::add_top() size == 0");
+    }
+
+    if (data == nullptr) {
+        throw Exception("RawData:add_top() ptr == nullptr");
     }
 
     size_t  size_new = this->size + size;
@@ -132,6 +142,10 @@ void RawData::write(size_t offset, char *data, size_t size) {
         throw Exception("RawData::write() size == 0");
     }
 
+    if (data == nullptr) {
+        throw Exception("RawData:write() ptr == nullptr");
+    }
+
     if (offset >= this->size) {
         throw Exception("RawData::write() Offset >= data size. Offset: {}, Data size: {}", offset, this->size);
     }
@@ -146,6 +160,10 @@ void RawData::write(size_t offset, char *data, size_t size) {
 void RawData::read(size_t offset, char *data, size_t size) const {
     if (size == 0) {
         throw Exception("RawData::read() size == 0");
+    }
+
+    if (data == nullptr) {
+        throw Exception("RawData:read() ptr == nullptr");
     }
 
     if (offset >= this->size) {

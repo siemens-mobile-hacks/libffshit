@@ -188,7 +188,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
     const auto &part_map = partitions->get_partitions();
 
     // Нужен лайтфак на поиск конца таблицы, это пиздец
-    auto check_block = [](const FITHeader &header, uint32_t block_size) -> bool {
+    auto check_header = [](const FITHeader &header, uint32_t block_size) -> bool {
         if (header.flags != 0xFFFFFFC0) {
             return false;
         }
@@ -255,7 +255,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
                 block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.size), 1);
                 block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.offset), 1);
 
-                if (!check_block(fs_block.header, block_size)) {
+                if (!check_header(fs_block.header, block_size)) {
                     continue;
                 }
 

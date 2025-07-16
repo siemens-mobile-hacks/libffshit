@@ -22,8 +22,6 @@ class RawData {
         RawData(std::ifstream &file, size_t offset, size_t size);
 
         RawData(char *data, size_t size);
-
-        void            reverse(size_t align_size);
     
         void            add(char *data, size_t size);
         void            add(const RawData &data);

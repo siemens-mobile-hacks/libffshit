@@ -50,10 +50,6 @@ RawData::RawData(std::ifstream &file, size_t offset, size_t size) {
     file.read(data.get(), size);
 }
 
-void RawData::reverse(size_t align_size) {
-
-}
-
 void RawData::add(char *data, size_t size) {
     size_t  size_new = this->size + size;
     Data    tmp_data;

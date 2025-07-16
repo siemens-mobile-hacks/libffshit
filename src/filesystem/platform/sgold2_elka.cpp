@@ -217,7 +217,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
             const RawData & block_data = block.get_data();
             size_t          block_size = block.get_size();
 
-            for (ssize_t offset = block_size - 64; offset > 0; offset -= 16) {
+            for (ssize_t offset = block_size - 64; offset > 0; offset -= 32) {
                 FFSBlock    fs_block;
                 size_t      offset_header = offset;
 

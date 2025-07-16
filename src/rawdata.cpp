@@ -164,6 +164,44 @@ void RawData::read_wstring(size_t offset, std::wstring &str) const {
     }
 }
 
+// ELKA Align
+RawData RawData::read_aligned(size_t read_offset, size_t read_size) const {
+    RawData         data_ret;
+
+    if (read_offset >= this->size) {
+        throw Exception("RawData::read_aligned(). offset '{}' >= data size '{}'", read_offset, size);
+    }
+
+    if (static_cast<int64_t>(size) - read_size < 0) {
+        throw Exception("RawData::read_aligned(). offset '{}' - read_size '{}' < 0", read_offset, read_size);
+    }
+
+    char *          data_ptr    = data.get() + read_offset;
+    ssize_t         to_read     = read_size;
+
+    while (to_read > 0) {
+        size_t read_size    = 16;
+        size_t skip         = 0;
+
+        if (to_read <= 16) {
+            skip        = 16 - to_read;
+        }
+
+        // if (to_read > 16) {
+        //     // read_size = 16;
+        // } else {
+        //     // read_size   = to_read;
+        //     skip        = 16 - to_read;
+        // }
+
+        data_ptr    -= 32;
+        data_ret.add_top(data_ptr + skip, read_size - skip);
+        to_read     -= read_size - skip;
+    }
+
+    return data_ret;
+}
+
 RawData::Data RawData::get_data() const {
     return data;
 }

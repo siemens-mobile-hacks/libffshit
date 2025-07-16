@@ -75,8 +75,6 @@ class SGOLD2_ELKA : public Base {
         static void                 print_file_part(const FilePart &part);
         static void                 print_data(const FFSBlock &block);
 
-        static RawData              read_aligned(char *data, size_t size);
-
         static FileHeader           read_file_header(const FFSBlock &block);
         static FilePart             read_file_part(const RawData &data);
 

@@ -64,35 +64,6 @@ void SGOLD2_ELKA::print_file_part(const FilePart &part) {
     Log::Logger::debug("  Next part ID:   {:04X} {}", part.next_part, part.next_part);
 }
 
-RawData SGOLD2_ELKA::read_aligned(char *data, size_t size) {
-    RawData         data_ret;
-
-    char *          data_ptr    = data;
-    ssize_t         to_read     = size;
-
-    while (to_read > 0) {
-        size_t read_size    = 16;
-        size_t skip         = 0;
-
-        if (to_read <= 16) {
-            skip        = 16 - to_read;
-        }
-
-        // if (to_read > 16) {
-        //     // read_size = 16;
-        // } else {
-        //     // read_size   = to_read;
-        //     skip        = 16 - to_read;
-        // }
-
-        data_ptr    -= 32;
-        data_ret.add_top(data_ptr + skip, read_size - skip);
-        to_read     -= read_size - skip;
-    }
-
-    return data_ret;
-}
-
 SGOLD2_ELKA::FileHeader SGOLD2_ELKA::read_file_header(const FFSBlock &block) {
     const RawData &             header_data = block.data;
     SGOLD2_ELKA::FileHeader     header;
@@ -271,10 +242,15 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
 
                     // fs_block.data = read_aligned(tmp_data.get_data().get() + size_data, fs_block.header.size);
 
-                    char *  read_addr   = block_data.get_data().get() + offset_data + size_data;
-                    size_t  read_size   = fs_block.header.size;
+                    // char *  read_addr   = block_data.get_data().get() + offset_data + size_data;
+                    // size_t  read_size   = fs_block.header.size;
 
-                    fs_block.data = read_aligned(read_addr, read_size);
+                    // fs_block.data = read_aligned(read_addr, read_size);
+
+                    size_t read_offset  = offset_data + size_data;
+                    size_t read_size    = fs_block.header.size;
+
+                    fs_block.data = block_data.read_aligned(read_offset, read_size);
                 } else if (size_diff < 0x200) {
                     RawData file_data(this->partitions->get_data(), ff_boffset + fs_block.header.offset, 0x400);
 
@@ -286,12 +262,17 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
 
                     // auto end = read_aligned(tmp_data.get_data().get() + size_data, fs_block.header.size - 0x400);
 
-                    char *  read_addr = block_data.get_data().get() + offset_data + size_data;
-                    size_t  read_size = fs_block.header.size - 0x400;
+                    // char *  read_addr = block_data.get_data().get() + offset_data + size_data;
+                    // size_t  read_size = fs_block.header.size - 0x400;
 
-                    auto data_aligned = read_aligned(read_addr, read_size);
+                    // auto data_aligned = read_aligned(read_addr, read_size);
 
-                    fs_block.data.add(data_aligned);
+                    size_t read_offset  = offset_data + size_data;
+                    size_t read_size    = fs_block.header.size - 0x400;
+
+                    auto data_nonaligned = block_data.read_aligned(read_offset, read_size);
+
+                    fs_block.data.add(data_nonaligned);
                 } else {
                     size_t read_addr = ff_boffset + fs_block.header.offset;
                     size_t read_size = fs_block.header.size;

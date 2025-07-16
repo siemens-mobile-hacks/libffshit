@@ -35,6 +35,9 @@ class RawData {
         void            read_string(size_t offset, std::string &str, size_t step = 1) const;
         void            read_wstring(size_t offset, std::wstring &str) const;
 
+        // ELKA Align
+        RawData         read_aligned(size_t offset, size_t read_size) const;
+
         template<typename T>
         void read_type(const size_t offset, T *dst, size_t count = 1) const {
             read(offset, reinterpret_cast<char *>(dst), count * sizeof(T));

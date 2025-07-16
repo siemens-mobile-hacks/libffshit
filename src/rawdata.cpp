@@ -68,8 +68,6 @@ RawData::RawData(std::ifstream &file, size_t offset, size_t size) {
 
 void RawData::add(char *data, size_t size) {
     if (size == 0) {
-        this->size = 0;
-
         throw Exception("RawData::add() size == 0");
     }
 
@@ -95,8 +93,6 @@ void RawData::add(char *data, size_t size) {
 
 void RawData::add_top(char *data, size_t size) {
     if (size == 0) {
-        this->size = 0;
-
         throw Exception("RawData::add() size == 0");
     }
 
@@ -147,7 +143,7 @@ void RawData::write(size_t offset, char *data, size_t size) {
 
 void RawData::read(size_t offset, char *data, size_t size) const {
     if (size == 0) {
-        throw Exception("RawData::write() read == 0");
+        throw Exception("RawData::read() size == 0");
     }
 
     if (offset >= this->size) {

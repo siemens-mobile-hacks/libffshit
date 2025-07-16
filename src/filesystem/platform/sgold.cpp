@@ -350,7 +350,7 @@ void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory:
             FileHeader      file_header = read_file_header(tmp.data);
             auto            timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
 
-            Log::Logger::info("Found ID: {:5d}, Path: {}{}{}", id, block_name, path, file_header.name);
+            Log::Logger::info("Processing ID: {:5d}, Path: {}{}{}", id, block_name, path, file_header.name);
 
             if (file_header.attributes & 0x10) {
                 Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);

@@ -436,9 +436,10 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
 
         try {
             const auto &        file_block  = ffs_map.at(dir_info.id);
-            const FITHeader &   fit_header  = file_block.header;
             FileHeader          file_header = read_file_header(file_block);;
             TimePoint           timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
+
+            Log::Logger::info("Processing ID: {:5d}, Path: {}{}", dir_info.id, block_name, path + file_header.name);
 
             if (file_header.attributes & 0x10) {
                 Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);

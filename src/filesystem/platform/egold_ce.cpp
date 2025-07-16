@@ -302,7 +302,7 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
         const auto &file        = ffs_files.at(id);
         auto        timestamp   = fat_timestamp_to_unix(file.header.fat_timestamp);
 
-        Log::Logger::info("Found ID: {:5d} {:5d}, Path: {}{}{}", file.block->header.block_id, file.header.id, part_name, path, file.header.name);
+        Log::Logger::info("Processing ID: {:5d} {:5d}, Path: {}{}{}", file.block->header.block_id, file.header.id, part_name, path, file.header.name);
 
         try {
             if (file.header.flags & 0x10) {

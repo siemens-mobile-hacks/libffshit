@@ -280,12 +280,18 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
                     fs_block.data = RawData(this->partitions->get_data(), read_addr, fs_block.header.size);
                 }
 
-                if (ffs_map.count(fs_block.header.id)) {
-                    throw Exception("Duplicate id {}", fs_block.header.id);
-                }
-
                 if (dump_data) {
                     print_data(fs_block);
+                }
+
+                if (ffs_map.count(fs_block.header.id)) {
+                    if (skip_dup) {
+                        Log::Logger::warn("Duplicate id {}", fs_block.header.id);
+
+                        continue;
+                    }
+
+                    throw Exception("Duplicate id {}", fs_block.header.id);
                 }
 
                 ffs_map[fs_block.header.id] = fs_block;
@@ -293,17 +299,31 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
         }
 
         if (!ffs_map.count(10)) {
-            throw Exception("Root block (ID: 10) not found. Broken filesystem?");
+            if (skip_broken) {
+                Log::Logger::warn("{} Root block (ID: 10) not found. Broken filesystem?", part_name);
+
+                continue;
+            } else {
+                throw Exception("{} Root block (ID: 10) not found. Broken filesystem?", part_name);
+            }
         }
 
-        const FFSBlock &    root_block      = ffs_map.at(10);
-        FileHeader          root_header     = read_file_header(root_block);
-        auto                timestamp       = fat_timestamp_to_unix(root_header.fat_timestamp);
-        Directory::Ptr      root            = Directory::build(part_name, ROOT_PATH, timestamp);
+        try {
+            const FFSBlock &    root_block      = ffs_map.at(10);
+            FileHeader          root_header     = read_file_header(root_block);
+            auto                timestamp       = fat_timestamp_to_unix(root_header.fat_timestamp);
+            Directory::Ptr      root            = Directory::build(part_name, ROOT_PATH, timestamp);
 
-        scan(part_name, ffs_map, root, root_header, skip_broken);
+            scan(part_name, ffs_map, root, root_header, skip_broken);
 
-        root_dir->add_subdir(root);
+            root_dir->add_subdir(root);
+        } catch (const FULLFLASH::BaseException &e) {
+            if (skip_broken) {
+                Log::Logger::warn("{} Skip. Broken root directory: {}", part_name, e.what());
+            } else {
+                throw;
+            }
+        }
     }
 }
 
@@ -354,6 +374,30 @@ void SGOLD2_ELKA::read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t nex
 void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, bool skip_broken, std::string path) {
     RawData dir_data;
 
+    if (skip_broken) {
+        for (const auto &p_id : recourse_protector) {
+            if (header.id == p_id) {
+                throw Exception("Directory id already in list");
+            }
+        }
+
+        recourse_protector.push_back(header.id);
+    }
+
+    try {
+        dir_data = read_full_data(ffs_map, header);
+    } catch (const FULLFLASH::BaseException &e) {
+        if (skip_broken) {
+            Log::Logger::warn("Skip. Broken directory: {}", e.what());
+
+            recourse_protector.pop_back();
+
+            return;
+        } else {
+            throw;
+        }
+    }
+
     dir_data = read_full_data(ffs_map, header);
 
     DirList dir_list;
@@ -390,29 +434,41 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
             throw Exception("scan() ID {} not found in ffs_map", dir_info.id);
         }
 
-        const auto &        file_block  = ffs_map.at(dir_info.id);
-        const FITHeader &   fit_header  = file_block.header;
-        FileHeader          file_header = read_file_header(file_block);;
-        TimePoint           timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
+        try {
+            const auto &        file_block  = ffs_map.at(dir_info.id);
+            const FITHeader &   fit_header  = file_block.header;
+            FileHeader          file_header = read_file_header(file_block);;
+            TimePoint           timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
 
-        if (file_header.attributes & 0x10) {
-            Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);
+            if (file_header.attributes & 0x10) {
+                Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);
 
-            dir->add_subdir(dir_next);
+                dir->add_subdir(dir_next);
 
-            scan(block_name, ffs_map, dir_next, file_header, skip_broken, path + file_header.name + "/");
-        } else {
-            RawData     file_data;
-            uint32_t    data_id = file_header.id + 1;
+                scan(block_name, ffs_map, dir_next, file_header, skip_broken, path + file_header.name + "/");
+            } else {
+                RawData     file_data;
+                uint32_t    data_id = file_header.id + 1;
 
-            if (ffs_map.count(data_id)) {
-                file_data = read_full_data(ffs_map, file_header);
+                if (ffs_map.count(data_id)) {
+                    file_data = read_full_data(ffs_map, file_header);
+                }
+
+                File::Ptr file = File::build(file_header.name, block_name + path, timestamp, file_data);
+
+                dir->add_file(file);
             }
-
-            File::Ptr file = File::build(file_header.name, block_name + path, timestamp, file_data);
-
-            dir->add_file(file);
+        } catch (const FULLFLASH::BaseException &e) {
+            if (skip_broken) {
+                Log::Logger::warn("Skip. Broken file/directory: {}", e.what());
+            } else {
+                throw;
+            }
         }
+    }
+
+    if (skip_broken) {
+        recourse_protector.pop_back();
     }
 }
 

@@ -18,18 +18,18 @@ class RawData {
 
         RawData();
         RawData(const RawData &prev);
-        RawData(const RawData &prev, size_t offset, size_t size);
-        RawData(std::ifstream &file, size_t offset, size_t size);
+        RawData(const RawData &prev, size_t offset, size_t data_size);
+        RawData(std::ifstream &file, size_t offset, size_t data_size);
 
-        RawData(char *data, size_t size);
+        RawData(char *data, size_t data_size);
     
-        void            add(char *data, size_t size);
+        void            add(char *data, size_t add_size);
         void            add(const RawData &data);
 
-        void            add_top(char *data, size_t size);
+        void            add_top(char *data, size_t add_size);
 
-        void            write(size_t offset, char *data, size_t size);
-        void            read(size_t offset, char *data, size_t size) const;
+        void            write(size_t offset, char *data, size_t write_size);
+        void            read(size_t offset, char *data, size_t read_size) const;
         void            read_string(size_t offset, std::string &str, size_t step = 1) const;
         void            read_wstring(size_t offset, std::wstring &str) const;
 

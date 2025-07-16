@@ -8,20 +8,20 @@ namespace FULLFLASH {
 RawData::RawData() : size(0) { 
 }
 
-RawData::RawData(char *data, size_t size) {
+RawData::RawData(char *data, size_t data_size) {
     if (data == nullptr) {
         throw Exception("RawData() from raw ptr. ptr == nullptr");
     }
 
-    if (size == 0) {
-        throw Exception("RawData() from raw ptr. size == 0");
+    if (data_size == 0) {
+        throw Exception("RawData() from raw ptr. data_size == 0");
     }
 
-    this->data = Data(new char[size]);
+    this->data = Data(new char[data_size]);
 
-    memcpy(this->data.get(), data, size);
+    memcpy(this->data.get(), data, data_size);
 
-    this->size = size;
+    this->size = data_size;
 }
 
 RawData::RawData(const RawData &prev) {
@@ -39,47 +39,47 @@ RawData::RawData(const RawData &prev) {
     memcpy(this->data.get(), prev.data.get(), prev.size);
 }
 
-RawData::RawData(const RawData &prev, size_t offset, size_t size) {
+RawData::RawData(const RawData &prev, size_t offset, size_t data_size) {
     if (!prev.data) {
         throw Exception("RawData() form prev. with offset, size. prev.data invalid ptr");
     }
 
-    if (size == 0) {
-        throw Exception("RawData() form prev. with offset, size. size == 0");
+    if (data_size == 0) {
+        throw Exception("RawData() form prev. with offset, size. data_size == 0");
     }
 
-    if (offset + size > prev.get_size()) {
+    if (offset + data_size > prev.get_size()) {
         throw Exception("RawData() offset + size > prev. size");
     }
 
-    this->size = size;
-    this->data = Data(new char[size]);
+    this->size = data_size;
+    this->data = Data(new char[data_size]);
 
-    memcpy(this->data.get(), prev.data.get() + offset, size);
+    memcpy(this->data.get(), prev.data.get() + offset, data_size);
 }
 
-RawData::RawData(std::ifstream &file, size_t offset, size_t size) {
-    if (size == 0) {
-        throw Exception("RawData() from file size == 0");
+RawData::RawData(std::ifstream &file, size_t offset, size_t data_size) {
+    if (data_size == 0) {
+        throw Exception("RawData() from file data_size == 0");
     }
   
-    this->size = size;
-    this->data = Data(new char[size]);
+    this->size = data_size;
+    this->data = Data(new char[data_size]);
 
     file.seekg(offset, std::ios_base::beg);
-    file.read(data.get(), size);
+    file.read(data.get(), data_size);
 }
 
-void RawData::add(char *data, size_t size) {
-    if (size == 0) {
-        throw Exception("RawData::add() size == 0");
+void RawData::add(char *data, size_t add_size) {
+    if (add_size == 0) {
+        throw Exception("RawData::add() add_size == 0");
     }
 
     if (data == nullptr) {
         throw Exception("RawData:add() ptr == nullptr");
     }
 
-    size_t  size_new = this->size + size;
+    size_t  size_new = this->size + add_size;
     Data    tmp_data;
 
     if (this->size > 0) {
@@ -94,21 +94,21 @@ void RawData::add(char *data, size_t size) {
         memcpy(this->data.get(), tmp_data.get(), this->size);
     }
 
-    memcpy(this->data.get() + this->size, data, size);
+    memcpy(this->data.get() + this->size, data, add_size);
 
     this->size = size_new;
 }
 
-void RawData::add_top(char *data, size_t size) {
-    if (size == 0) {
-        throw Exception("RawData::add_top() size == 0");
+void RawData::add_top(char *data, size_t add_size) {
+    if (add_size == 0) {
+        throw Exception("RawData::add_top() add_size == 0");
     }
 
     if (data == nullptr) {
         throw Exception("RawData:add_top() ptr == nullptr");
     }
 
-    size_t  size_new = this->size + size;
+    size_t  size_new = this->size + add_size;
     Data    tmp_data;
 
     if (this->data) {
@@ -119,15 +119,14 @@ void RawData::add_top(char *data, size_t size) {
 
     this->data = Data(new char[size_new]);
 
-    memcpy(this->data.get(), data, size);
+    memcpy(this->data.get(), data, add_size);
 
     if (tmp_data) {
-        memcpy(this->data.get() + size, tmp_data.get(), this->size);
+        memcpy(this->data.get() + add_size, tmp_data.get(), this->size);
     }
 
     this->size = size_new;
 }
-
 
 void RawData::add(const RawData &data) {
     if (data.get_size() == 0) {
@@ -137,9 +136,9 @@ void RawData::add(const RawData &data) {
     add(data.data.get(), data.size);
 }
 
-void RawData::write(size_t offset, char *data, size_t size) {
-    if (size == 0) {
-        throw Exception("RawData::write() size == 0");
+void RawData::write(size_t offset, char *data, size_t write_size) {
+    if (write_size == 0) {
+        throw Exception("RawData::write() write_size == 0");
     }
 
     if (data == nullptr) {
@@ -150,16 +149,16 @@ void RawData::write(size_t offset, char *data, size_t size) {
         throw Exception("RawData::write() Offset >= data size. Offset: {}, Data size: {}", offset, this->size);
     }
 
-    if (offset + size > this->size) {
+    if (offset + write_size > this->size) {
         throw Exception("RawData::write() Write size + offset > data size; Offset: {}, Write size: {}, Data size: {}", offset, size, this->size);
     }
 
-    memcpy(this->data.get() + offset, data, size);
+    memcpy(this->data.get() + offset, data, write_size);
 }
 
-void RawData::read(size_t offset, char *data, size_t size) const {
-    if (size == 0) {
-        throw Exception("RawData::read() size == 0");
+void RawData::read(size_t offset, char *data, size_t read_size) const {
+    if (read_size == 0) {
+        throw Exception("RawData::read() read_size == 0");
     }
 
     if (data == nullptr) {
@@ -170,11 +169,11 @@ void RawData::read(size_t offset, char *data, size_t size) const {
         throw Exception("RawData::read() Offset >= data size. Offset: {}, Data size: {}", offset, this->size);
     }
 
-    if (offset + size > this->size) {
-        throw Exception("RawData::read() Read size + offset > data size; Offset: {}, Read size: {}, Data size: {}", offset, size, this->size);
+    if (offset + read_size > this->size) {
+        throw Exception("RawData::read() Read size + offset > data size; Offset: {}, Read size: {}, Data size: {}", offset, read_size, this->size);
     }
 
-    memcpy(data, this->data.get() + offset, size);
+    memcpy(data, this->data.get() + offset, read_size);
 }
 
 void RawData::read_string(size_t offset, std::string &str, size_t step) const {

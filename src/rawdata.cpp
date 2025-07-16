@@ -12,7 +12,7 @@ RawData::RawData(char *data, size_t size) {
     if (size == 0) {
         this->size = 0;
 
-        throw Exception("RawData() size == 0");
+        throw Exception("RawData() from raw ptr. size == 0");
     }
 
     this->data = Data(new char[size]);
@@ -23,6 +23,8 @@ RawData::RawData(char *data, size_t size) {
 }
 
 RawData::RawData(const RawData &prev) {
+    // Валидно, копирование пустого RawData
+
     if (!prev.data) {
         this->size = 0;
 
@@ -37,7 +39,11 @@ RawData::RawData(const RawData &prev) {
 
 RawData::RawData(const RawData &prev, size_t offset, size_t size) {
     if (!prev.data) {
-        throw Exception("RawData() prev.data invalid ptr");
+        throw Exception("RawData() form prev. with offset, size. prev.data invalid ptr");
+    }
+
+    if (size == 0) {
+        throw Exception("RawData() form prev. with offset, size. size == 0");
     }
 
     if (offset + size > prev.get_size()) {
@@ -52,9 +58,7 @@ RawData::RawData(const RawData &prev, size_t offset, size_t size) {
 
 RawData::RawData(std::ifstream &file, size_t offset, size_t size) {
     if (size == 0) {
-        this->size = 0;
-
-        throw Exception("RawData() size == 0");
+        throw Exception("RawData() from file size == 0");
     }
   
     this->size = size;

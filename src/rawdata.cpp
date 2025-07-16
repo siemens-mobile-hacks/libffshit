@@ -9,14 +9,23 @@ RawData::RawData() : size(0) {
 }
 
 RawData::RawData(char *data, size_t size) {
+    if (size == 0) {
+        this->size = 0;
+
+        throw Exception("RawData() size == 0");
+    }
+
     this->data = Data(new char[size]);
 
     memcpy(this->data.get(), data, size);
+
     this->size = size;
 }
 
 RawData::RawData(const RawData &prev) {
     if (!prev.data) {
+        this->size = 0;
+
         return;
     }
 
@@ -28,6 +37,8 @@ RawData::RawData(const RawData &prev) {
 
 RawData::RawData(const RawData &prev, size_t offset, size_t size) {
     if (!prev.data) {
+        this->size = 0;
+
         return;
     }
 
@@ -42,7 +53,6 @@ RawData::RawData(const RawData &prev, size_t offset, size_t size) {
 }
 
 RawData::RawData(std::ifstream &file, size_t offset, size_t size) {
-
     this->size = size;
     this->data = Data(new char[size]);
 

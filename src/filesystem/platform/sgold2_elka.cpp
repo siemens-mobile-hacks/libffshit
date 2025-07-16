@@ -264,14 +264,17 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
                 uint32_t    ff_boffset      = block.get_addr();
                 size_t      size_data       = ((fs_block.header.size / 16) + 1) * 32;
                 size_t      offset_data     = offset - size_data;
-                size_t      size_diff       = fs_block.header.size - 0x400;
+                uint32_t    size_diff       = fs_block.header.size - 0x400;
 
                 if (fs_block.header.size < 0x200) {
                     // RawData tmp_data(block_data, offset_data, size_data);
 
                     // fs_block.data = read_aligned(tmp_data.get_data().get() + size_data, fs_block.header.size);
 
-                    fs_block.data = read_aligned(block_data.get_data().get() + offset_data + size_data, fs_block.header.size);
+                    char *  read_addr   = block_data.get_data().get() + offset_data + size_data;
+                    size_t  read_size   = fs_block.header.size;
+
+                    fs_block.data = read_aligned(read_addr, read_size);
                 } else if (size_diff < 0x200) {
                     RawData file_data(this->partitions->get_data(), ff_boffset + fs_block.header.offset, 0x400);
 
@@ -283,13 +286,17 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
 
                     // auto end = read_aligned(tmp_data.get_data().get() + size_data, fs_block.header.size - 0x400);
 
-                    auto end = read_aligned(block_data.get_data().get() + offset_data + size_data, fs_block.header.size - 0x400);
+                    char *  read_addr = block_data.get_data().get() + offset_data + size_data;
+                    size_t  read_size = fs_block.header.size - 0x400;
 
-                    fs_block.data.add(end);
+                    auto data_aligned = read_aligned(read_addr, read_size);
+
+                    fs_block.data.add(data_aligned);
                 } else {
-                    size_t data_addr = ff_boffset + fs_block.header.offset;
+                    size_t read_addr = ff_boffset + fs_block.header.offset;
+                    size_t read_size = fs_block.header.size;
 
-                    fs_block.data = RawData(this->partitions->get_data(), data_addr, fs_block.header.size);
+                    fs_block.data = RawData(this->partitions->get_data(), read_addr, fs_block.header.size);
                 }
 
                 if (ffs_map.count(fs_block.header.id)) {

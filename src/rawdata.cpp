@@ -53,6 +53,12 @@ RawData::RawData(const RawData &prev, size_t offset, size_t size) {
 }
 
 RawData::RawData(std::ifstream &file, size_t offset, size_t size) {
+    if (size == 0) {
+        this->size = 0;
+
+        throw Exception("RawData() size == 0");
+    }
+  
     this->size = size;
     this->data = Data(new char[size]);
 
@@ -61,6 +67,12 @@ RawData::RawData(std::ifstream &file, size_t offset, size_t size) {
 }
 
 void RawData::add(char *data, size_t size) {
+    if (size == 0) {
+        this->size = 0;
+
+        throw Exception("RawData::add() size == 0");
+    }
+
     size_t  size_new = this->size + size;
     Data    tmp_data;
 
@@ -82,6 +94,12 @@ void RawData::add(char *data, size_t size) {
 }
 
 void RawData::add_top(char *data, size_t size) {
+    if (size == 0) {
+        this->size = 0;
+
+        throw Exception("RawData::add() size == 0");
+    }
+
     size_t  size_new = this->size + size;
     Data    tmp_data;
 
@@ -104,10 +122,18 @@ void RawData::add_top(char *data, size_t size) {
 
 
 void RawData::add(const RawData &data) {
+    if (data.get_size() == 0) {
+        return;
+    }
+
     add(data.data.get(), data.size);
 }
 
 void RawData::write(size_t offset, char *data, size_t size) {
+    if (size == 0) {
+        throw Exception("RawData::write() size == 0");
+    }
+
     if (offset >= this->size) {
         throw Exception("RawData::write() Offset >= data size. Offset: {}, Data size: {}", offset, this->size);
     }
@@ -120,6 +146,10 @@ void RawData::write(size_t offset, char *data, size_t size) {
 }
 
 void RawData::read(size_t offset, char *data, size_t size) const {
+    if (size == 0) {
+        throw Exception("RawData::write() read == 0");
+    }
+
     if (offset >= this->size) {
         throw Exception("RawData::read() Offset >= data size. Offset: {}, Data size: {}", offset, this->size);
     }
@@ -173,6 +203,10 @@ void RawData::read_wstring(size_t offset, std::wstring &str) const {
 // ELKA Align
 RawData RawData::read_aligned(size_t read_offset, size_t read_size) const {
     RawData         data_ret;
+
+    if (read_size == 0) {
+        throw Exception("RawData::read_aligned() read_size == 0");
+    }
 
     if (read_offset >= this->size) {
         throw Exception("RawData::read_aligned(). offset '{}' >= data size '{}'", read_offset, size);

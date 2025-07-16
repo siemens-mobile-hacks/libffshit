@@ -270,9 +270,11 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
                     size_t read_offset  = offset_data + size_data;
                     size_t read_size    = fs_block.header.size - 0x400;
 
-                    auto data_nonaligned = block_data.read_aligned(read_offset, read_size);
+                    if (read_size != 0) {
+                        auto data_nonaligned = block_data.read_aligned(read_offset, read_size);
 
-                    fs_block.data.add(data_nonaligned);
+                        fs_block.data.add(data_nonaligned);
+                    }
                 } else {
                     size_t read_addr = ff_boffset + fs_block.header.offset;
                     size_t read_size = fs_block.header.size;

@@ -41,7 +41,7 @@ class SGOLD2_ELKA : public Base {
             uint32_t    unknown1;
             uint32_t    next_part;
             uint32_t    parent_id;
-            uint32_t    unknown2;
+            uint32_t    size;
             uint32_t    fat_timestamp;
             uint16_t    attributes;
             uint16_t    unknown7;

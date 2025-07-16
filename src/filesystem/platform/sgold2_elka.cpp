@@ -49,7 +49,7 @@ void SGOLD2_ELKA::print_file_header(const SGOLD2_ELKA::FileHeader &header) {
     Log::Logger::debug("  Unknown1:      {:04X} {}",     header.unknown1, header.unknown1);
     Log::Logger::debug("  Parent ID:     {:04X} {}",     header.parent_id, header.parent_id);
     Log::Logger::debug("  Next part ID:  {:04X} {}",     header.next_part, header.next_part);
-    Log::Logger::debug("  Size:          {:08X} {}",     header.unknown2, header.unknown2);
+    Log::Logger::debug("  Size:          {:08X} {}",     header.size, header.size);
     Log::Logger::debug("  FAT timestamp: {:08X} {}",     header.fat_timestamp, header.fat_timestamp);
     Log::Logger::debug("  Attributes:    {:04X} {}",     header.attributes, header.attributes);
     Log::Logger::debug("  Unknown7:      {:04X} {}",     header.unknown7, header.unknown7);
@@ -73,7 +73,7 @@ SGOLD2_ELKA::FileHeader SGOLD2_ELKA::read_file_header(const FFSBlock &block) {
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.unknown1), 1);
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.next_part), 1);
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.parent_id), 1);
-    header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.unknown2), 1);
+    header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.size), 1);
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.fat_timestamp), 1);
     header_data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.attributes), 1);
     header_data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.unknown7), 1);
@@ -180,7 +180,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
             return false;
         }
 
-        if (header.size > 0x800) {
+        if (header.size > 0x1000) {
             return false;
         }
 
@@ -316,6 +316,8 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
             auto                timestamp       = fat_timestamp_to_unix(root_header.fat_timestamp);
             Directory::Ptr      root            = Directory::build(part_name, ROOT_PATH, timestamp);
 
+            print_file_header(root_header);
+
             scan(part_name, ffs_map, root, root_header, skip_broken);
 
             root_dir->add_subdir(root);
@@ -330,8 +332,6 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
 }
 
 RawData SGOLD2_ELKA::read_full_data(FSBlocksMap &ffs_map, const FileHeader &header) {
-    print_file_header(header);
-
     uint32_t data_id = header.id + 1;
 
     if (!ffs_map.count(data_id)) {
@@ -440,6 +440,8 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
             const auto &        file_block  = ffs_map.at(dir_info.id);
             FileHeader          file_header = read_file_header(file_block);;
             TimePoint           timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
+
+            print_file_header(file_header);
 
             Log::Logger::info("Processing ID: {:5d}, Path: {}{}", dir_info.id, block_name, path + file_header.name);
 

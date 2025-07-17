@@ -76,6 +76,8 @@ class Partitions {
 
         bool                        sl75_bober_kurwa;
 
+        void                        x65flasher_fix();
+
         bool                        check_part_name(const std::string &name);
 
         void                        search_partitions(bool old_search_algorithm, uint32_t start_addr);

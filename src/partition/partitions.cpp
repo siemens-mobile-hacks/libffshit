@@ -125,6 +125,8 @@ Partitions::Partitions(std::filesystem::path fullflash_path, bool old_search_alg
     file.seekg(0, std::ios_base::beg);
 
     this->data = RawData(file, 0, data_size);
+    
+    x65flasher_fix();
 
     detect_platform();
     search_partitions(old_search_algorithm, search_start_addr);
@@ -153,6 +155,9 @@ Partitions::Partitions(std::filesystem::path fullflash_path, Platform platform, 
     file.seekg(0, std::ios_base::beg);
 
     this->data      = RawData(file, 0, data_size);
+
+    x65flasher_fix();
+
     this->platform  = platform;
     this->model     = PlatformToString.at(platform);
 
@@ -169,6 +174,8 @@ Partitions::Partitions(char *ff_data, size_t ff_data_size, bool old_search_algor
     
     this->data = RawData(ff_data, ff_data_size);
 
+    x65flasher_fix();
+
     detect_platform();
     search_partitions(old_search_algorithm, search_start_addr);
 
@@ -183,6 +190,9 @@ Partitions::Partitions(char *ff_data, size_t ff_data_size, Platform platform, bo
     std::ifstream file;
 
     this->data      = RawData(ff_data, ff_data_size);
+
+    x65flasher_fix();
+
     this->platform  = platform;
     this->model     = PlatformToString.at(platform);
 
@@ -191,6 +201,36 @@ Partitions::Partitions(char *ff_data, size_t ff_data_size, Platform platform, bo
     for (const auto &pair : partitions_map) {
         Log::Logger::debug("{:10s} {}", pair.first, pair.second.get_blocks().size());
     }
+}
+
+void Partitions::x65flasher_fix() {
+    char FBK[3];
+
+    data.read_type<char>(0x0, FBK, 3);
+
+    bool x65_flasher_detected = false;
+
+    if (FBK[0] == 'F' &&
+        FBK[1] == 'B' &&
+        FBK[2] == 'K') {
+        x65_flasher_detected = true;
+    }
+
+    if (!x65_flasher_detected) {
+        return;
+    }
+
+    Log::Logger::warn("x65flasher detected");
+
+    RawData tmp = this->data;
+
+    size_t old_size = tmp.get_size();
+    size_t new_size = old_size - 0x10;
+
+    this->data =  RawData(tmp, 0x10, new_size);
+
+    Log::Logger::warn("x65flasher fixed {:08X} -> {:08X}", old_size, new_size);
+
 }
 
 const std::filesystem::path &Partitions::get_file_path() const {

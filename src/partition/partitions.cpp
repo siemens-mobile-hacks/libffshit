@@ -752,6 +752,18 @@ bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
 void Partitions::detect_platform() {
     std::string bc;
 
+    auto check_string = [](const std::string &data) -> bool {
+        bool valid = true;
+
+        std::for_each(data.cbegin(), data.cend(), [&](char c) {
+            if (!isprint(c)) {
+                valid = false;
+            }
+        });
+
+        return valid;
+    };
+
     data.read_string(BC65_BC75_OFFSET, bc, 1);
 
     if (bc == "BC65" || bc == "BCORE65") {
@@ -763,7 +775,7 @@ void Partitions::detect_platform() {
         if (imei.length() != 15) {
             imei.clear();
             data.read_string(X65_7X_IMEI_OFFSET, imei);
-        }
+        };
     } else if (bc == "BC75") {
         platform = Platform::SGOLD2;
 
@@ -780,6 +792,12 @@ void Partitions::detect_platform() {
             data.read_string(X85_MODEL_OFFSET, model);
             data.read_string(X85_IMEI_OFFSET, imei);
 
+            if (!(check_string(model) & check_string(imei))) {
+                imei.clear();
+
+                data.read_string(X85_MODEL_OFFSET + 0x10, model);
+                data.read_string(X85_IMEI_OFFSET + 0x10, imei);
+            }
         } else {
             platform = Platform::UNK;
         }
@@ -823,19 +841,10 @@ void Partitions::detect_platform() {
         if (imei.size() != 15) {
             borken_imei = true;
         } else {
-            std::for_each(imei.cbegin(), imei.cend(), [&](char c) {
-                if (!isprint(c)) {
-                    borken_imei = true;
-                }
-            });
+            borken_imei = !check_string(imei);
         }
 
-        std::for_each(model.cbegin(), model.cend(), [&](char c) {
-            if (!isprint(c)) {
-                broken_model = true;
-            }
-        });
-
+        broken_model = !check_string(model);
 
         if (borken_imei) {
             Log::Logger::warn("Couldn't detect IMEI");

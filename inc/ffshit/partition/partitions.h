@@ -49,10 +49,10 @@ class Partitions {
         }
 
         Partitions(std::filesystem::path fullflash_path, bool old_search_algorithm, uint32_t search_start_addr = 0);
-        Partitions(std::filesystem::path fullflash_path, Platform platform, bool old_search_algorithm, uint32_t search_start_addr = 0);
+        Partitions(std::filesystem::path fullflash_path, Platform from_platform, bool old_search_algorithm, uint32_t search_start_addr = 0);
 
         Partitions(char *ff_data, size_t ff_data_size, bool old_search_algorithm, uint32_t search_start_addr = 0);
-        Partitions(char *ff_data, size_t ff_data_size, Platform platform, bool old_search_algorithm, uint32_t search_start_addr = 0);
+        Partitions(char *ff_data, size_t ff_data_size, Platform from_platform, bool old_search_algorithm, uint32_t search_start_addr = 0);
 
         const std::filesystem::path &   get_file_path() const;
 
@@ -75,6 +75,9 @@ class Partitions {
         std::string                 model;
 
         bool                        sl75_bober_kurwa;
+
+        void                        process(bool old_search_algorithm, uint32_t search_start_addr);
+        void                        process(Platform from_platform, bool old_search_algorithm, uint32_t search_start_addr);
 
         void                        x65flasher_fix();
 

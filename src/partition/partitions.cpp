@@ -126,20 +126,10 @@ Partitions::Partitions(std::filesystem::path fullflash_path, bool old_search_alg
 
     this->data = RawData(file, 0, data_size);
     
-    x65flasher_fix();
-
-    detect_platform();
-    search_partitions(old_search_algorithm, search_start_addr);
-
-    Log::Logger::debug("Found {} partitions", partitions_map.size());
-
-    for (const auto &pair : partitions_map) {
-        Log::Logger::debug("  {:8s} {}", pair.first, pair.second.get_blocks().size());
-    }
-
+    process(old_search_algorithm, search_start_addr);
 }
 
-Partitions::Partitions(std::filesystem::path fullflash_path, Platform platform, bool old_search_algorithm, uint32_t search_start_addr) {
+Partitions::Partitions(std::filesystem::path fullflash_path, Platform from_platform, bool old_search_algorithm, uint32_t search_start_addr) {
     std::ifstream file;
 
     this->fullflash_path = fullflash_path;
@@ -156,24 +146,26 @@ Partitions::Partitions(std::filesystem::path fullflash_path, Platform platform, 
 
     this->data      = RawData(file, 0, data_size);
 
-    x65flasher_fix();
-
-    this->platform  = platform;
-    this->model     = PlatformToString.at(platform);
-
-    search_partitions(old_search_algorithm, search_start_addr);
-
-    for (const auto &pair : partitions_map) {
-        Log::Logger::debug("{:10s} {}", pair.first, pair.second.get_blocks().size());
-    }
+    process(from_platform, old_search_algorithm, search_start_addr);
 }
-
 
 Partitions::Partitions(char *ff_data, size_t ff_data_size, bool old_search_algorithm, uint32_t search_start_addr) {
     sl75_bober_kurwa = false;
     
     this->data = RawData(ff_data, ff_data_size);
 
+    process(old_search_algorithm, search_start_addr);
+}
+
+Partitions::Partitions(char *ff_data, size_t ff_data_size, Platform from_platform, bool old_search_algorithm, uint32_t search_start_addr) {
+    std::ifstream file;
+
+    this->data      = RawData(ff_data, ff_data_size);
+
+    process(from_platform, old_search_algorithm, search_start_addr);
+}
+
+void Partitions::process(bool old_search_algorithm, uint32_t search_start_addr) {
     x65flasher_fix();
 
     detect_platform();
@@ -186,15 +178,11 @@ Partitions::Partitions(char *ff_data, size_t ff_data_size, bool old_search_algor
     }
 }
 
-Partitions::Partitions(char *ff_data, size_t ff_data_size, Platform platform, bool old_search_algorithm, uint32_t search_start_addr) {
-    std::ifstream file;
-
-    this->data      = RawData(ff_data, ff_data_size);
-
+void Partitions::process(Platform from_platform, bool old_search_algorithm, uint32_t search_start_addr) {
     x65flasher_fix();
 
-    this->platform  = platform;
-    this->model     = PlatformToString.at(platform);
+    this->platform  = from_platform;
+    this->model     = PlatformToString.at(from_platform);
 
     search_partitions(old_search_algorithm, search_start_addr);
 
@@ -230,7 +218,6 @@ void Partitions::x65flasher_fix() {
     this->data =  RawData(tmp, 0x10, new_size);
 
     Log::Logger::warn("x65flasher fixed {:08X} -> {:08X}", old_size, new_size);
-
 }
 
 const std::filesystem::path &Partitions::get_file_path() const {

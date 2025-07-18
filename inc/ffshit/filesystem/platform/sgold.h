@@ -22,37 +22,45 @@ class SGOLD : public Base {
         const Directory::Ptr    get_root() const override final;
 
     private:
-        typedef struct {
-            uint32_t flags;
-            uint32_t id;
-            uint32_t size;
-            uint32_t offset;
-        } FITHeader;
+        struct FITHeader {
+            FITHeader() = default;
 
-        typedef struct {
+            uint32_t flags      = 0x0;
+            uint32_t id         = 0x0;
+            uint32_t size       = 0x0;
+            uint32_t offset     = 0x0;
+        };
+
+        struct FFSBlock {
+            FFSBlock() = default;
+
             FITHeader   header;
             RawData     data;
-        } FFSBlock;
+        };
 
-        typedef struct {
-            uint16_t    id;
-            uint16_t    parent_id;
-            uint32_t    fat_timestamp;
-            uint16_t    data_id;
-            uint32_t    attributes;
-            uint16_t    next_part;
+        struct FileHeader {
+            FileHeader() = default;
+
+            uint16_t    id              = 0x0;
+            uint16_t    parent_id       = 0x0;
+            uint32_t    fat_timestamp   = 0x0;
+            uint16_t    data_id         = 0x0;
+            uint32_t    attributes      = 0x0;
+            uint16_t    next_part       = 0x0;
             std::string name;
-        } FileHeader;
+        };
 
-        typedef struct {
-            uint16_t    id;
-            uint16_t    parent_id;
-            uint32_t    unknown;
-            uint16_t    data_id;
-            uint16_t    unknown2;
-            uint16_t    prev_id;
-            uint16_t    next_part;
-        } FilePart;
+        struct FilePart {
+            FilePart() = default;
+
+            uint16_t    id              = 0x0;
+            uint16_t    parent_id       = 0x0;
+            uint32_t    unknown         = 0x0;
+            uint16_t    data_id         = 0x0;
+            uint16_t    unknown2        = 0x0;
+            uint16_t    prev_id         = 0x0;
+            uint16_t    next_part       = 0x0;
+        };
 
         using FSBlocksMap   = std::map<uint16_t, FFSBlock>;
 

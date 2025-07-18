@@ -24,36 +24,44 @@ class EGOLD_CE : public Base {
         const Directory::Ptr        get_root() const override final;
 
     private:
-        typedef struct {
-            uint16_t marker1;
-            uint16_t size;
-            uint32_t offset;
-            uint16_t block_id;
-            uint16_t marker2;
-        } FITHeader;
+        struct FITHeader {
+            FITHeader() = default;
 
-        typedef struct {
+            uint16_t marker1    = 0x0;
+            uint16_t size       = 0x0;
+            uint32_t offset     = 0x0;
+            uint16_t block_id   = 0x0;
+            uint16_t marker2    = 0x0;
+        };
+
+        struct FFSBlock {
+            FFSBlock() = default;
+
             FITHeader   header;
             RawData     data;
-            uint32_t    addr_start;
-            uint32_t    addr;
-        } FFSBlock;
+            uint32_t    addr_start  = 0x0;
+            uint32_t    addr        = 0x0;
+        };
 
-        typedef struct {
-            uint16_t    id;
-            uint16_t    parent_id;
-            uint32_t    fat_timestamp;
-            uint16_t    data_id;
-            uint16_t    flags;
-            uint16_t    unk4;
-            uint16_t    next_part_id;
+        struct FileHeader {
+            FileHeader() = default;
+
+            uint16_t    id              = 0x0;
+            uint16_t    parent_id       = 0x0;
+            uint32_t    fat_timestamp   = 0x0;
+            uint16_t    data_id         = 0x0;
+            uint16_t    flags           = 0x0;
+            uint16_t    unk4            = 0x0;
+            uint16_t    next_part_id    = 0x0;
             std::string name;
-        } FileHeader;
+        };
 
-        typedef struct {
+        struct FFSFile {
+            FFSFile() = default;
+
             FileHeader          header;
             const FFSBlock *    block;
-        } FFSFile;
+        };
 
         using FFSBlocksMap = std::map<uint16_t, FFSBlock>;
         using FFSFilesMap = std::map<uint16_t, FFSFile>;

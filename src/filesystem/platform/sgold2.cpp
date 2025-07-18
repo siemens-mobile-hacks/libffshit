@@ -133,6 +133,8 @@ SGOLD2::FileHeader SGOLD2::read_file_header(const RawData &data) {
     int r = iconv(iccd, &inptr, &from_size, &ouptr, &to_size);
 
     if (r == -1) {
+        iconv_close(iccd);
+
         delete[] from;
         delete[] to;
 
@@ -143,6 +145,8 @@ SGOLD2::FileHeader SGOLD2::read_file_header(const RawData &data) {
 
     header.name = std::string(to);
 
+    iconv_close(iccd);
+    
     delete []from;
     delete []to;
 

@@ -108,12 +108,19 @@ SGOLD2_ELKA::FileHeader SGOLD2_ELKA::read_file_header(const FFSBlock &block) {
     int r = iconv(iccd, &inptr, &from_n, &ouptr, &to_n);
 
     if (r == -1) {
+        iconv_close(iccd);
+
+        delete []from;
+        delete []to;
+
         throw Exception("iconv(): {}", strerror(errno));
     }
 
     to[str_size - to_n] = 0x00;
 
     header.name = std::string(to);
+
+    iconv_close(iccd);
 
     delete []from;
     delete []to;

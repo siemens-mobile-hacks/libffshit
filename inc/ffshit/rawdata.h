@@ -24,7 +24,7 @@ class RawData {
         RawData(char *data, size_t data_size);
     
         void            add(char *data, size_t add_size);
-        void            add(const RawData &data);
+        void            add(const RawData &new_data);
 
         void            add_top(char *data, size_t add_size);
 

@@ -77,7 +77,7 @@ class SGOLD2 : public Base {
         static FilePart             read_file_part(const RawData &data);
 
         void                        read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id);
-        RawData                     read_full_data(FSBlocksMap &ffs_map, const FileHeader &header);
+        void                        read_full_data(FSBlocksMap &ffs_map, const FileHeader &header, RawData &file_data);
         void                        scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, bool skip_broken = false, std::string path = "/");
 
 };

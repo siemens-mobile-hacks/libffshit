@@ -292,9 +292,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
                     size_t read_size    = fs_block.header.size - FFS_MAX_DATA_SIZE_2;
 
                     if (fs_block.header.flags == 0xFFFFFFC0) {
-                        RawData file_data(this->partitions->get_data(), ff_boffset + fs_block.header.offset, FFS_MAX_DATA_SIZE_2);
-
-                        fs_block.data.add(file_data);
+                        fs_block.data = RawData(this->partitions->get_data(), ff_boffset + fs_block.header.offset, FFS_MAX_DATA_SIZE_2);
 
                         // ===============================
 
@@ -365,9 +363,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
                     size_data = ceil((read_size / 16.0) + 1) * 32.0;
 
                     if (fs_block.header.flags == 0xFFFFFFC0) {
-                        RawData file_data(this->partitions->get_data(), ff_boffset + fs_block.header.offset, FFS_MAX_DATA_SIZE_2);
-
-                        fs_block.data.add(file_data);
+                        fs_block.data = RawData(this->partitions->get_data(), ff_boffset + fs_block.header.offset, FFS_MAX_DATA_SIZE_2);
 
                         // ===============================
 
@@ -563,7 +559,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
     }
 }
 
-RawData SGOLD2_ELKA::read_full_data(FSBlocksMap &ffs_map, const FileHeader &header) {
+void SGOLD2_ELKA::read_full_data(FSBlocksMap &ffs_map, const FileHeader &header, RawData &file_data) {
     uint32_t data_id = header.id + 1;
 
     if (!ffs_map.count(data_id)) {
@@ -572,13 +568,11 @@ RawData SGOLD2_ELKA::read_full_data(FSBlocksMap &ffs_map, const FileHeader &head
 
     const FFSBlock &block = ffs_map.at(data_id);
 
-    RawData data_full(block.data);
+    file_data.add(block.data);
 
     if (header.next_part != 0xFFFFFFFF) {
-        read_recurse(ffs_map, data_full, header.next_part);
+        read_recurse(ffs_map, file_data, header.next_part);
     }
-
-    return data_full;
 }
 
 void SGOLD2_ELKA::read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id) {
@@ -619,7 +613,7 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
     }
 
     try {
-        dir_data = read_full_data(ffs_map, header);
+        read_full_data(ffs_map, header, dir_data);
     } catch (const FULLFLASH::BaseException &e) {
         if (skip_broken) {
             Log::Logger::warn("Skip. Broken directory: {}", e.what());
@@ -631,8 +625,6 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
             throw;
         }
     }
-
-    dir_data = read_full_data(ffs_map, header);
 
     DirList dir_list;
 
@@ -688,7 +680,7 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
                 uint32_t    data_id = file_header.id + 1;
 
                 if (ffs_map.count(data_id)) {
-                    file_data = read_full_data(ffs_map, file_header);
+                    read_full_data(ffs_map, file_header, file_data);
                 }
 
                 File::Ptr file = File::build(file_header.name, block_name + path, timestamp, file_data);

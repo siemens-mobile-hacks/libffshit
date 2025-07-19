@@ -279,7 +279,7 @@ void SGOLD2::read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id)
     }
 }
 
-RawData SGOLD2::read_full_data(FSBlocksMap &ffs_map, const FileHeader &header) {
+void SGOLD2::read_full_data(FSBlocksMap &ffs_map, const FileHeader &header, RawData &file_data) {
     print_file_header(header);
 
     uint32_t data_id = header.id + 1;
@@ -290,13 +290,11 @@ RawData SGOLD2::read_full_data(FSBlocksMap &ffs_map, const FileHeader &header) {
 
     const FFSBlock &block = ffs_map.at(data_id);
 
-    RawData data_full(block.data);
+    file_data.add(block.data);
 
     if (header.next_part != 0xFFFFFFFF) {
-        read_recurse(ffs_map, data_full, header.next_part);
+        read_recurse(ffs_map, file_data, header.next_part);
     }
-
-    return data_full;
 }
 
 void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, bool skip_broken, std::string path) {
@@ -313,7 +311,7 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
     }
 
     try {
-        data = read_full_data(ffs_map, header);
+        read_full_data(ffs_map, header, data);
     } catch (const FULLFLASH::BaseException &e) {
         if (skip_broken) {
             Log::Logger::warn("Skip. Broken directory: {}", e.what());
@@ -326,7 +324,8 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
         }
     }
 
-    size_t  offset  = 0;
+    size_t                  offset  = 0;
+    std::vector<uint16_t>   id_list;
 
     while (offset < data.get_size()) {
         fflush(stdout);
@@ -347,6 +346,10 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
             continue;
         }
 
+        id_list.push_back(id);
+    }
+
+    for (const auto &id : id_list) {
         if (!ffs_map.count(id)) {
             if (skip_broken) {
                 Log::Logger::warn("Skip. FFS Block ID {} not found", id);
@@ -375,7 +378,7 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
                 uint32_t    data_id = file_header.id + 1;
 
                 if (ffs_map.count(data_id)) {
-                    file_data = read_full_data(ffs_map, file_header);
+                    read_full_data(ffs_map, file_header, file_data);
                 }
             
                 File::Ptr file = File::build(file_header.name, block_name + path, timestamp, file_data);

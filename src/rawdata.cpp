@@ -5,8 +5,7 @@
 
 namespace FULLFLASH {
 
-RawData::RawData() : size(0) { 
-}
+RawData::RawData() : size(0) {}
 
 RawData::RawData(char *data, size_t data_size) {
     if (data == nullptr) {
@@ -128,12 +127,16 @@ void RawData::add_top(char *data, size_t add_size) {
     this->size = size_new;
 }
 
-void RawData::add(const RawData &data) {
-    if (data.get_size() == 0) {
+void RawData::add(const RawData &new_data) {
+    if (!new_data.data) {
         return;
     }
 
-    add(data.data.get(), data.size);
+    if (new_data.get_size() == 0) {
+        return;
+    }
+
+    add(new_data.data.get(), new_data.size);
 }
 
 void RawData::write(size_t offset, char *data, size_t write_size) {

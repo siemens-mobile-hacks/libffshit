@@ -206,25 +206,15 @@ void SGOLD::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
                 block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.size), 1);
                 block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.offset), 1);
 
-                // Log::Logger::debug("    ==== Offset: {:08X} ====", block.get_addr() + offset);
-                // Log::Logger::debug("    ID:     {:08X}", fs_block.header.id);
-                // Log::Logger::debug("    Size:   {:08X} {}", fs_block.header.size, fs_block.header.size);
-                // Log::Logger::debug("    Offset: {:08X}", fs_block.header.offset);
-                // Log::Logger::debug("    Flags:  {:08X}", fs_block.header.flags);
+                print_fit_header(fs_block.header);
 
                 if (fs_block.header.flags == 0xFFFFFFFF) {
                     break;
                 }
 
-                if (fs_block.header.flags == 0xFFFFFF00) {
+                if (fs_block.header.flags != 0xFFFFFFC0) {
                     continue;
                 }
-
-                // if (fs_block.header.offset >= block_size) {
-                //     continue;
-                // }
-
-                print_fit_header(fs_block.header);
 
                 fs_block.data = RawData(block_data, fs_block.header.offset, fs_block.header.size);
 

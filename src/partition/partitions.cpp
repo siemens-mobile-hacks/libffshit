@@ -856,7 +856,7 @@ void Partitions::detect_platform() {
         if (broken_model) {
             Log::Logger::warn("Couldn't detect model");
 
-            model = PlatformToString.at(platform);
+            model = bc;
         }
     }
 }

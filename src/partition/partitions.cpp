@@ -675,6 +675,12 @@ void Partitions::old_search_partitions_egold_ce() {
             continue;
         }
 
+        std::string part_name(header.name);
+
+        if (part_name.find("FFS") == std::string::npos) {
+            continue;
+        }
+
         if (headers.count(block_addr)) {
             throw Exception("Block with address {:08X} already exists", block_addr);
         }

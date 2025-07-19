@@ -183,6 +183,8 @@ void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_add
         }
     }
 
+    inspect();
+
     if (!partitions_map.size()) {
         throw Exception("Partitions not found");
     }
@@ -881,6 +883,19 @@ void Partitions::old_search_partitions_sgold2_elka() {
         uint32_t    block_offset    = offset - (block_size * (block_count - 1));
 
         partitions_map[block_name].add_block(Block(header, RawData(buf + block_offset, block_size * block_count), block_offset, block_size * block_count));
+    }
+}
+
+void Partitions::inspect() {
+    for (auto iter = partitions_map.begin(); iter != partitions_map.end();) {
+        auto &pair = *iter;
+
+        if (pair.second.get_blocks().size() == 0) {
+            Log::Logger::warn("Partition {} has 0 blocks. Removed from part. map", pair.first);
+            partitions_map.erase(iter++);
+        } else {
+            ++iter;
+        }
     }
 }
 

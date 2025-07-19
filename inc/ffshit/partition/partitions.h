@@ -52,6 +52,8 @@ class Partitions {
         void                        old_search_partitions_sgold_sgold2();
         void                        old_search_partitions_sgold2_elka();
 
+        void                        inspect();
+
         std::vector<uint32_t>       find_pattern(const Patterns::Readable &pattern_readable, uint32_t start = 0, bool break_first = false);
 
 };

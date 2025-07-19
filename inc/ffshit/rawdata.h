@@ -17,11 +17,14 @@ class RawData {
         using Data = std::shared_ptr<char[]>;
 
         RawData();
+        RawData(RawData &&prev);
         RawData(const RawData &prev);
         RawData(const RawData &prev, size_t offset, size_t data_size);
         RawData(std::ifstream &file, size_t offset, size_t data_size);
-
         RawData(char *data, size_t data_size);
+
+        RawData &       operator =(const RawData &prev);
+        RawData &       operator =(RawData &&prev);
     
         void            add(char *data, size_t add_size);
         void            add(const RawData &new_data);
@@ -48,7 +51,7 @@ class RawData {
             offset += count * sizeof(T);
         }
 
-        Data            get_data() const;
+        const Data &    get_data() const;
         const size_t    get_size() const;
 
     private:

@@ -26,6 +26,12 @@ RawData::RawData(char *data, size_t data_size) {
 RawData::RawData(const RawData &prev) {
     // Валидно, копирование пустого RawData
 
+    if (prev.size == 0) {
+        this->size = 0;
+
+        return;
+    }
+
     if (!prev.data) {
         this->size = 0;
 
@@ -38,7 +44,32 @@ RawData::RawData(const RawData &prev) {
     memcpy(this->data.get(), prev.data.get(), prev.size);
 }
 
+RawData::RawData(RawData &&prev) {
+    // Валидно, перемещение пустого RawData
+
+    if (prev.size == 0) {
+        this->size = 0;
+
+        return;
+    }
+
+    if (!prev.data) {
+        this->size = 0;
+
+        return;
+    }
+
+    this->size = prev.size;
+    this->data = Data(new char[prev.size]);
+
+    memmove(this->data.get(), prev.data.get(), prev.size);
+}
+
 RawData::RawData(const RawData &prev, size_t offset, size_t data_size) {
+    if (prev.size == 0) {
+        throw Exception("RawData() form prev. with offset, size. prev.size == 0");
+    }
+
     if (!prev.data) {
         throw Exception("RawData() form prev. with offset, size. prev.data invalid ptr");
     }
@@ -67,6 +98,64 @@ RawData::RawData(std::ifstream &file, size_t offset, size_t data_size) {
 
     file.seekg(offset, std::ios_base::beg);
     file.read(data.get(), data_size);
+}
+
+RawData &RawData::operator =(const RawData &prev) {
+    if (this != &prev) {
+        if (prev.size == 0) {
+            this->size = 0;
+
+            return *this;
+        }
+
+        if (!prev.data) {
+            this->size = 0;
+
+            return *this;
+        }
+
+        if (this->size >= prev.size) {
+            this->size = prev.size;
+
+            memcpy(this->data.get(), prev.data.get(), prev.size);
+        } else {
+            this->size = prev.size;
+            this->data = Data(new char[prev.size]);
+
+            memcpy(this->data.get(), prev.data.get(), prev.size);
+        }
+    }
+
+    return *this;
+}
+
+RawData &RawData::operator =(RawData &&prev) {
+    if (this != &prev) {
+        if (prev.size == 0) {
+            this->size = 0;
+
+            return *this;
+        }
+
+        if (!prev.data) {
+            this->size = 0;
+
+            return *this;
+        }
+
+        if (this->size >= prev.size) {
+            this->size = prev.size;
+
+            memmove(this->data.get(), prev.data.get(), prev.size);
+        } else {
+            this->size = prev.size;
+            this->data = Data(new char[prev.size]);
+
+            memmove(this->data.get(), prev.data.get(), prev.size);
+        }
+    }
+
+    return *this;
 }
 
 void RawData::add(char *data, size_t add_size) {
@@ -260,7 +349,7 @@ RawData RawData::read_aligned(size_t read_offset, size_t read_size) const {
     return data_ret;
 }
 
-RawData::Data RawData::get_data() const {
+const RawData::Data &RawData::get_data() const {
     return data;
 }
 

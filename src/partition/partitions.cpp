@@ -107,68 +107,10 @@ static bool is_empty(const char *buf, size_t size) {
 
 // =========================================================================
 
-Partitions::Partitions(std::filesystem::path fullflash_path, bool old_search_algorithm, uint32_t search_start_addr) {
-    sl75_bober_kurwa = false;
-    
-    this->fullflash_path = fullflash_path;
+Partitions::Partitions(const RawData& raw_data, Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr) {
+    this->data      = raw_data;
+    this->detector  = detector;
 
-    std::ifstream file;
-
-    file.open(fullflash_path, std::ios_base::binary | std::ios_base::in);
-
-    if (!file.is_open()) {
-        throw Exception("Couldn't open file '{}': {}\n", fullflash_path.string(), std::string(strerror(errno)));
-    }
-
-    file.seekg(0, std::ios_base::end);
-    size_t data_size = file.tellg();
-    file.seekg(0, std::ios_base::beg);
-
-    this->data = RawData(file, 0, data_size);
-    
-    process(old_search_algorithm, search_start_addr);
-}
-
-Partitions::Partitions(std::filesystem::path fullflash_path, Platform from_platform, bool old_search_algorithm, uint32_t search_start_addr) {
-    std::ifstream file;
-
-    this->fullflash_path = fullflash_path;
-
-    file.open(fullflash_path, std::ios_base::binary | std::ios_base::in);
-
-    if (!file.is_open()) {
-        throw Exception("Couldn't open file '{}': {}\n", fullflash_path.string(), std::string(strerror(errno)));
-    }
-
-    file.seekg(0, std::ios_base::end);
-    size_t data_size = file.tellg();
-    file.seekg(0, std::ios_base::beg);
-
-    this->data      = RawData(file, 0, data_size);
-
-    process(from_platform, old_search_algorithm, search_start_addr);
-}
-
-Partitions::Partitions(char *ff_data, size_t ff_data_size, bool old_search_algorithm, uint32_t search_start_addr) {
-    sl75_bober_kurwa = false;
-    
-    this->data = RawData(ff_data, ff_data_size);
-
-    process(old_search_algorithm, search_start_addr);
-}
-
-Partitions::Partitions(char *ff_data, size_t ff_data_size, Platform from_platform, bool old_search_algorithm, uint32_t search_start_addr) {
-    std::ifstream file;
-
-    this->data      = RawData(ff_data, ff_data_size);
-
-    process(from_platform, old_search_algorithm, search_start_addr);
-}
-
-void Partitions::process(bool old_search_algorithm, uint32_t search_start_addr) {
-    x65flasher_fix();
-
-    detect_platform();
     search_partitions(old_search_algorithm, search_start_addr);
 
     Log::Logger::debug("Found {} partitions", partitions_map.size());
@@ -176,52 +118,6 @@ void Partitions::process(bool old_search_algorithm, uint32_t search_start_addr) 
     for (const auto &pair : partitions_map) {
         Log::Logger::debug("  {:8s} {}", pair.first, pair.second.get_blocks().size());
     }
-}
-
-void Partitions::process(Platform from_platform, bool old_search_algorithm, uint32_t search_start_addr) {
-    x65flasher_fix();
-
-    this->platform  = from_platform;
-    this->model     = PlatformToString.at(from_platform);
-
-    search_partitions(old_search_algorithm, search_start_addr);
-
-    for (const auto &pair : partitions_map) {
-        Log::Logger::debug("{:10s} {}", pair.first, pair.second.get_blocks().size());
-    }
-}
-
-void Partitions::x65flasher_fix() {
-    char FBK[3];
-
-    data.read_type<char>(0x0, FBK, 3);
-
-    bool x65_flasher_detected = false;
-
-    if (FBK[0] == 'F' &&
-        FBK[1] == 'B' &&
-        FBK[2] == 'K') {
-        x65_flasher_detected = true;
-    }
-
-    if (!x65_flasher_detected) {
-        return;
-    }
-
-    Log::Logger::warn("x65flasher detected");
-
-    RawData tmp = this->data;
-
-    size_t old_size = tmp.get_size();
-    size_t new_size = old_size - 0x10;
-
-    this->data =  RawData(tmp, 0x10, new_size);
-
-    Log::Logger::warn("x65flasher fixed {:08X} -> {:08X}", old_size, new_size);
-}
-
-const std::filesystem::path &Partitions::get_file_path() const {
-    return fullflash_path;
 }
 
 const Partitions::Map &Partitions::get_partitions() const {
@@ -232,21 +128,9 @@ const RawData & Partitions::get_data() const {
     return data;
 }
 
-const Platform Partitions::get_platform() const {
-    return platform;
-}
-
-const std::string &Partitions::get_imei() const {
-    return imei;
-}
-
-const std::string &Partitions::get_model() const {
-    return model;
-}
-
 void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_addr) {
     auto old_search = [&]() {
-        switch (platform) {
+        switch (detector->get_platform()) {
             case Platform::EGOLD_CE:    block_size = 0x10000; old_search_partitions_egold_ce(); break;
             case Platform::SGOLD:
             case Platform::SGOLD2:      block_size = 0x10000; old_search_partitions_sgold_sgold2(); break;
@@ -256,7 +140,7 @@ void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_add
     };
 
     auto new_search = [&]() {
-        switch (platform) {
+        switch (detector->get_platform()) {
             case Platform::EGOLD_CE: {
                 Log::Logger::warn("New partitions search algorithm not implemented yet for EGOLD_CE");
 
@@ -457,7 +341,7 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
     // auto address_list    = find_pattern(pattern_nsg);
     auto address_list    = find_pattern(pattern_nsg, start_addr);
     
-    if (sl75_bober_kurwa) {
+    if (detector->is_sl75()) {
         Log::Logger::warn("SL75 ja pierdole!");
     }
 
@@ -530,12 +414,7 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                 data.read_type<uint32_t>(table_addr + i, &block_addr);
                 data.read_type<uint32_t>(table_addr + i + 4, &block_size);
 
-                if (((block_addr & 0xFF000000) > 0xA2000000) && sl75_bober_kurwa) {
-                    if (!sl75_bober_kurwa) {
-                        // throw Exception("!SL75_ja_pierdole?");
-                        break;
-                    }
-
+                if (((block_addr & 0xFF000000) > 0xA2000000) && detector->is_sl75()) {
                     uint32_t shit = 0xA4000000 - 0xA2000000;
                     Log::Logger::debug("  JA PIERDOLE! {:08X} -> {:08X}", block_addr, block_addr - shit);
 
@@ -612,7 +491,7 @@ bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
     // auto address_list    = find_pattern(pattern_nsg);
     auto address_list    = find_pattern(pattern_nsg, start_addr);
     
-    if (sl75_bober_kurwa) {
+    if (detector->is_sl75()) {
         Log::Logger::warn("SL75 ja pierdole!");
     }
 
@@ -747,118 +626,6 @@ bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
     }
 
     return true;
-}
-
-void Partitions::detect_platform() {
-    std::string bc;
-
-    auto check_string = [](const std::string &data) -> bool {
-        bool valid = true;
-
-        std::for_each(data.cbegin(), data.cend(), [&](char c) {
-            if (!isprint(c)) {
-                valid = false;
-            }
-        });
-
-        return valid;
-    };
-
-    data.read_string(BC65_BC75_OFFSET, bc, 1);
-
-    if (bc == "BC65" || bc == "BCORE65") {
-        platform = Platform::SGOLD;
-
-        data.read_string(X65_MODEL_OFFSET, model);
-        data.read_string(X65_IMEI_OFFSET, imei);
-
-        if (imei.length() != 15) {
-            imei.clear();
-            data.read_string(X65_7X_IMEI_OFFSET, imei);
-        };
-    } else if (bc == "BC75") {
-        platform = Platform::SGOLD2;
-
-        data.read_string(X75_MODEL_OFFSET, model);
-        data.read_string(X75_IMEI_OFFSET, imei);
-    } else {
-        bc.clear();
-
-        data.read_string(BC85_OFFSET, bc, 1);
-
-        if (bc == "BC85") {
-            platform = Platform::SGOLD2_ELKA;
-
-            data.read_string(X85_MODEL_OFFSET, model);
-            data.read_string(X85_IMEI_OFFSET, imei);
-
-            if (!(check_string(model) & check_string(imei))) {
-                imei.clear();
-
-                data.read_string(X85_MODEL_OFFSET + 0x10, model);
-                data.read_string(X85_IMEI_OFFSET + 0x10, imei);
-            }
-        } else {
-            platform = Platform::UNK;
-        }
-    }
-
-
-    if (platform == Platform::UNK) {
-        for (const auto &offset : EGOLD_INFO_OFFSETS) {
-            std::string magick;
-
-            data.read_string(offset + EGOLD_MAGICK_SIEMENS_OFFSET, magick);
-
-            if (magick != "SIEMENS") {
-                continue;
-            }
-
-            data.read_string(offset + EGOLD_MODEL_OFFSET, model);
-
-            platform = Platform::EGOLD_CE;
-
-            break;
-        }
-    }
-
-    if (platform == Platform::SGOLD2) {
-        std::string model_local(model);
-
-        System::to_lower(model_local);
-
-        if (model_local.find("sl75") != std::string::npos) {
-            sl75_bober_kurwa = true;
-        } else if (data.get_size() > 0x04000000) {
-            sl75_bober_kurwa = true;
-        }
-    }
-
-    if (platform != Platform::UNK) {
-        bool borken_imei = false;
-        bool broken_model = false;
-
-        if (imei.size() != 15) {
-            borken_imei = true;
-        } else {
-            borken_imei = !check_string(imei);
-        }
-
-        broken_model = !check_string(model);
-
-        if (borken_imei) {
-            Log::Logger::warn("Couldn't detect IMEI");
-            Log::Logger::debug("IMEI broken: {}", imei);
-
-            imei.clear();
-        }
-
-        if (broken_model) {
-            Log::Logger::warn("Couldn't detect model");
-
-            model = bc;
-        }
-    }
 }
 
 void Partitions::old_search_partitions_egold_ce() {

@@ -41,6 +41,8 @@ set(SOURCES_LIST
     src/version.cpp
     src/system.cpp
     src/rawdata.cpp
+    src/fullflash.cpp
+    src/detector.cpp
     src/partition/block.cpp
     src/partition/partition.cpp
     src/partition/partitions.cpp
@@ -56,6 +58,8 @@ set(SOURCES_LIST
 set(PUBLIC_HEADERS_LIST
     inc/ffshit/version.h
     inc/ffshit/rawdata.h
+    inc/ffshit/detector.h
+    inc/ffshit/fullflash.h
     inc/ffshit/help.h
     inc/ffshit/patterns/ex.h
     inc/ffshit/patterns/raw.h

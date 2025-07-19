@@ -3,6 +3,8 @@
 
 #include "ffshit/log/interface.h"
 
+#include <fmt/format.h>
+
 namespace FULLFLASH {
 namespace Log {
 

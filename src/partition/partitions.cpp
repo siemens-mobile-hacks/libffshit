@@ -107,8 +107,7 @@ static bool is_empty(const char *buf, size_t size) {
 
 // =========================================================================
 
-Partitions::Partitions(const RawData& raw_data, Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr) {
-    this->data      = raw_data;
+Partitions::Partitions(const RawData& raw_data, Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr) : data(raw_data) {
     this->detector  = detector;
 
     search_partitions(old_search_algorithm, search_start_addr);
@@ -250,14 +249,20 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
             data.read_string(name_addr, partition_name);
 
             if (!is_printable(partition_name.data(), partition_name.size())) {
+                // Log::Logger::debug("{}", partition_name);
+
                 continue;
             }
 
             if (partition_name.find(" ") != std::string::npos) {
+                // Log::Logger::debug("{}", partition_name);
+
                 continue;
             }
 
             if (!check_part_name(partition_name)) {
+                // Log::Logger::debug("{}", partition_name);
+
                 continue;
             }
 
@@ -328,7 +333,21 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
         }
 
         if (!partitions_map.empty()) {
-            break;
+            bool ffs_found = false;
+
+            for (const auto &pair : partitions_map) {
+                if (pair.first.find("FFS") != std::string::npos) {
+                    ffs_found = true;
+
+                    break;
+                }
+            }
+
+            if (ffs_found) {
+                break;
+            }
+
+            partitions_map.clear();
         }
     }
 

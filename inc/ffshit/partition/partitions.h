@@ -35,7 +35,7 @@ class Partitions {
         Map                         partitions_map;
         
         Detector::Ptr               detector;
-        RawData                     data;
+        const RawData &             data;
 
         bool                        check_part_name(const std::string &name);
 

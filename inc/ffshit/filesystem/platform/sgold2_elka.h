@@ -16,7 +16,7 @@ class SGOLD2_ELKA : public Base {
             return std::make_shared<SGOLD2_ELKA>(partitions);
         }
 
-        void                        load(bool skip_broken = false, bool skip_dup = false, bool dump_data = false) override final;
+        void                        load(bool skip_broken = false, bool skip_dup = false, bool dump_data = false, std::vector<std::string> parts_to_extract = {}) override final;
         const Directory::Ptr        get_root() const override final;
 
     private:
@@ -77,7 +77,7 @@ class SGOLD2_ELKA : public Base {
 
         std::vector<uint32_t>       recourse_protector;
 
-        void                        parse_FIT(bool skip_broken, bool skip_dup, bool dump_data);
+        void                        parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::vector<std::string> parts_to_extract);
 
         static void                 print_fit_header(const SGOLD2_ELKA::FITHeader &header);
         static void                 print_dir_header(const DirHeader &header);

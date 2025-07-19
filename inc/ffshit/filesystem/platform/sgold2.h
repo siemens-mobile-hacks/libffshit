@@ -16,7 +16,7 @@ class SGOLD2 : public Base {
             return std::make_shared<SGOLD2>(partitions);
         }
 
-        void                        load(bool skip_broken = false, bool skip_dup = false, bool dump_data = false) override final;
+        void                        load(bool skip_broken = false, bool skip_dup = false, bool dump_data = false, std::vector<std::string> parts_to_extract = {}) override final;
         const Directory::Ptr        get_root() const override final;
 
     private:
@@ -67,7 +67,7 @@ class SGOLD2 : public Base {
         std::vector<uint32_t>       recourse_protector;
 
         static void                 print_fit_header(const SGOLD2::FITHeader &header);
-        void                        parse_FIT(bool skip_broken, bool skip_dup, bool dump_data);
+        void                        parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::vector<std::string> parts_to_extract);
 
         static void                 print_file_header(const FileHeader &header);
         static void                 print_file_part(const FilePart &part);

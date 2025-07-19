@@ -16,7 +16,7 @@ class Base {
 
         Base() { }
 
-        virtual void                    load(bool skip_broken = false, bool skip_dup = false, bool dump_data = false) = 0;
+        virtual void                    load(bool skip_broken = false, bool skip_dup = false, bool dump_data = false, std::vector<std::string> parts_to_extract = {}) = 0;
         virtual const Directory::Ptr    get_root() const = 0;
 
         virtual ~Base() { }

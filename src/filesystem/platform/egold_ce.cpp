@@ -15,8 +15,8 @@ EGOLD_CE::EGOLD_CE(Partitions::Partitions::Ptr partitions) : partitions(partitio
     root_dir = Directory::build(ROOT_NAME, "/");
 }
 
-void EGOLD_CE::load(bool skip_broken, bool skip_dup, bool dump_data) {
-    parse_FIT(skip_broken, skip_dup, dump_data);
+void EGOLD_CE::load(bool skip_broken, bool skip_dup, bool dump_data, std::vector<std::string> parts_to_extract) {
+    parse_FIT(skip_broken, skip_dup, dump_data, parts_to_extract);
 }
 
 const Directory::Ptr EGOLD_CE::get_root() const {
@@ -67,7 +67,7 @@ void EGOLD_CE::print_data(const FFSBlock &block) {
     }
 }
 
-void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
+void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::vector<std::string> parts_to_extract) {
     const auto &part_map = partitions->get_partitions();
 
     for (const auto &pair : part_map) {
@@ -76,6 +76,24 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
         const auto &        part_blocks = part_info.get_blocks();
 
         if (part_name.find("FFS") != std::string::npos) {
+            if (parts_to_extract.size() != 0) {
+                bool is_extract = false;
+
+                for (const auto &part_to_extract : parts_to_extract) {
+                    if (part_name == part_to_extract) {
+                        is_extract = true;
+
+                        break;
+                    }
+                }
+
+                if (!is_extract) {
+                    Log::Logger::warn("Partition {} excluded", part_name);
+
+                    continue;
+                }
+            }
+
             Log::Logger::debug("Partition: {}, Blocks {}", part_name, part_blocks.size());
         } else {
             continue;

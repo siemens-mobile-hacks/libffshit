@@ -112,7 +112,7 @@ Partitions::Partitions(const RawData& raw_data, Detector::Ptr detector, bool old
 
     search_partitions(old_search_algorithm, search_start_addr);
 
-    Log::Logger::debug("Found {} partitions", partitions_map.size());
+    Log::Logger::debug("Found {} FFS partitions", partitions_map.size());
 
     for (const auto &pair : partitions_map) {
         Log::Logger::debug("  {:8s} {}", pair.first, pair.second.get_blocks().size());
@@ -249,20 +249,14 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
             data.read_string(name_addr, partition_name);
 
             if (!is_printable(partition_name.data(), partition_name.size())) {
-                // Log::Logger::debug("{}", partition_name);
-
                 continue;
             }
 
             if (partition_name.find(" ") != std::string::npos) {
-                // Log::Logger::debug("{}", partition_name);
-
                 continue;
             }
 
             if (!check_part_name(partition_name)) {
-                // Log::Logger::debug("{}", partition_name);
-
                 continue;
             }
 
@@ -280,11 +274,15 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
 
                 Log::Logger::debug("  Block:        Name: {}, Addr: {:08X}, size: {:08X}, table: {:08X}", partition_name, masked_block_addr, masked_block_size, table_addr + i);
 
-                if (!partitions_map.count(partition_name)) {
-                    partitions_map[partition_name] = Partition(partition_name);
-                }
+                // if (!partitions_map.count(partition_name)) {
+                //     partitions_map[partition_name] = Partition(partition_name);
+                // }
 
                 if (partition_name.find("FFS") != std::string::npos) {
+                    if (!partitions_map.count(partition_name)) {
+                        partitions_map[partition_name] = Partition(partition_name);
+                    }
+
                     Block::Header header;
 
                     size_t  block_rd_offset = masked_block_addr;
@@ -311,22 +309,23 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
                                 masked_block_size)
                     );
                 } else {
-                    Block::Header header;
+                    // На самом деле, мне нужны только FFS, пока
+                    // Block::Header header;
 
-                    // ну пусть будет
-                    size_t  block_rd_offset = masked_block_addr;
+                    // // ну пусть будет
+                    // size_t  block_rd_offset = masked_block_addr;
 
-                    data.read<char>(block_rd_offset, header.name, 8);
-                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
-                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
-                    data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
+                    // data.read<char>(block_rd_offset, header.name, 8);
+                    // data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
+                    // data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
+                    // data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
 
-                    partitions_map[partition_name].add_block(
-                        Block(  header, 
-                                RawData(data.get_data().get() + masked_block_addr, masked_block_size), 
-                                masked_block_addr, 
-                                masked_block_size)
-                    );
+                    // partitions_map[partition_name].add_block(
+                    //     Block(  header, 
+                    //             RawData(data.get_data().get() + masked_block_addr, masked_block_size), 
+                    //             masked_block_addr, 
+                    //             masked_block_size)
+                    // );
 
                 }
             }
@@ -445,11 +444,11 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
 
                 Log::Logger::debug("  Block:        Name: {}, Addr: {:08X}, size: {:08X}, table: {:08X}", partition_name, masked_block_addr, masked_block_size, table_addr + i);
 
-                if (!partitions_map.count(partition_name)) {
-                    partitions_map[partition_name] = Partition(partition_name);
-                }
-
                 if (partition_name.find("FFS") != std::string::npos) {
+                    if (!partitions_map.count(partition_name)) {
+                        partitions_map[partition_name] = Partition(partition_name);
+                    }
+
                     Block::Header header;
 
                     size_t  block_rd_offset = masked_block_addr;
@@ -476,22 +475,23 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                                 masked_block_size)
                     );
                 } else {
-                    Block::Header header;
+                    // На самом деле, мне нужны только FFS, пока
+                    // Block::Header header;
 
-                    // ну пусть будет
-                    size_t  block_rd_offset = masked_block_addr;
+                    // // ну пусть будет
+                    // size_t  block_rd_offset = masked_block_addr;
 
-                    data.read<char>(block_rd_offset, header.name, 8);
-                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
-                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
-                    data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
+                    // data.read<char>(block_rd_offset, header.name, 8);
+                    // data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
+                    // data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
+                    // data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
 
-                    partitions_map[partition_name].add_block(
-                        Block(  header, 
-                                RawData(data.get_data().get() + masked_block_addr, masked_block_size), 
-                                masked_block_addr, 
-                                masked_block_size)
-                    );
+                    // partitions_map[partition_name].add_block(
+                    //     Block(  header, 
+                    //             RawData(data.get_data().get() + masked_block_addr, masked_block_size), 
+                    //             masked_block_addr, 
+                    //             masked_block_size)
+                    // );
                 }
             }
         }
@@ -588,11 +588,11 @@ bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
 
                 Log::Logger::debug("  Block:        Name: {}, Addr: {:08X}, size: {:08X}, table: {:08X}", partition_name, masked_block_addr, masked_block_size, table_addr + i);
 
-                if (!partitions_map.count(partition_name)) {
-                    partitions_map[partition_name] = Partition(partition_name);
-                }
-
                 if (partition_name.find("FFS") != std::string::npos) {
+                    if (!partitions_map.count(partition_name)) {
+                        partitions_map[partition_name] = Partition(partition_name);
+                    }
+
                     Block::Header header;
 
                     size_t  block_rd_offset = masked_block_addr + masked_block_size - 0x20;
@@ -619,22 +619,23 @@ bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
                                 masked_block_size)
                     );
                 } else {
-                    Block::Header header;
+                    // На самом деле, мне нужны только FFS, пока
+                    // Block::Header header;
 
-                    // ну пусть будет
-                    size_t  block_rd_offset = masked_block_addr;
+                    // // ну пусть будет
+                    // size_t  block_rd_offset = masked_block_addr;
 
-                    data.read<char>(block_rd_offset, header.name, 8);
-                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
-                    data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
-                    data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
+                    // data.read<char>(block_rd_offset, header.name, 8);
+                    // data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
+                    // data.read<uint16_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
+                    // data.read<uint32_t>(block_rd_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
 
-                    partitions_map[partition_name].add_block(
-                        Block(  header, 
-                                RawData(data.get_data().get() + masked_block_addr, masked_block_size), 
-                                masked_block_addr, 
-                                masked_block_size)
-                    );
+                    // partitions_map[partition_name].add_block(
+                    //     Block(  header, 
+                    //             RawData(data.get_data().get() + masked_block_addr, masked_block_size), 
+                    //             masked_block_addr, 
+                    //             masked_block_size)
+                    // );
                 }
             }
         }
@@ -757,7 +758,10 @@ void Partitions::old_search_partitions_sgold_sgold2() {
         header.name[end_of_name] = '\0';
 
         std::string block_name(header.name);
-        std::vector<std::string> names = { "EEFULL", "EELITE", "FFS" };
+
+        // На самом деле, мне нужны только FFS, пока
+        // std::vector<std::string> names = { "EEFULL", "EELITE", "FFS" };
+        std::vector<std::string> names = { "FFS" };
 
         bool any_find = false;
 
@@ -844,7 +848,10 @@ void Partitions::old_search_partitions_sgold2_elka() {
         header.name[end_of_name] = '\0';
 
         std::string block_name(header.name);
-        std::vector<std::string> names = { "EEFULL", "EELITE", "FFS" };
+
+        // На самом деле, мне нужны только FFS, пока
+        // std::vector<std::string> names = { "EEFULL", "EELITE", "FFS" };
+        std::vector<std::string> names = { "FFS" };
 
         bool any_find = false;
 

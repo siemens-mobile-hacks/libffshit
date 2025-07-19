@@ -69,18 +69,6 @@ void Detector::detect_platform() {
         }
     }
 
-    if (platform == Platform::SGOLD2) {
-        std::string model_local(model);
-
-        System::to_lower(model_local);
-
-        if (model_local.find("sl75") != std::string::npos) {
-            sl75_bober_kurwa = true;
-        } else if (data.get_size() > 0x04000000) {
-            sl75_bober_kurwa = true;
-        }
-    }
-
     if (platform == Platform::UNK) {
         for (const auto &offset : EGOLD_INFO_OFFSETS) {
             std::string magick;
@@ -222,6 +210,16 @@ void Detector::detect_imei_model() {
         case Platform::SGOLD2: {
             data.read_string(X75_MODEL_OFFSET, model);
             data.read_string(X75_IMEI_OFFSET, imei);
+
+            std::string model_local(model);
+
+            System::to_lower(model_local);
+
+            if (model_local.find("sl75") != std::string::npos) {
+                sl75_bober_kurwa = true;
+            } else if (data.get_size() > 0x04000000) {
+                sl75_bober_kurwa = true;
+            }
 
             break;
         }

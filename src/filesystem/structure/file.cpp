@@ -37,7 +37,7 @@ const TimePoint File::get_timestamp() const {
     return timestamp;
 }
 
-RawData File::get_data() const {
+const RawData &File::get_data() const {
     return data;
 }
 

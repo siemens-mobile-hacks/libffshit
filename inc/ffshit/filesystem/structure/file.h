@@ -26,7 +26,7 @@ class File {
         const std::string & get_path() const;
         const TimePoint     get_timestamp() const;
 
-        RawData             get_data() const;
+        const RawData &     get_data() const;
         const size_t        get_size() const;
 
     private:

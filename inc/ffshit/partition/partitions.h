@@ -8,8 +8,9 @@
 
 #include "ffshit/detector.h"
 
+#include "thirdparty/ordered_map.h"
+
 #include <memory>
-#include <map>
 #include <regex>
 #include <filesystem>
 
@@ -19,7 +20,7 @@ namespace Partitions {
 class Partitions {
     public:
         using Ptr       = std::shared_ptr<Partitions>;
-        using Map       = std::map<std::string, Partition>;
+        using Map       = tsl::ordered_map<std::string, Partition>;
         
         Partitions(const RawData& raw_data, Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0);
 

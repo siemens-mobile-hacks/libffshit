@@ -651,7 +651,7 @@ bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
 void Partitions::old_search_partitions_egold_ce() {
     auto addresses   = find_pattern(pattern_egold, 0x0, false);
 
-    std::map<uint32_t, Block::Header> headers;
+    tsl::ordered_map<uint32_t, Block::Header> headers;
 
     for (const auto &addr : addresses) {
         if ((addr & 0xFFF) != 0x80) {

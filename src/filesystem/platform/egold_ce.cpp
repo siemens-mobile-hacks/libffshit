@@ -81,8 +81,8 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data) {
             continue;
         }
 
-        std::map<uint16_t, FFSBlock> ffs_blocks;
-        std::map<uint16_t, FFSFile>  ffs_files;
+        tsl::ordered_map<uint16_t, FFSBlock> ffs_blocks;
+        tsl::ordered_map<uint16_t, FFSFile>  ffs_files;
 
         Log::Logger::debug("Collecting FFS blocks");
 

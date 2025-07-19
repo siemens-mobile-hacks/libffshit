@@ -63,8 +63,8 @@ class EGOLD_CE : public Base {
             const FFSBlock *    block;
         };
 
-        using FFSBlocksMap = std::map<uint16_t, FFSBlock>;
-        using FFSFilesMap = std::map<uint16_t, FFSFile>;
+        using FFSBlocksMap  = tsl::ordered_map<uint16_t, FFSBlock>;
+        using FFSFilesMap   = tsl::ordered_map<uint16_t, FFSFile>;
 
         static constexpr uint32_t   ID_ADD = 6000;
 

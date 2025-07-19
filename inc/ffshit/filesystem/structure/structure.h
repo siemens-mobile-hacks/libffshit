@@ -4,12 +4,12 @@
 #include "ffshit/filesystem/structure/file.h"
 #include "ffshit/filesystem/structure/directory.h"
 
-#include <map>
+#include "thirdparty/ordered_map.h"
 
 namespace FULLFLASH {
 namespace Filesystem {
 
-using FSMap = std::map<std::string, Directory::Ptr>;
+using FSMap = tsl::ordered_map<std::string, Directory::Ptr>;
 
 };
 };

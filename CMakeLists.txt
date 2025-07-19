@@ -56,6 +56,8 @@ set(SOURCES_LIST
     src/filesystem/platform/builder.cpp)
 
 set(PUBLIC_HEADERS_LIST
+    inc/thirdparty/ordered_hash.h
+    inc/thirdparty/ordered_map.h
     inc/ffshit/version.h
     inc/ffshit/rawdata.h
     inc/ffshit/detector.h

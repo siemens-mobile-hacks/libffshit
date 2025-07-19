@@ -62,7 +62,7 @@ class SGOLD : public Base {
             uint16_t    next_part       = 0x0;
         };
 
-        using FSBlocksMap   = std::map<uint16_t, FFSBlock>;
+        using FSBlocksMap   = tsl::ordered_map<uint16_t, FFSBlock>;
 
         Partitions::Partitions::Ptr partitions;
         Directory::Ptr              root_dir;

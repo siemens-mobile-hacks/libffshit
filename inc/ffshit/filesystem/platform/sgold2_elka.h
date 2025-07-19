@@ -69,8 +69,8 @@ class SGOLD2_ELKA : public Base {
             uint32_t    next_part       = 0x0;
         };
 
-        using FSBlocksMap       = std::map<uint16_t, FFSBlock>;
-        using FSBlocksMapList   = std::map<uint16_t, std::vector<FFSBlock>>;
+        using FSBlocksMap       = tsl::ordered_map<uint16_t, FFSBlock>;
+        using FSBlocksMapList   = tsl::ordered_map<uint16_t, std::vector<FFSBlock>>;
 
         Partitions::Partitions::Ptr partitions;
         Directory::Ptr              root_dir;

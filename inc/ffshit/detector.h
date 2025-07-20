@@ -5,6 +5,7 @@
 #include "ffshit/rawdata.h"
 
 #include <vector>
+#include <cstdint>
 
 namespace FULLFLASH {
 

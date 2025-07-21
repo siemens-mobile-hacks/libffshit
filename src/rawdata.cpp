@@ -141,16 +141,8 @@ RawData &RawData::operator =(RawData &&prev) {
             return *this;
         }
 
-        if (this->size >= prev.size) {
-            this->size = prev.size;
-
-            memmove(this->data.get(), prev.data.get(), prev.size);
-        } else {
-            this->size = prev.size;
-            this->data = Data(new char[prev.size]);
-
-            memmove(this->data.get(), prev.data.get(), prev.size);
-        }
+        this->size = prev.size;
+        this->data = std::move(prev.data);
     }
 
     return *this;

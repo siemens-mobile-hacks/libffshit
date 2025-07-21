@@ -33,6 +33,10 @@ const std::string &Detector::get_imei() const {
     return imei;
 }
 
+const size_t Detector::get_egold_offset() const {
+    return egold_offset;
+}
+
 const bool Detector::is_sl75() const {
     return sl75_bober_kurwa;
 }

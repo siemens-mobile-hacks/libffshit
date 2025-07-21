@@ -28,30 +28,37 @@ class Pattern {
             constexpr size_t align = sizeof(T);
 
             auto hex_to_T = [](const std::string &h) -> T {
-                std::stringstream   ss;
-                T                   out;
+                return static_cast<T>(std::stoul(h, nullptr, 16));
+                // std::stringstream   ss;
+                // T                   out;
 
-                ss << std::hex << h;
-                ss >> out;
+                // ss << std::hex << h;
+                // ss >> out;
 
-                return out;
+                // return out;
             };
 
-            for (const auto &uint32_str : readable) {
-                std::vector<std::string> bytes;
+            for (const auto &uint_str : readable) {
+                std::vector<std::string>    bytes;
+                std::string                 byte;
 
-                std::stringstream   ss(uint32_str);
-                std::string         byte;
-
-                while (std::getline(ss, byte, ' ')) {
-                    bytes.push_back(byte);
+                if (align > 1) {
+                    std::stringstream   ss(uint_str);
+                    while (std::getline(ss, byte, ' ')) {
+                        bytes.push_back(byte);
+                    }
+                } else {
+                    bytes.push_back(uint_str);
                 }
+
 
                 if (bytes.size() != align) {
                     throw Exception("Broken pattern");
                 }
 
-                std::reverse(bytes.begin(), bytes.end());
+                if (align > 1) {
+                    std::reverse(bytes.begin(), bytes.end());
+                }
 
                 std::string data_value_str;
                 std::string data_mask_str;

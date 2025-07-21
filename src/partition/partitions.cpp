@@ -60,6 +60,17 @@ static const Patterns::Readable pattern_egold {
     "?? ?? FE FE",
 };
 
+static const Patterns::Readable pattern_egold_table {
+    "0?",
+    "00",
+    "??",
+    "??",
+    "??",
+    "??",
+};
+
+// 7F1200: FFFFFFFFFFFF 020000107C02
+
 static const std::vector<std::string> possible_part_names {
     "BCORE",
     "EEFULL",
@@ -141,9 +152,10 @@ void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_add
     auto new_search = [&]() {
         switch (detector->get_platform()) {
             case Platform::EGOLD_CE: {
-                Log::Logger::warn("New partitions search algorithm not implemented yet for EGOLD_CE");
+                search_partitions_egold(start_addr);
+                // Log::Logger::warn("New partitions search algorithm not implemented yet for EGOLD_CE");
 
-                old_search();
+                // old_search();
 
                 break;
             }
@@ -202,6 +214,138 @@ bool Partitions::check_part_name(const std::string &name) {
     }
 
     return false;
+}
+
+bool Partitions::search_partitions_egold(uint32_t start_addr) {
+    size_t egold_offset = detector->get_egold_offset();
+
+    Log::Logger::debug("EGOLD base: {:08X}", egold_offset);
+
+    Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
+    Log::Logger::debug("Searching pattern");
+
+    auto addresses = find_pattern8(pattern_egold_table, start_addr, false);
+
+    Log::Logger::debug("Found {} matches", addresses.size());
+
+    if (!addresses.size()) {
+        return false;
+    }
+
+    tsl::ordered_map<uint32_t, Block::Header> headers;
+
+    for (auto &addr : addresses) {
+        auto saddr = addr;
+
+        uint32_t block_addr;
+        uint16_t block_size;
+
+        data.read_type<uint32_t>(addr,      &block_addr);
+        data.read_type<uint16_t>(addr + 4,  &block_size);
+
+        if (block_addr == 0) {
+            continue;
+        }
+
+        block_addr -= 0x200000;
+        block_addr += 2;
+        block_addr |= 0x80;
+
+
+        if (block_addr + 6 >= data.get_size()) {
+            continue;
+        }
+
+        char raw_name[6];
+        data.read_type<char>(block_addr, raw_name, 6);
+
+        std::string block_name(raw_name);
+
+        if (block_name.find("FFS") == std::string::npos) {
+            continue;
+        }
+
+        if (block_size < 0x0020) {
+            continue;
+        }
+
+        bool stop = false;
+
+        while (!stop) {
+            uint32_t block_addr;
+            uint16_t block_size;
+
+            data.read_type<uint32_t>(addr,      &block_addr);
+            data.read_type<uint16_t>(addr + 4,  &block_size);
+
+            if (block_addr == 0) {
+                stop = true;
+
+                continue;
+            }
+
+            if (block_size != 0x0040) {
+                stop = true;
+
+                continue;
+            }
+
+            block_addr -= 0x200000;
+            block_addr += 2;
+            block_addr |= 0x80;
+
+            if (block_addr + 6 >= data.get_size()) {
+                stop = true;
+
+                continue;
+            }
+
+            char raw_name[6];
+            data.read_type<char>(block_addr, raw_name, 6);
+
+            std::string block_name(raw_name);
+
+            if (block_name.find("FFS") == std::string::npos) {
+                stop = true;
+
+                continue;
+            }
+            
+            addr += 6;
+
+            Block::Header header;
+
+            data.read_type<char>(block_addr, header.name, 6);
+            data.read_type<uint16_t>(block_addr + 6, &header.unknown_1, 1);
+            data.read_type<uint16_t>(block_addr + 8, &header.unknown_2, 1);
+            data.read_type<uint16_t>(block_addr + 10, &header.unknown_4, 1);
+
+            if (!headers.count(block_addr)) {
+                headers[block_addr] = header;
+
+                uint32_t    addr = block_addr & 0xFFFFFF00;
+                size_t      ssz = block_size * 1024;
+        
+                char *block_ptr   = data.get_data().get() + addr;
+
+                RawData block_data(block_ptr, ssz);
+
+                if (!partitions_map.count(block_name)) {
+                    partitions_map[block_name] = Partition(block_name);
+                }
+
+                partitions_map[block_name].add_block(Block(header, block_data, addr, ssz));
+
+                Log::Logger::debug("Block: {:08X} {} {:04X} {:04X} {:04X}", block_addr, header.name, header.unknown_1, header.unknown_2, header.unknown_4);
+
+            }
+            
+            Log::Logger::debug("Pattern find, addr: {:08X}, {:08X}, name: {}, size {:04X} {}", saddr, block_addr, raw_name, block_size, block_size);
+        }
+
+    }
+
+    return true;
 }
 
 bool Partitions::search_partitions_sgold(uint32_t start_addr) {
@@ -688,6 +832,9 @@ void Partitions::old_search_partitions_egold_ce() {
         }
 
         headers[block_addr] = header;
+
+        Log::Logger::debug("Block: {:08X} {} {:04X} {:04X} {:04X}", block_addr, header.name, header.unknown_1, header.unknown_2, header.unknown_4);
+
     }
 
     if (headers.size() >= 2) {
@@ -716,6 +863,7 @@ void Partitions::old_search_partitions_egold_ce() {
         }
 
         if (block_addr + block_size > data.get_size()) {
+            Log::Logger::debug("WTF? {:08X} {}", block_addr, block_size);
             continue;
         }
 
@@ -723,7 +871,7 @@ void Partitions::old_search_partitions_egold_ce() {
 
         partitions_map[block_name].add_block(Block(header, block_data, block_addr, block_size));
 
-        Log::Logger::debug("Block: {:08X} {} {:04X} {:04X} {:04X}", block_addr, header.name, header.unknown_1, header.unknown_2, header.unknown_4);
+        // Log::Logger::debug("Block: {:08X} {} {:04X} {:04X} {:04X}", block_addr, header.name, header.unknown_1, header.unknown_2, header.unknown_4);
     }
 }
 
@@ -899,6 +1047,51 @@ void Partitions::inspect() {
     }
 }
 
+std::vector<uint32_t> Partitions::find_pattern8(const Patterns::Readable &pattern_readable, uint32_t start, bool break_first) {
+    std::vector<uint32_t>       address_list;
+    Patterns::Pattern<uint8_t>  pattern(pattern_readable);
+
+    Log::Logger::warn("{}", pattern.to_string());
+
+    address_list.reserve(1000);
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    for (size_t i = start; i < data.get_size() - pattern_readable.size(); ++i) {
+        uint8_t *data_ptr   = reinterpret_cast<uint8_t *>(data.get_data().get() + i);
+
+        if (!pattern.match(data_ptr)) {
+            continue;
+        }
+
+        address_list.push_back(i);
+
+        std::string match_data;
+
+        for (size_t j = 0; j < pattern_readable.size(); ++j) {
+            uint8_t value = *(data_ptr + j);
+
+            match_data += fmt::format("{:02X} ", value);
+        }
+
+        // Log::Logger::debug("Match addr: {:08X}", i);
+        // Log::Logger::debug("{}", pattern.to_string());
+        // Log::Logger::debug(match_data);
+
+        if (break_first) {
+            break;
+        }
+    }
+
+    auto end_time   = std::chrono::high_resolution_clock::now();
+    auto diff_time  = end_time - start_time;
+
+    Log::Logger::debug("Search end. Time: {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(diff_time).count());
+
+    return address_list;
+
+}
+
 std::vector<uint32_t> Partitions::find_pattern(const Patterns::Readable &pattern_readable, uint32_t start, bool break_first) {
     std::vector<uint32_t>       address_list;
     Patterns::Pattern<uint32_t> pattern(pattern_readable);
@@ -907,7 +1100,8 @@ std::vector<uint32_t> Partitions::find_pattern(const Patterns::Readable &pattern
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    for (size_t i = start; i < data.get_size() - pattern_readable.size(); i += 4) {
+    for (size_t i = start; i < data.get_size() - pattern_readable.size(); ++i) {
+    // for (size_t i = start; i < data.get_size() - pattern_readable.size(); i += 4) {
         uint32_t *data_ptr   = reinterpret_cast<uint32_t *>(data.get_data().get() + i);
 
         if (!pattern.match(data_ptr)) {
@@ -916,14 +1110,14 @@ std::vector<uint32_t> Partitions::find_pattern(const Patterns::Readable &pattern
 
         address_list.push_back(i);
 
-        Log::Logger::debug("Match addr: {:08X}", i);
-        Log::Logger::debug("{}", pattern.to_string());
-
         std::string match_data;
 
         for (size_t j = 0; j < pattern_readable.size(); ++j) {
             match_data += fmt::format("{:08X} ", + *(data_ptr + j));
         }
+
+        Log::Logger::debug("Match addr: {:08X}", i);
+        Log::Logger::debug("{}", pattern.to_string());
         Log::Logger::debug(match_data);
 
         if (break_first) {

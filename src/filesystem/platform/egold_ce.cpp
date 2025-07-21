@@ -154,7 +154,7 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::v
                 size_t addr_mask    = block.get_size() - 1;
                 size_t addr_data    = fs_block.header.offset & addr_mask;
 
-                // Log::Logger::debug("addr mask: {:08X} {:08X} {:08X}", block.get_addr(), fs_block.header.offset, addr_mask);
+                // Log::Logger::debug("addr mask: {:08X} {:08X} {:08X} {:08X}", block.get_addr(), fs_block.header.offset, addr_mask, addr_data);
 
                 fs_block.data = RawData(block_data, addr_data, fs_block.header.size);
 
@@ -242,7 +242,7 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::v
         }
 
         if (!ffs_files.count(6)) {
-            throw Exception("root block not found. Empty filesystem?");
+            throw Exception("root block not found. Empty filesystem? {}", part_name);
         }
 
         try {
@@ -321,7 +321,9 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
         auto        timestamp   = fat_timestamp_to_unix(file.header.fat_timestamp);
 
         Log::Logger::info("Processing ID: {:5d} {:5d}, Path: {}{}{}", file.block->header.block_id, file.header.id, part_name, path, file.header.name);
-
+        
+        print_file_header(file);
+        
         try {
             if (file.header.flags & 0x10) {
                 Directory::Ptr dir_next = Directory::build(file.header.name, part_name + path, timestamp);
@@ -377,7 +379,8 @@ void EGOLD_CE::read_recurse(const FFSBlocksMap &ffs_map, const FFSFilesMap &ffs_
     }
 
     const auto &next_part = ffs_files.at(next_file_id);
-    uint32_t    data_id = next_part.block->header.block_id + 1;
+    // uint32_t    data_id = next_part.block->header.block_id + 1;
+    uint32_t data_id = file.header.data_id + ID_ADD;
 
     if (!ffs_map.count(data_id)) {
         throw Exception("read_recurse() Next data id {} not found", data_id);
@@ -385,7 +388,7 @@ void EGOLD_CE::read_recurse(const FFSBlocksMap &ffs_map, const FFSFilesMap &ffs_
 
     const auto &data_block = ffs_map.at(data_id);
 
-    data.add(data_block.data);
+    data.add(data_block.data.get_data().get(), data_block.header.size);
 
     if (next_part.header.next_part_id == 0xFFFF) {
         return;

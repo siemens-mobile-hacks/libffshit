@@ -51,6 +51,7 @@ class Detector {
         const std::string & get_model() const;
         const std::string & get_imei() const;
         const bool          is_sl75() const;
+        const size_t        get_egold_offset() const;
 
     private:
         const RawData & data;

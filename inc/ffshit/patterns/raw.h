@@ -32,8 +32,8 @@ class RawPart {
         }
 
     private:
-        uint32_t value;
-        uint32_t mask;
+        T value;
+        T mask;
 };
 
 template <typename T>

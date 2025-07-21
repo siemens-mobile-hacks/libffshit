@@ -42,6 +42,7 @@ class Partitions {
 
         void                        search_partitions(bool old_search_algorithm, uint32_t start_addr);
 
+        bool                        search_partitions_egold(uint32_t start_addr);
         bool                        search_partitions_sgold(uint32_t start_addr);
         bool                        search_partitions_sgold2(uint32_t start_addr);
         bool                        search_partitions_sgold2_elka(uint32_t start_addr);
@@ -54,6 +55,7 @@ class Partitions {
 
         void                        inspect();
 
+        std::vector<uint32_t>       find_pattern8(const Patterns::Readable &pattern_readable, uint32_t start = 0, bool break_first = false);
         std::vector<uint32_t>       find_pattern(const Patterns::Readable &pattern_readable, uint32_t start = 0, bool break_first = false);
 
 };

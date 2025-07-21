@@ -60,9 +60,7 @@ RawData::RawData(RawData &&prev) {
     }
 
     this->size = prev.size;
-    this->data = Data(new char[prev.size]);
-
-    memmove(this->data.get(), prev.data.get(), prev.size);
+    this->data = std::move(prev.data);
 }
 
 RawData::RawData(const RawData &prev, size_t offset, size_t data_size) {

@@ -90,6 +90,8 @@ static const Patterns::Readable pattern_egold {
     "?? ?? FE FE",
 };
 
+// 00426A3A: 01 00 10 2A 89 01 
+
 static const Patterns::Readable pattern_egold_table_pointer {
     "??", "00", "00", "00",             // Количество записей
     "0?", "00", "??", "??", "??", "0?"  // Адрес таблицы
@@ -179,7 +181,7 @@ void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_add
 
     auto new_search = [&]() {
         switch (detector->get_platform()) {
-            case Platform::EGOLD_CE:    search_partitions_egold(start_addr);
+            case Platform::EGOLD_CE:    search_partitions_egold(start_addr); break;
             case Platform::SGOLD:       search_partitions_sgold(start_addr); break;
             case Platform::SGOLD2:      search_partitions_sgold2(start_addr); break;
             case Platform::SGOLD2_ELKA: search_partitions_sgold2_elka(start_addr); break;

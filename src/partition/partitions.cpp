@@ -60,16 +60,10 @@ static const Patterns::Readable pattern_egold {
     "?? ?? FE FE",
 };
 
-static const Patterns::Readable pattern_egold_table {
-    "0?",
-    "00",
-    "??",
-    "??",
-    "??",
-    "??",
+static const Patterns::Readable pattern_egold_table_pointer {
+    "??", "00", "00", "00",             // Количество записей
+    "0?", "00", "??", "??", "??", "0?"  // Адрес таблицы
 };
-
-// 7F1200: FFFFFFFFFFFF 020000107C02
 
 static const std::vector<std::string> possible_part_names {
     "BCORE",
@@ -134,8 +128,12 @@ const Partitions::Map &Partitions::get_partitions() const {
     return partitions_map;
 }
 
-const RawData & Partitions::get_data() const {
+const RawData &Partitions::get_data() const {
     return data;
+}
+
+const Detector::Ptr &Partitions::get_detector() const {
+    return detector;
 }
 
 void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_addr) {
@@ -151,14 +149,12 @@ void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_add
 
     auto new_search = [&]() {
         switch (detector->get_platform()) {
-            case Platform::EGOLD_CE: {
-                search_partitions_egold(start_addr);
-                // Log::Logger::warn("New partitions search algorithm not implemented yet for EGOLD_CE");
+            case Platform::EGOLD_CE: search_partitions_egold(start_addr);
 
-                // old_search();
+            // From Feyman. Start table search pattern: 4F 54 50 00 ?? ?? ?? A0 
+            // да, работает, заебись, спасибо)))) Чуть ппж добавлю спасибки в начало
+            // И да, не забыть применить метод
 
-                break;
-            }
             case Platform::SGOLD:       search_partitions_sgold(start_addr); break;
             case Platform::SGOLD2:      search_partitions_sgold2(start_addr); break;
             case Platform::SGOLD2_ELKA: search_partitions_sgold2_elka(start_addr); break;
@@ -216,15 +212,130 @@ bool Partitions::check_part_name(const std::string &name) {
     return false;
 }
 
-bool Partitions::search_partitions_egold(uint32_t start_addr) {
-    size_t egold_offset = detector->get_egold_offset();
+// Маппинг блоков на M55 fw91
 
-    Log::Logger::debug("EGOLD base: {:08X}", egold_offset);
+// ========== FFS ==========
+
+// Таблица указателей на адреса непосредственно блоков диска:
+// Указатели прямые, просто - база
+// 00426834: 00 00 D0 00 40 00 
+// 0042683A: 00 00 D1 00 40 00 
+// 00426840: 00 00 D2 00 40 00 
+// 00426846: 00 00 D3 00 40 00 
+// 0042684C: 00 00 D4 00 40 00 
+// 00426852: 00 00 D5 00 40 00 
+// 00426858: 00 00 D6 00 40 00 
+// 0042685E: 00 00 D7 00 40 00 
+// 00426864: 00 00 D8 00 40 00 
+// 0042686A: 00 00 D9 00 40 00 
+// 00426870: 00 00 DA 00 40 00 
+// 00426876: 00 00 DB 00 40 00 
+// 0042687C: 00 00 DC 00 40 00 
+// 00426882: 00 00 DD 00 40 00 
+// 00426888: 00 00 DE 00 40 00 
+// 0042688E: 00 00 DF 00 40 00 
+// 00426894: 00 00 E0 00 40 00 
+// 0042689A: 00 00 E1 00 40 00 
+// 004268A0: 00 00 E2 00 40 00 
+// 004268A6: 00 00 E3 00 40 00 
+// 004268AC: 00 00 E4 00 40 00 
+// 004268B2: 00 00 E5 00 40 00 
+// 004268B8: 00 00 E6 00 40 00 
+// 004268BE: 00 00 E7 00 40 00 
+// 004268C4: 00 00 E8 00 40 00 
+// 004268CA: 00 00 E9 00 40 00 
+// 004268D0: 00 00 EA 00 40 00 
+// 004268D6: 00 00 EB 00 40 00 
+// 004268DC: 00 00 EC 00 40 00 
+// 004268E2: 00 00 ED 00 40 00 
+// 004268E8: 00 00 EE 00 40 00 
+// 004268EE: 00 00 EF 00 40 00 
+
+// Таблица указатели на адреса блоков и их количество:
+// 004268F4: 01 00 34 28 89 01 
+// 004268FA: 01 00 3A 28 89 01 
+// 00426900: 01 00 40 28 89 01 
+// 00426906: 01 00 46 28 89 01 
+// 0042690C: 01 00 4C 28 89 01 
+// 00426912: 01 00 52 28 89 01 
+// 00426918: 01 00 58 28 89 01 
+// 0042691E: 01 00 5E 28 89 01 
+// 00426924: 01 00 64 28 89 01 
+// 0042692A: 01 00 6A 28 89 01 
+// 00426930: 01 00 70 28 89 01 
+// 00426936: 01 00 76 28 89 01 
+// 0042693C: 01 00 7C 28 89 01 
+// 00426942: 01 00 82 28 89 01 
+// 00426948: 01 00 88 28 89 01 
+// 0042694E: 01 00 8E 28 89 01 
+// 00426954: 01 00 94 28 89 01    
+// 0042695A: 01 00 9A 28 89 01 
+// 00426960: 01 00 A0 28 89 01 
+// 00426966: 01 00 A6 28 89 01 
+// 0042696C: 01 00 AC 28 89 01 
+// 00426972: 01 00 B2 28 89 01 
+// 00426978: 01 00 B8 28 89 01 
+// 0042697E: 01 00 BE 28 89 01 
+// 00426984: 01 00 C4 28 89 01 	
+// 0042698A: 01 00 CA 28 89 01 
+// 00426990: 01 00 D0 28 89 01 
+// 00426996: 01 00 D6 28 89 01 
+// 0042699C: 01 00 DC 28 89 01 
+// 004269A2: 01 00 E2 28 89 01 
+// 004269A8: 01 00 E8 28 89 01 
+// 004269AE: 01 00 EE 28 89 01 
+
+// Указатель на начало таблицы:
+// 004269B4:       20 00 00 00 // Количество записей
+// 004269B8: 01 00 F4 28 89 01
+
+// ========== FFS_B ==========
+
+// Таблица указателей на адреса непосредственно блоков диска:
+// Указатели прямые, просто - база
+// 004269EC: 00 00 A8 00 40 00 
+// 004269F2: 00 00 A9 00 40 00 
+// 004269F8: 00 00 AA 00 40 00 
+// 004269FE: 00 00 AB 00 40 00 
+// 00426A04: 00 00 AC 00 40 00 
+// 00426A0A: 00 00 AD 00 40 00 
+// 00426A10: 00 00 AE 00 40 00 
+
+// Таблица указатели на адреса блоков и их количество:
+// 00426A16: 01 00 EC 29 89 01
+// 00426A1C: 01 00 F2 29 89 01 
+// 00426A22: 01 00 F8 29 89 01 
+// 00426A28: 01 00 FE 29 89 01 
+// 00426A2E: 01 00 04 2A 89 01 
+// 00426A34: 01 00 0A 2A 89 01 
+// 00426A3A: 01 00 10 2A 89 01 
+
+// Указатель на начало таблицы:
+// 00426A40:       07 00 00 00 // Количество записей
+// 00426A44: 01 00 16 2A 89 01 
+
+static uint32_t segment_to_page(uint32_t segment_addr) {
+    uint16_t    segment         = segment_addr >> 16;
+    uint16_t    segment_offset  = segment_addr & 0xFFFF;
+
+    return ((segment * 0x4000) + segment_offset);
+}
+
+static uint32_t page_to_segment(uint32_t page_addr) {
+    uint16_t segment_offset     = page_addr & 0x3FFFF;
+
+    return 0;
+}
+
+bool Partitions::search_partitions_egold(uint32_t start_addr) {
+    uint32_t base_address = detector->get_base_address();
+
+    Log::Logger::debug("EGOLD Base address: {:08X}", base_address);
 
     Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
     Log::Logger::debug("Searching pattern");
 
-    auto addresses = find_pattern8(pattern_egold_table, start_addr, false);
+    auto addresses = find_pattern8(pattern_egold_table_pointer, start_addr, false);
 
     Log::Logger::debug("Found {} matches", addresses.size());
 
@@ -232,117 +343,219 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
         return false;
     }
 
-    tsl::ordered_map<uint32_t, Block::Header> headers;
+    std::reverse(addresses.begin(), addresses.end());
 
-    for (auto &addr : addresses) {
-        auto saddr = addr;
+    typedef struct {
+        uint32_t    records_count;
+        uint16_t    blocks_count;
+        uint32_t    offset;
+    } Table;
 
-        uint32_t block_addr;
-        uint16_t block_size;
+    std::vector<Table> tables;
 
-        data.read_type<uint32_t>(addr,      &block_addr);
-        data.read_type<uint16_t>(addr + 4,  &block_size);
+    auto validate_table_start = [this, base_address](size_t offset, uint32_t records_count) -> bool {
+        uint16_t    blocks_count;
+        uint32_t    block_segment_addr;
 
-        if (block_addr == 0) {
-            continue;
+        data.read_type<uint16_t>(offset,     &blocks_count, 1);
+        data.read_type<uint32_t>(offset + 2, &block_segment_addr, 1);
+
+        uint16_t    segment         = block_segment_addr >> 16;
+        uint16_t    segment_offset  = block_segment_addr & 0xFFFF;
+
+        size_t      ff_offset   = ((segment * 0x4000) + segment_offset) - base_address;
+
+        if (ff_offset >= data.get_size()) {
+            return false;
         }
 
-        block_addr -= 0x200000;
-        block_addr += 2;
-        block_addr |= 0x80;
-
-
-        if (block_addr + 6 >= data.get_size()) {
-            continue;
+        if (ff_offset == 0) {
+            return false;
         }
 
-        char raw_name[6];
-        data.read_type<char>(block_addr, raw_name, 6);
+        offset = ff_offset;
 
-        std::string block_name(raw_name);
+        for (size_t block_pointer_offset = offset; block_pointer_offset < offset + (6 * records_count); block_pointer_offset += 6) {
+            uint32_t    block_addr;
+            uint16_t    wtf;
 
-        if (block_name.find("FFS") == std::string::npos) {
-            continue;
-        }
+            data.read_type<uint32_t>(block_pointer_offset,        &block_addr, 1);
+            data.read_type<uint16_t>(block_pointer_offset + 4,    &wtf, 1);
 
-        if (block_size < 0x0020) {
-            continue;
-        }
-
-        bool stop = false;
-
-        while (!stop) {
-            uint32_t block_addr;
-            uint16_t block_size;
-
-            data.read_type<uint32_t>(addr,      &block_addr);
-            data.read_type<uint16_t>(addr + 4,  &block_size);
-
-            if (block_addr == 0) {
-                stop = true;
-
-                continue;
+            if (wtf > 0x80) {
+                return false;
             }
 
-            if (block_size != 0x0040) {
-                stop = true;
+            block_addr -= base_address;
 
-                continue;
+            if (block_addr >= data.get_size()) {
+                return false;
             }
 
-            block_addr -= 0x200000;
-            block_addr += 2;
-            block_addr |= 0x80;
-
-            if (block_addr + 6 >= data.get_size()) {
-                stop = true;
-
-                continue;
+            if (block_addr & 0x0FFF != 0) {
+                return false;
             }
 
-            char raw_name[6];
-            data.read_type<char>(block_addr, raw_name, 6);
+            size_t rd_header_offset = (block_addr + 2) | 0x80;
 
-            std::string block_name(raw_name);
-
-            if (block_name.find("FFS") == std::string::npos) {
-                stop = true;
-
-                continue;
+            if (rd_header_offset + 12 >= data.get_size()) {
+                return false;
             }
-            
-            addr += 6;
 
             Block::Header header;
 
-            data.read_type<char>(block_addr, header.name, 6);
-            data.read_type<uint16_t>(block_addr + 6, &header.unknown_1, 1);
-            data.read_type<uint16_t>(block_addr + 8, &header.unknown_2, 1);
-            data.read_type<uint16_t>(block_addr + 10, &header.unknown_4, 1);
+            data.read<char>(rd_header_offset, reinterpret_cast<char *>(header.name), 6);
+            data.read<uint16_t>(rd_header_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
+            data.read<uint16_t>(rd_header_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
+            data.read<uint16_t>(rd_header_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
 
-            if (!headers.count(block_addr)) {
-                headers[block_addr] = header;
+            std::string block_name(header.name);
 
-                uint32_t    addr = block_addr & 0xFFFFFF00;
-                size_t      ssz = block_size * 1024;
-        
-                char *block_ptr   = data.get_data().get() + addr;
-
-                RawData block_data(block_ptr, ssz);
-
-                if (!partitions_map.count(block_name)) {
-                    partitions_map[block_name] = Partition(block_name);
-                }
-
-                partitions_map[block_name].add_block(Block(header, block_data, addr, ssz));
-
-                Log::Logger::debug("Block: {:08X} {} {:04X} {:04X} {:04X}", block_addr, header.name, header.unknown_1, header.unknown_2, header.unknown_4);
-
+            if (!is_printable(block_name.data(), block_name.size())) {
+                return false;
             }
-            
-            Log::Logger::debug("Pattern find, addr: {:08X}, {:08X}, name: {}, size {:04X} {}", saddr, block_addr, raw_name, block_size, block_size);
+
+            block_pointer_offset += (blocks_count - 1) * 6;
         }
 
+        return true;
+    };
+
+    for (auto &addr : addresses) {
+        uint32_t    records_count;
+        uint16_t    blocks_count;
+        uint32_t    block_segment_addr;
+
+        size_t offset = addr;
+
+        data.read<uint32_t>(offset, reinterpret_cast<char *>(&records_count), 1);
+        data.read<uint16_t>(offset, reinterpret_cast<char *>(&blocks_count), 1);
+        data.read<uint32_t>(offset, reinterpret_cast<char *>(&block_segment_addr), 1);
+
+        if (records_count == 0) {
+            continue;
+        }
+
+        if (blocks_count == 0) {
+            continue;
+        }
+
+        if (blocks_count > 2) {
+            continue;
+        }
+
+        uint16_t    segment         = block_segment_addr >> 16;
+        uint16_t    segment_offset  = block_segment_addr & 0xFFFF;
+
+        size_t      ff_offset   = ((segment * 0x4000) + segment_offset) - base_address;
+
+        if (ff_offset >= data.get_size()) {
+            continue;
+        }
+
+        if (ff_offset == 0) {
+            continue;
+        }
+
+        bool is_table = validate_table_start(ff_offset, records_count);
+
+        if (!is_table) {
+            continue;
+        }
+
+        Log::Logger::debug("{:08X}: Records count: {:08X}, Blocks count: {:04X}, Segment addr: {:08X}, Page addr: {:08X}",  
+            addr, 
+            records_count,
+            blocks_count,
+            block_segment_addr, 
+            ff_offset);
+
+        Table table_record;
+
+        table_record.blocks_count   = blocks_count;
+        table_record.offset         = ff_offset;
+        table_record.records_count  = records_count;
+
+        bool skip = false;
+
+        for (const auto &table : tables) {
+            if (table.offset == table_record.offset) {
+                Log::Logger::debug("Dupicate table. A60? Skip");
+
+                skip = true;
+            }
+        }
+
+        if (skip) {
+            continue;
+        }
+
+        tables.push_back(table_record);
+    }
+
+    for (const auto &table : tables) {
+        size_t offset = table.offset;
+        Log::Logger::debug("Table: {:08X}, Records: ", table.offset, table.records_count);
+
+        for (size_t i = 0; i < table.records_count; ++i) {
+            uint16_t    blocks_count;
+            uint32_t    block_segment_addr;
+
+            data.read_type<uint16_t>(offset,     &blocks_count, 1);
+            data.read_type<uint32_t>(offset + 2, &block_segment_addr, 1);
+
+            uint16_t segment         = block_segment_addr >> 16;
+            uint16_t segment_offset  = block_segment_addr & 0xFFFF;
+
+            size_t ff_offset   = ((segment * 0x4000) + segment_offset) - base_address;
+
+            Log::Logger::debug("  Segment addr: {:08X}, Segment: {:04X}, Segment Offset: {:04X}, Page addr: {:08X}", block_segment_addr, segment, segment_offset, ff_offset);
+
+            uint32_t    block_addr;
+            uint16_t    wtf;
+
+            data.read_type<uint32_t>(ff_offset,        &block_addr, 1);
+            data.read_type<uint16_t>(ff_offset + 4,    &wtf, 1);
+    
+            block_addr -= base_address;
+            
+            size_t rd_header_offset = (block_addr + 2) | 0x80;
+            
+            Block::Header header;
+
+            data.read<char>(rd_header_offset, reinterpret_cast<char *>(header.name), 6);
+            data.read<uint16_t>(rd_header_offset, reinterpret_cast<char *>(&header.unknown_1), 1);
+            data.read<uint16_t>(rd_header_offset, reinterpret_cast<char *>(&header.unknown_2), 1);
+            data.read<uint16_t>(rd_header_offset, reinterpret_cast<char *>(&header.unknown_3), 1);
+
+            std::string block_name(header.name);
+
+            Log::Logger::debug("    {:6s} Block addr: {:08X} WTF: {:04X}", block_name, block_addr, wtf);
+
+            if (!partitions_map.count(block_name)) {
+                partitions_map[block_name] = Partition(block_name);
+            }
+
+            size_t  single_block_size   = 65536;
+
+            if (wtf == 0x80) { // New EGOLD
+                single_block_size *= 2;
+            }
+
+            size_t  block_data_size     = single_block_size * blocks_count;
+
+            RawData block_data;
+
+            for (uint16_t i = 0; i < blocks_count; ++i) {
+                RawData tmp(data, block_addr + (single_block_size * i), single_block_size);
+
+                block_data.add(tmp);
+            }
+
+            partitions_map[block_name].add_block(Block(header, block_data, block_addr & 0xFFFFFF00, block_data_size));
+
+            offset += 6;
+        }
     }
 
     return true;
@@ -1057,7 +1270,7 @@ std::vector<uint32_t> Partitions::find_pattern8(const Patterns::Readable &patter
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    for (size_t i = start; i < data.get_size() - pattern_readable.size(); ++i) {
+    for (size_t i = start; i < data.get_size() - pattern_readable.size(); i+= 1) {
         uint8_t *data_ptr   = reinterpret_cast<uint8_t *>(data.get_data().get() + i);
 
         if (!pattern.match(data_ptr)) {

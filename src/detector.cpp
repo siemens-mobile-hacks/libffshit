@@ -7,14 +7,16 @@
 namespace FULLFLASH {
 
 Detector::Detector(const RawData &data) : data(data) {
-    sl75_bober_kurwa = false;
+    sl75_bober_kurwa    = false;
+    base_adress         = 0;
 
     detect_platform();
     detect_imei_model();
 }
 
 Detector::Detector(const RawData &data, Platform platform) : data(data) {
-    sl75_bober_kurwa = false;
+    sl75_bober_kurwa    = false;
+    base_adress         = 0;
 
     this->platform = platform;
 
@@ -33,8 +35,8 @@ const std::string &Detector::get_imei() const {
     return imei;
 }
 
-const size_t Detector::get_egold_offset() const {
-    return egold_offset;
+const size_t Detector::get_base_address() const {
+    return base_adress;
 }
 
 const bool Detector::is_sl75() const {
@@ -57,17 +59,19 @@ void Detector::detect_platform() {
     data.read_string(BC65_BC75_OFFSET, bcore_name, 1);
 
     if (bcore_name == "BC65" || bcore_name == "BCORE65") {
-        platform = Platform::SGOLD;
-
+        platform    = Platform::SGOLD;
+        base_adress = 0xA0000000;
     } else if (bcore_name == "BC75") {
-        platform = Platform::SGOLD2;
+        platform    = Platform::SGOLD2;
+        base_adress = 0xA0000000;
     } else {
         bcore_name.clear();
 
         data.read_string(BC85_OFFSET, bcore_name, 1);
 
         if (bcore_name == "BC85") {
-            platform = Platform::SGOLD2_ELKA;
+            platform    = Platform::SGOLD2_ELKA;
+            base_adress = 0xA0000000;
         } else {
             platform = Platform::UNK;
         }
@@ -84,106 +88,12 @@ void Detector::detect_platform() {
             }
 
             platform        = Platform::EGOLD_CE;
-            egold_offset    = offset;
+            base_adress     = 16777216 - data.get_size(); // Max adress size
+            egold_offset = offset;
 
             break;
         }
     }
-    // data.read_string(BC65_BC75_OFFSET, bc, 1);
-
-    // if (bc == "BC65" || bc == "BCORE65") {
-    //     platform = Platform::SGOLD;
-
-    //     data.read_string(X65_MODEL_OFFSET, model);
-    //     data.read_string(X65_IMEI_OFFSET, imei);
-
-    //     if (imei.length() != 15) {
-    //         imei.clear();
-    //         data.read_string(X65_7X_IMEI_OFFSET, imei);
-    //     };
-    // } else if (bc == "BC75") {
-    //     platform = Platform::SGOLD2;
-
-    //     data.read_string(X75_MODEL_OFFSET, model);
-    //     data.read_string(X75_IMEI_OFFSET, imei);
-    // } else {
-    //     bc.clear();
-
-    //     data.read_string(BC85_OFFSET, bc, 1);
-
-    //     if (bc == "BC85") {
-    //         platform = Platform::SGOLD2_ELKA;
-
-    //         data.read_string(X85_MODEL_OFFSET, model);
-    //         data.read_string(X85_IMEI_OFFSET, imei);
-
-    //         if (!(check_string(model) & check_string(imei))) {
-    //             imei.clear();
-
-    //             data.read_string(X85_MODEL_OFFSET + 0x10, model);
-    //             data.read_string(X85_IMEI_OFFSET + 0x10, imei);
-    //         }
-    //     } else {
-    //         platform = Platform::UNK;
-    //     }
-    // }
-
-
-    // if (platform == Platform::UNK) {
-    //     for (const auto &offset : EGOLD_INFO_OFFSETS) {
-    //         std::string magick;
-
-    //         data.read_string(offset + EGOLD_MAGICK_SIEMENS_OFFSET, magick);
-
-    //         if (magick != "SIEMENS") {
-    //             continue;
-    //         }
-
-    //         data.read_string(offset + EGOLD_MODEL_OFFSET, model);
-
-    //         platform = Platform::EGOLD_CE;
-
-    //         break;
-    //     }
-    // }
-
-    // if (platform == Platform::SGOLD2) {
-    //     std::string model_local(model);
-
-    //     System::to_lower(model_local);
-
-    //     if (model_local.find("sl75") != std::string::npos) {
-    //         sl75_bober_kurwa = true;
-    //     } else if (data.get_size() > 0x04000000) {
-    //         sl75_bober_kurwa = true;
-    //     }
-    // }
-
-    // if (platform != Platform::UNK) {
-    //     bool borken_imei = false;
-    //     bool broken_model = false;
-
-    //     if (imei.size() != 15) {
-    //         borken_imei = true;
-    //     } else {
-    //         borken_imei = !check_string(imei);
-    //     }
-
-    //     broken_model = !check_string(model);
-
-    //     if (borken_imei) {
-    //         Log::Logger::warn("Couldn't detect IMEI");
-    //         Log::Logger::debug("IMEI broken: {}", imei);
-
-    //         imei.clear();
-    //     }
-
-    //     if (broken_model) {
-    //         Log::Logger::warn("Couldn't detect model");
-
-    //         model = bc;
-    //     }
-    // }
 }
 
 void Detector::detect_imei_model() {

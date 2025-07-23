@@ -51,10 +51,12 @@ class Detector {
         const std::string & get_model() const;
         const std::string & get_imei() const;
         const bool          is_sl75() const;
-        const size_t        get_egold_offset() const;
+        const size_t        get_base_address() const;
 
     private:
         const RawData & data;
+
+        size_t          egold_offset;
 
         Platform        platform;
 
@@ -62,7 +64,7 @@ class Detector {
         std::string     imei;
         std::string     model;
 
-        size_t          egold_offset;
+        size_t          base_adress;
 
         bool            sl75_bober_kurwa;
 

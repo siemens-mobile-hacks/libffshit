@@ -68,7 +68,8 @@ void EGOLD_CE::print_data(const FFSBlock &block) {
 }
 
 void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::vector<std::string> parts_to_extract) {
-    const auto &part_map = partitions->get_partitions();
+    const auto &part_map        = partitions->get_partitions();
+    size_t      base_address    = partitions->get_detector()->get_base_address();
 
     for (const auto &pair : part_map) {
         const std::string & part_name   = pair.first;
@@ -110,7 +111,7 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::v
 
             uint32_t block_addr = block.get_addr();
 
-            Log::Logger::debug("  Block: {:08X} ====", block_addr);
+            Log::Logger::debug("  Block: {:08X}, end: {:08X} ====", block_addr, block_addr);
 
             for (ssize_t offset = block_size - 12; offset > 0; offset -= 12) {
                 FFSBlock    fs_block;
@@ -156,7 +157,9 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::v
 
                 // Log::Logger::debug("addr mask: {:08X} {:08X} {:08X} {:08X}", block.get_addr(), fs_block.header.offset, addr_mask, addr_data);
 
-                fs_block.data = RawData(block_data, addr_data, fs_block.header.size);
+                // fs_block.data = RawData(block_data, addr_data, fs_block.header.size);
+
+                fs_block.data = RawData(partitions->get_data(), fs_block.header.offset - base_address, fs_block.header.size);
 
                 if (ffs_blocks.count(fs_block.header.block_id)) {
                     if (skip_dup) {
@@ -378,17 +381,17 @@ void EGOLD_CE::read_recurse(const FFSBlocksMap &ffs_map, const FFSFilesMap &ffs_
         throw Exception("read_recurse() Next file id {} not found", next_file_id);
     }
 
-    const auto &next_part = ffs_files.at(next_file_id);
-    // uint32_t    data_id = next_part.block->header.block_id + 1;
-    uint32_t data_id = file.header.data_id + ID_ADD;
+    const auto &next_part   = ffs_files.at(next_file_id);
+    uint32_t    data_id     = next_part.block->header.block_id + 1;
+    // uint32_t data_id = file.header.data_id + ID_ADD;
 
     if (!ffs_map.count(data_id)) {
         throw Exception("read_recurse() Next data id {} not found", data_id);
     }
 
     const auto &data_block = ffs_map.at(data_id);
-
-    data.add(data_block.data.get_data().get(), data_block.header.size);
+    data.add(data_block.data);
+    // data.add(data_block.data.get_data().get(), data_block.header.size);
 
     if (next_part.header.next_part_id == 0xFFFF) {
         return;

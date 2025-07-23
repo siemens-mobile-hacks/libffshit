@@ -30,6 +30,7 @@ class Partitions {
 
         const Map &                 get_partitions() const;
         const RawData &             get_data() const;
+        const Detector::Ptr &       get_detector() const;
 
     private:
         uint32_t                    block_size;

@@ -180,11 +180,6 @@ void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_add
     auto new_search = [&]() {
         switch (detector->get_platform()) {
             case Platform::EGOLD_CE:    search_partitions_egold(start_addr);
-
-            // From Feyman. Start table search pattern: 4F 54 50 00 ?? ?? ?? A0 
-            // да, работает, заебись, спасибо)))) Чуть ппж добавлю спасибки в начало
-            // И да, не забыть применить метод
-
             case Platform::SGOLD:       search_partitions_sgold(start_addr); break;
             case Platform::SGOLD2:      search_partitions_sgold2(start_addr); break;
             case Platform::SGOLD2_ELKA: search_partitions_sgold2_elka(start_addr); break;
@@ -1329,7 +1324,7 @@ std::vector<uint32_t> Partitions::find_pattern8(const Patterns::Readable &patter
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    for (size_t i = start; i < data.get_size() - pattern_readable.size(); i+= 1) {
+    for (size_t i = start; i < data.get_size() - pattern_readable.size(); i += 2) {
         uint8_t *data_ptr   = reinterpret_cast<uint8_t *>(data.get_data().get() + i);
 
         if (!pattern.match(data_ptr)) {

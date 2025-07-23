@@ -5,7 +5,13 @@
 
 namespace FULLFLASH {
 
-RawData::RawData() : size(0) {}
+static constexpr size_t CHUNK_SIZE = 0x10000;
+
+RawData::RawData() : size(0) {
+    size_real = CHUNK_SIZE;
+
+    data = Data(new char[size_real]);
+}
 
 RawData::RawData(char *data, size_t data_size) {
     if (data == nullptr) {
@@ -16,30 +22,38 @@ RawData::RawData(char *data, size_t data_size) {
         throw Exception("RawData() from raw ptr. data_size == 0");
     }
 
-    this->data = Data(new char[data_size]);
+    size_t chunks = (data_size / CHUNK_SIZE) + 1;
+
+    this->size_real = CHUNK_SIZE * chunks;
+    this->data      = Data(new char[this->size_real]);
 
     memcpy(this->data.get(), data, data_size);
 
-    this->size = data_size;
+    this->size      = data_size;
 }
 
 RawData::RawData(const RawData &prev) {
     // Валидно, копирование пустого RawData
 
     if (prev.size == 0) {
-        this->size = 0;
+        this->size      = 0;
+        this->size_real = CHUNK_SIZE;
+        this->data      = Data(new char[this->size_real]);
 
         return;
     }
 
     if (!prev.data) {
-        this->size = 0;
+        this->size      = 0;
+        this->size_real = CHUNK_SIZE;
+        this->data      = Data(new char[this->size_real]);
 
         return;
     }
 
-    this->size = prev.size;
-    this->data = Data(new char[prev.size]);
+    this->size      = prev.size;
+    this->size_real = prev.size_real;
+    this->data      = Data(new char[prev.size_real]);
 
     memcpy(this->data.get(), prev.data.get(), prev.size);
 }
@@ -48,19 +62,24 @@ RawData::RawData(RawData &&prev) {
     // Валидно, перемещение пустого RawData
 
     if (prev.size == 0) {
-        this->size = 0;
+        this->size      = 0;
+        this->size_real = CHUNK_SIZE;
+        this->data      = Data(new char[this->size_real]);
 
         return;
     }
 
     if (!prev.data) {
-        this->size = 0;
+        this->size      = 0;
+        this->size_real = CHUNK_SIZE;
+        this->data      = Data(new char[this->size_real]);
 
         return;
     }
 
-    this->size = prev.size;
-    this->data = std::move(prev.data);
+    this->size      = prev.size;
+    this->size_real = prev.size_real;
+    this->data      = std::move(prev.data);
 }
 
 RawData::RawData(const RawData &prev, size_t offset, size_t data_size) {
@@ -80,8 +99,11 @@ RawData::RawData(const RawData &prev, size_t offset, size_t data_size) {
         throw Exception("RawData() offset + size > prev. size");
     }
 
-    this->size = data_size;
-    this->data = Data(new char[data_size]);
+    size_t chunks = (data_size / CHUNK_SIZE) + 1;
+
+    this->size_real = CHUNK_SIZE * chunks;
+    this->data      = Data(new char[this->size_real]);
+    this->size      = data_size;
 
     memcpy(this->data.get(), prev.data.get() + offset, data_size);
 }
@@ -90,9 +112,12 @@ RawData::RawData(std::ifstream &file, size_t offset, size_t data_size) {
     if (data_size == 0) {
         throw Exception("RawData() from file data_size == 0");
     }
-  
-    this->size = data_size;
-    this->data = Data(new char[data_size]);
+
+    size_t chunks = (data_size / CHUNK_SIZE) + 1;
+
+    this->size_real = CHUNK_SIZE * chunks;
+    this->data      = Data(new char[this->size_real]);
+    this->size      = data_size;
 
     file.seekg(offset, std::ios_base::beg);
     file.read(data.get(), data_size);
@@ -101,24 +126,38 @@ RawData::RawData(std::ifstream &file, size_t offset, size_t data_size) {
 RawData &RawData::operator =(const RawData &prev) {
     if (this != &prev) {
         if (prev.size == 0) {
-            this->size = 0;
+            this->size      = 0;
+            this->size_real = CHUNK_SIZE;
+            this->data      = Data(new char[this->size_real]);
 
             return *this;
         }
 
         if (!prev.data) {
-            this->size = 0;
+            this->size      = 0;
+            this->size_real = CHUNK_SIZE;
+            this->data      = Data(new char[this->size_real]);
 
             return *this;
         }
 
         if (this->size >= prev.size) {
+            if (this->size_real < prev.size_real) {
+                size_t chunks = (prev.size / CHUNK_SIZE) + 1;
+
+                this->size_real = CHUNK_SIZE * chunks;
+                this->data      = Data(new char[this->size_real]);
+            }
+
             this->size = prev.size;
 
             memcpy(this->data.get(), prev.data.get(), prev.size);
         } else {
-            this->size = prev.size;
-            this->data = Data(new char[prev.size]);
+            size_t chunks = (prev.size / CHUNK_SIZE) + 1;
+
+            this->size      = prev.size;
+            this->size_real = CHUNK_SIZE * chunks;
+            this->data      = Data(new char[this->size_real]);
 
             memcpy(this->data.get(), prev.data.get(), prev.size);
         }
@@ -130,19 +169,24 @@ RawData &RawData::operator =(const RawData &prev) {
 RawData &RawData::operator =(RawData &&prev) {
     if (this != &prev) {
         if (prev.size == 0) {
-            this->size = 0;
+            this->size      = 0;
+            this->size_real = CHUNK_SIZE;
+            this->data      = Data(new char[this->size_real]);
 
             return *this;
         }
 
         if (!prev.data) {
-            this->size = 0;
+            this->size      = 0;
+            this->size_real = CHUNK_SIZE;
+            this->data      = Data(new char[this->size_real]);
 
             return *this;
         }
 
-        this->size = prev.size;
-        this->data = std::move(prev.data);
+        this->size      = prev.size;
+        this->size_real = prev.size_real;
+        this->data      = std::move(prev.data);
     }
 
     return *this;
@@ -158,23 +202,33 @@ void RawData::add(char *data, size_t add_size) {
     }
 
     size_t  size_new = this->size + add_size;
-    Data    tmp_data;
 
-    if (this->size > 0) {
-        tmp_data = Data(new char[this->size]);
-        
+    if (size + add_size < size_real) {
+        memcpy(this->data.get() + this->size, data, add_size);
+        this->size = size_new;
+
+        return;
+    }
+
+    if (size + add_size >= size_real) {
+        auto tmp_data = Data(new char[this->size]);
+
         memcpy(tmp_data.get(), this->data.get(), this->size);
-    }
 
-    this->data = Data(new char[size_new]);
+        size_t chunks = ((size + add_size) / CHUNK_SIZE) + 1;
 
-    if (this->size > 0) {
+        this->size_real = CHUNK_SIZE * chunks;
+        this->data      = Data(new char[this->size_real]);
+
         memcpy(this->data.get(), tmp_data.get(), this->size);
+        memcpy(this->data.get() + this->size, data, add_size);
+
+        this->size = size_new;
+
+        return;
     }
 
-    memcpy(this->data.get() + this->size, data, add_size);
-
-    this->size = size_new;
+    throw Exception("Data corrupted add");
 }
 
 void RawData::add_top(char *data, size_t add_size) {
@@ -187,23 +241,35 @@ void RawData::add_top(char *data, size_t add_size) {
     }
 
     size_t  size_new = this->size + add_size;
-    Data    tmp_data;
 
-    if (this->data) {
-        tmp_data = Data(new char[this->size]);
-        
+    if (size + add_size < size_real) {
+        auto tmp_data = Data(new char[this->size]);
         memcpy(tmp_data.get(), this->data.get(), this->size);
-    }
 
-    this->data = Data(new char[size_new]);
-
-    memcpy(this->data.get(), data, add_size);
-
-    if (tmp_data) {
+        memcpy(this->data.get(), data, add_size);
         memcpy(this->data.get() + add_size, tmp_data.get(), this->size);
+
+        this->size = size_new;
+
+        return;
     }
 
-    this->size = size_new;
+    if (size + add_size >= size_real) {
+        auto tmp_data = Data(new char[this->size]);
+        memcpy(tmp_data.get(), this->data.get(), this->size);
+
+        size_t chunks = ((size + add_size) / CHUNK_SIZE) + 1;
+
+        this->size_real = CHUNK_SIZE * chunks;
+        this->data      = Data(new char[this->size_real]);
+
+        memcpy(this->data.get(), data, add_size);
+        memcpy(this->data.get() + add_size, tmp_data.get(), this->size);
+
+        this->size = size_new;
+    }
+
+    throw Exception("Data corrupted add_top");
 }
 
 void RawData::add(const RawData &new_data) {
@@ -216,26 +282,6 @@ void RawData::add(const RawData &new_data) {
     }
 
     add(new_data.data.get(), new_data.size);
-}
-
-void RawData::write(size_t offset, char *data, size_t write_size) {
-    if (write_size == 0) {
-        throw Exception("RawData::write() write_size == 0");
-    }
-
-    if (data == nullptr) {
-        throw Exception("RawData:write() ptr == nullptr");
-    }
-
-    if (offset >= this->size) {
-        throw Exception("RawData::write() Offset >= data size. Offset: {}, Data size: {}", offset, this->size);
-    }
-
-    if (offset + write_size > this->size) {
-        throw Exception("RawData::write() Write size + offset > data size; Offset: {}, Write size: {}, Data size: {}", offset, size, this->size);
-    }
-
-    memcpy(this->data.get() + offset, data, write_size);
 }
 
 void RawData::read(size_t offset, char *data, size_t read_size) const {

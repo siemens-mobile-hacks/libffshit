@@ -126,18 +126,10 @@ RawData::RawData(std::ifstream &file, size_t offset, size_t data_size) {
 RawData &RawData::operator =(const RawData &prev) {
     if (this != &prev) {
         if (prev.size == 0) {
-            this->size      = 0;
-            this->size_real = CHUNK_SIZE;
-            this->data      = Data(new char[this->size_real]);
-
             return *this;
         }
 
         if (!prev.data) {
-            this->size      = 0;
-            this->size_real = CHUNK_SIZE;
-            this->data      = Data(new char[this->size_real]);
-
             return *this;
         }
 
@@ -169,18 +161,10 @@ RawData &RawData::operator =(const RawData &prev) {
 RawData &RawData::operator =(RawData &&prev) {
     if (this != &prev) {
         if (prev.size == 0) {
-            this->size      = 0;
-            this->size_real = CHUNK_SIZE;
-            this->data      = Data(new char[this->size_real]);
-
             return *this;
         }
 
         if (!prev.data) {
-            this->size      = 0;
-            this->size_real = CHUNK_SIZE;
-            this->data      = Data(new char[this->size_real]);
-
             return *this;
         }
 

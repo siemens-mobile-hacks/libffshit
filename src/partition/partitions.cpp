@@ -376,8 +376,6 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
         uint32_t    records_count;
         uint16_t    blocks_count;
         uint32_t    offset;
-        uint16_t    segment;
-        uint16_t    segment_offset;
     } Table;
 
     std::vector<Table> tables;
@@ -390,10 +388,12 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
             data.read_type<uint16_t>(offset,     &blocks_count, 1);
             data.read_type<uint32_t>(offset + 2, &block_segment_addr, 1);
 
-            uint16_t    segment         = block_segment_addr >> 16;
-            uint16_t    segment_offset  = block_segment_addr & 0xFFFF;
+            // uint16_t    segment         = block_segment_addr >> 16;
+            // uint16_t    segment_offset  = block_segment_addr & 0xFFFF;
 
-            size_t      ff_offset   = ((segment * 0x4000) + segment_offset) - base_address;
+            // size_t      ff_offset   = ((segment * 0x4000) + segment_offset) - base_address;
+
+            size_t ff_offset = segment_to_page(block_segment_addr) - base_address;
 
             if (ff_offset >= data.get_size()) {
                 return false;
@@ -467,10 +467,12 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
             continue;
         }
 
-        uint16_t    segment         = block_segment_addr >> 16;
-        uint16_t    segment_offset  = block_segment_addr & 0xFFFF;
+        // uint16_t    segment         = block_segment_addr >> 16;
+        // uint16_t    segment_offset  = block_segment_addr & 0xFFFF;
 
-        size_t      ff_offset   = ((segment * 0x4000) + segment_offset) - base_address;
+        // size_t      ff_offset   = ((segment * 0x4000) + segment_offset) - base_address;
+
+        size_t  ff_offset = segment_to_page(block_segment_addr) - base_address;
 
         if (ff_offset >= data.get_size()) {
             continue;
@@ -486,13 +488,14 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
             continue;
         }
 
-        Log::Logger::debug("{:08X} {:08X} {:08X}: Records count: {:08X}, Blocks count: {:04X}, Segment addr: {:08X}, Page addr: {:08X}",  
+        Log::Logger::debug("{:08X} {:08X} {:08X}: Records count: {:08X}, Blocks count: {:04X}, Segment addr: {:08X}, Page addr: {:08X} {:08X}",  
             addr, 
             addr + base_address,
             page_to_segment(addr + base_address),
             records_count,
             blocks_count,
             block_segment_addr, 
+            ff_offset + base_address,
             ff_offset);
 
         Table table_record;
@@ -500,8 +503,6 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
         table_record.blocks_count   = blocks_count;
         table_record.offset         = ff_offset;
         table_record.records_count  = records_count;
-        table_record.segment        = segment;
-        table_record.segment_offset = segment_offset;
 
         bool skip = false;
 
@@ -523,16 +524,11 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
     for (const auto &table : tables) {
         size_t offset = table.offset;
 
-        Log::Logger::debug("Table:     Page addr: {:08X}, Segment: {:04X}, Segment offset: {:04X}, Records: ", 
+        Log::Logger::debug("Table:     Page addr: {:08X} -> {:08X}, Segment addr: {:08X}, Records: ", 
+            table.offset + base_address,
             table.offset, 
-            table.segment,
-            table.segment_offset,
+            page_to_segment(table.offset + base_address),
             table.records_count);
-
-        // Log::Logger::debug("Table end: Page addr: {:08X}, Segment addr: {:08X}", 
-        //     table.offset + table.records_count * 6, 
-        //     page_to_segment((table.offset + base_address) + table.records_count * 6),
-        //     table.records_count);
 
         for (size_t i = 0; i < table.records_count; ++i) {
             uint16_t    blocks_count;
@@ -541,12 +537,13 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
             data.read_type<uint16_t>(offset,     &blocks_count, 1);
             data.read_type<uint32_t>(offset + 2, &block_segment_addr, 1);
 
-            uint16_t segment         = block_segment_addr >> 16;
-            uint16_t segment_offset  = block_segment_addr & 0xFFFF;
+            // uint16_t segment         = block_segment_addr >> 16;
+            // uint16_t segment_offset  = block_segment_addr & 0xFFFF;
 
-            size_t ff_offset   = ((segment * 0x4000) + segment_offset) - base_address;
+            // size_t ff_offset   = ((segment * 0x4000) + segment_offset) - base_address;
+            size_t ff_offset = segment_to_page(block_segment_addr) - base_address;
 
-            Log::Logger::debug("  Segment addr: {:08X}, Segment: {:04X}, Segment Offset: {:04X}, Page addr: {:08X}", block_segment_addr, segment, segment_offset, ff_offset);
+            Log::Logger::debug("  Segment addr: {:08X}, Page addr: {:08X} -> {:08X}", block_segment_addr, ff_offset + base_address, ff_offset);
 
             uint32_t    block_addr;
             uint16_t    wtf;
@@ -567,7 +564,7 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
 
             std::string block_name(header.name);
 
-            Log::Logger::debug("    {:6s} Block addr: {:08X} WTF: {:04X}", block_name, block_addr, wtf);
+            Log::Logger::debug("    {:6s} Block addr: {:08X} -> {:08X} WTF: {:04X}", block_name, block_addr + base_address, block_addr, wtf);
 
             if (!partitions_map.count(block_name)) {
                 partitions_map[block_name] = Partition(block_name);

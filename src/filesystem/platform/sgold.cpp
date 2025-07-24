@@ -77,8 +77,17 @@ SGOLD::SGOLD(Partitions::Partitions::Ptr partitions) : partitions(partitions), p
     root_dir = Directory::build(ROOT_NAME, "/");
 }
 
-void SGOLD::load(bool skip_broken, bool skip_dup, bool dump_data, std::vector<std::string> parts_to_extract) {
-    parse_FIT(skip_broken, skip_dup, dump_data, parts_to_extract);
+void SGOLD::load(bool skip_broken, bool skip_dup, std::vector<std::string> parts_to_extract) {
+    Log::Logger::info("Loading filesystem");
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    parse_FIT(skip_broken, skip_dup, parts_to_extract);
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto diff_time = end_time - start_time;
+
+    Log::Logger::info("Done in {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(diff_time).count());
 }
 
 const Directory::Ptr SGOLD::get_root() const {
@@ -86,6 +95,10 @@ const Directory::Ptr SGOLD::get_root() const {
 }
 
 void SGOLD::print_fit_header(const SGOLD::FITHeader &header) {
+    if (!verbose_headers) {
+        return;
+    }
+
     Log::Logger::debug("===========================");
     Log::Logger::debug("FIT:");
     Log::Logger::debug("Flags:  {:08X}",  header.flags);
@@ -95,6 +108,10 @@ void SGOLD::print_fit_header(const SGOLD::FITHeader &header) {
 }
 
 void SGOLD::print_file_header(const SGOLD::FileHeader &header) {
+    if (!verbose_headers) {
+        return;
+    }
+
     Log::Logger::debug("===========================");
     Log::Logger::debug("File:");
     Log::Logger::debug("ID:            {}",      header.id);
@@ -107,6 +124,10 @@ void SGOLD::print_file_header(const SGOLD::FileHeader &header) {
 }
 
 void SGOLD::print_file_part(const SGOLD::FilePart &part) {
+    if (!verbose_headers) {
+        return;
+    }
+
     Log::Logger::debug("===========================");
     Log::Logger::debug("File part:");
     Log::Logger::debug("ID:            {}",      part.id);
@@ -153,6 +174,10 @@ SGOLD::FilePart SGOLD::read_file_part(const RawData &data) {
 }
 
 void SGOLD::print_data(const FFSBlock &block) {
+    if (!verbose_data) {
+        return;
+    }
+
     std::string data_print;
 
     const auto &block_data = block.data;
@@ -175,7 +200,7 @@ void SGOLD::print_data(const FFSBlock &block) {
     }
 }
 
-void SGOLD::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::vector<std::string> parts_to_extract) {
+void SGOLD::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::string> parts_to_extract) {
     const auto &part_map = partitions->get_partitions();
 
     for (const auto &pair : part_map) {
@@ -236,9 +261,7 @@ void SGOLD::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::vect
 
                 fs_block.data = RawData(block_data, fs_block.header.offset, fs_block.header.size);
 
-                if (dump_data) {
-                    print_data(fs_block);
-                }
+                print_data(fs_block);
 
                 if (ffs_map.count(fs_block.header.id)) {
                     if (skip_dup) {
@@ -363,7 +386,10 @@ void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory:
             FileHeader      file_header = read_file_header(tmp.data);
             auto            timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
 
-            Log::Logger::info("Processing ID: {:5d}, Path: {}{}{}", id, block_name, path, file_header.name);
+            if (verbose_processing) {
+                Log::Logger::info("Processing ID: {:5d}, Path: {}{}{}", id, block_name, path, file_header.name);
+            }
+
 
             if (file_header.attributes & 0x10) {
                 Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);

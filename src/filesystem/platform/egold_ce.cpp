@@ -15,8 +15,17 @@ EGOLD_CE::EGOLD_CE(Partitions::Partitions::Ptr partitions) : partitions(partitio
     root_dir = Directory::build(ROOT_NAME, "/");
 }
 
-void EGOLD_CE::load(bool skip_broken, bool skip_dup, bool dump_data, std::vector<std::string> parts_to_extract) {
-    parse_FIT(skip_broken, skip_dup, dump_data, parts_to_extract);
+void EGOLD_CE::load(bool skip_broken, bool skip_dup, std::vector<std::string> parts_to_extract) {
+    Log::Logger::info("Loading filesystem");
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    parse_FIT(skip_broken, skip_dup, parts_to_extract);
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto diff_time = end_time - start_time;
+
+    Log::Logger::info("Done in {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(diff_time).count());
 }
 
 const Directory::Ptr EGOLD_CE::get_root() const {
@@ -24,6 +33,10 @@ const Directory::Ptr EGOLD_CE::get_root() const {
 }
 
 void EGOLD_CE::print_block_header(const FFSBlock &block) {
+    if (!verbose_headers) {
+        return;
+    }
+
     Log::Logger::debug("    ==== Offset: {:08X} ====", block.addr);
     Log::Logger::debug("    Marker1:  {:04X}", block.header.marker1);
     Log::Logger::debug("    Size:     {:04X}", block.header.size);
@@ -33,6 +46,10 @@ void EGOLD_CE::print_block_header(const FFSBlock &block) {
 }
 
 void EGOLD_CE::print_file_header(const FFSFile &file) {
+    if (!verbose_headers) {
+        return;
+    }
+
     Log::Logger::debug("    ID:           {:04X} {}", file.header.id, file.header.id);
     Log::Logger::debug("    Parent:       {:04X} {}", file.header.parent_id, file.header.parent_id);
     Log::Logger::debug("    Timestamp:    {:08X}", file.header.fat_timestamp);
@@ -47,6 +64,10 @@ void EGOLD_CE::print_file_header(const FFSFile &file) {
 }
 
 void EGOLD_CE::print_data(const FFSBlock &block) {
+    if (!verbose_data) {
+        return;
+    }
+
     std::string data_print;
 
     for (size_t i = 0; i < block.data.get_size(); ++i) {
@@ -67,7 +88,7 @@ void EGOLD_CE::print_data(const FFSBlock &block) {
     }
 }
 
-void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::vector<std::string> parts_to_extract) {
+void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::string> parts_to_extract) {
     const auto &part_map        = partitions->get_partitions();
     size_t      base_address    = partitions->get_detector()->get_base_address();
 
@@ -146,9 +167,11 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::v
                     continue;
                 }
 
-                print_block_header(fs_block);
+                if (verbose_headers) {
+                    print_block_header(fs_block);
+                }
 
-                if (dump_data) {
+                if (verbose_data) {
                     print_data(fs_block);
                 }
 
@@ -184,10 +207,7 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::v
             bool is_header = !(fs_block.header.block_id & 1);
 
             print_block_header(fs_block);
-
-            if (dump_data) {
-                print_data(fs_block);
-            }
+            print_data(fs_block);
 
             if (!is_header) {
                 continue;
@@ -323,7 +343,9 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
         const auto &file        = ffs_files.at(id);
         auto        timestamp   = fat_timestamp_to_unix(file.header.fat_timestamp);
 
-        Log::Logger::info("Processing ID: {:5d} {:5d}, Path: {}{}{}", file.block->header.block_id, file.header.id, part_name, path, file.header.name);
+        if (verbose_processing) {
+            Log::Logger::info("Processing ID: {:5d} {:5d}, Path: {}{}{}", file.block->header.block_id, file.header.id, part_name, path, file.header.name);
+        }
         
         print_file_header(file);
         

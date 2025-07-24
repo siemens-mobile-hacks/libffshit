@@ -16,8 +16,17 @@ SGOLD2_ELKA::SGOLD2_ELKA(Partitions::Partitions::Ptr partitions) : partitions(pa
     root_dir = Directory::build(ROOT_NAME, "/");
 }
 
-void SGOLD2_ELKA::load(bool skip_broken, bool skip_dup, bool dump_data, std::vector<std::string> parts_to_extract) {
-    parse_FIT(skip_broken, skip_dup, dump_data, parts_to_extract);
+void SGOLD2_ELKA::load(bool skip_broken, bool skip_dup, std::vector<std::string> parts_to_extract) {
+    Log::Logger::info("Loading filesystem");
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    parse_FIT(skip_broken, skip_dup, parts_to_extract);
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto diff_time = end_time - start_time;
+
+    Log::Logger::info("Done in {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(diff_time).count());
 }
 
 const Directory::Ptr SGOLD2_ELKA::get_root() const {
@@ -25,6 +34,10 @@ const Directory::Ptr SGOLD2_ELKA::get_root() const {
 }
 
 void SGOLD2_ELKA::print_fit_header(const SGOLD2_ELKA::FITHeader &header) {
+    if (!verbose_headers) {
+        return;
+    }
+
     Log::Logger::debug("    ===========================");
     Log::Logger::debug("    FIT:");
     Log::Logger::debug("      Flags:      {:08X}",      header.flags);
@@ -34,6 +47,10 @@ void SGOLD2_ELKA::print_fit_header(const SGOLD2_ELKA::FITHeader &header) {
 }
 
 void SGOLD2_ELKA::print_dir_header(const DirHeader &header) {
+    if (!verbose_headers) {
+        return;
+    }
+
     Log::Logger::debug("===========================");
     Log::Logger::debug("Dir header:");
     Log::Logger::debug("  ID:           {:04X} {}",     header.id, header.id);
@@ -43,6 +60,10 @@ void SGOLD2_ELKA::print_dir_header(const DirHeader &header) {
 }
 
 void SGOLD2_ELKA::print_file_header(const SGOLD2_ELKA::FileHeader &header) {
+    if (!verbose_headers) {
+        return;
+    }
+
     Log::Logger::debug("===========================");
     Log::Logger::debug("File:");
     Log::Logger::debug("  ID:            {:04X} {}",     header.id, header.id);
@@ -57,6 +78,10 @@ void SGOLD2_ELKA::print_file_header(const SGOLD2_ELKA::FileHeader &header) {
 }
 
 void SGOLD2_ELKA::print_file_part(const FilePart &part) {
+    if (!verbose_headers) {
+        return;
+    }
+
     Log::Logger::debug("===========================");
     Log::Logger::debug("Part:");
     Log::Logger::debug("  ID:             {:04X} {}", part.id, part.id);
@@ -140,6 +165,10 @@ SGOLD2_ELKA::FilePart SGOLD2_ELKA::read_file_part(const RawData &data) {
 }
 
 void SGOLD2_ELKA::print_data(const FFSBlock &block) {
+    if (!verbose_data) {
+        return;
+    }
+
     std::string data_print;
 
     const auto &block_data = block.data;
@@ -162,46 +191,14 @@ void SGOLD2_ELKA::print_data(const FFSBlock &block) {
     }
 }
 
-void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std::vector<std::string> parts_to_extract) {
+void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::string> parts_to_extract) {
     const auto &part_map = partitions->get_partitions();
 
-    // auto check_header = [](const FITHeader &header, uint32_t block_size) -> bool {
-    //     if (header.flags != 0xFFFFFFC0) {
-    //         return false;
-    //     }
-
-    //     if (header.flags == 0xFFFFFFFF) {
-    //         return false;
-    //     }
-
-    //     if (header.id == 0xFFFFFFFF) {
-    //         return false;
-    //     }
-
-    //     if (header.size == 0xFFFFFFFF) {
-    //         return false;
-    //     }
-
-    //     if (header.offset == 0xFFFFFFFF) {
-    //         return false;
-    //     }
-
-    //     if (header.size > 0x1000) {
-    //         return false;
-    //     }
-
-    //     if (header.offset > block_size) {
-    //         return false;
-    //     }
-
-    //     return true;
-    // };
-
     auto check_end = [](const FITHeader &header) -> bool {
-        return  header.flags == 0xFFFFFFFF &&
-                header.id == 0xFFFFFFFF &&
-                header.size == 0xFFFFFFFF &&
-                header.offset == 0xFFFFFFFF;
+        return  header.flags    == 0xFFFFFFFF &&
+                header.id       == 0xFFFFFFFF &&
+                header.size     == 0xFFFFFFFF &&
+                header.offset   == 0xFFFFFFFF;
     };
 
     for (const auto &pair : part_map) {
@@ -434,9 +431,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, bool dump_data, std
                     continue;
                 }
 
-                if (dump_data) {
-                    print_data(fs_block);
-                }
+                print_data(fs_block);
 
                 if (ffs_map.count(fs_block.header.id)) {
                     if (skip_dup) {
@@ -685,7 +680,9 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
 
             print_file_header(file_header);
 
-            Log::Logger::info("Processing ID: {:5d}, Path: {}{}", dir_info.id, block_name, path + file_header.name);
+            if (verbose_processing) {
+                Log::Logger::info("Processing ID: {:5d}, Path: {}{}", dir_info.id, block_name, path + file_header.name);
+            }
 
             if (file_header.attributes & 0x10) {
                 Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);

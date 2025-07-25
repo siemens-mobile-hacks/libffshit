@@ -415,7 +415,7 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
             
             block_addr -= base_address;
 
-            if (block_addr & 0x0FFF != 0) {
+            if ((block_addr & 0x0FFF) != 0) {
                 return false;
             }
             

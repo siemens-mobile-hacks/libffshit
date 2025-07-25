@@ -3,6 +3,7 @@
 
 #include "ffshit/filesystem/structure/file.h"
 #include "ffshit/filesystem/structure/directory.h"
+#include "ffshit/filesystem/structure/attributes.h"
 
 #include "thirdparty/ordered_map.h"
 

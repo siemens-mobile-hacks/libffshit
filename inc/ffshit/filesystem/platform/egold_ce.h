@@ -50,7 +50,7 @@ class EGOLD_CE : public Base {
             uint16_t    parent_id       = 0x0;
             uint32_t    fat_timestamp   = 0x0;
             uint16_t    data_id         = 0x0;
-            uint16_t    flags           = 0x0;
+            uint16_t    attributes      = 0x0;
             uint16_t    unk4            = 0x0;
             uint16_t    next_part_id    = 0x0;
             std::string name;

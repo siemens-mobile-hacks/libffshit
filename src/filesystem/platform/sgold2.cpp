@@ -281,7 +281,9 @@ void SGOLD2::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::string>
             const FFSBlock &    root_block      = ffs_map.at(10);
             FileHeader          root_header     = read_file_header(root_block.data);
             auto                timestamp       = fat_timestamp_to_unix(root_header.fat_timestamp);
-            Directory::Ptr      root            = Directory::build(part_name, ROOT_PATH, timestamp);
+            Attributes          attributes(root_header.attributes);
+
+            Directory::Ptr      root            = Directory::build(part_name, ROOT_PATH, attributes, timestamp);
 
             root_dir->add_subdir(root);
 
@@ -406,12 +408,14 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
             FileHeader          file_header     = read_file_header(file_block.data);
             TimePoint           timestamp       = fat_timestamp_to_unix(file_header.fat_timestamp);
 
+            Attributes          attributes(file_header.attributes);
+
             if (verbose_processing) {
                 Log::Logger::info("Processing ID: {:5d}, Path: {}{}", id, block_name, path + file_header.name);
             }
 
-            if (file_header.attributes & 0x10) {
-                Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);
+            if (attributes.is_directory()) {
+                Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, attributes, timestamp);
 
                 dir->add_subdir(dir_next);
 
@@ -424,7 +428,7 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
                     read_full_data(ffs_map, file_header, file_data);
                 }
             
-                File::Ptr file = File::build(file_header.name, block_name + path, timestamp, file_data);
+                File::Ptr file = File::build(file_header.name, block_name + path, file_data, attributes, timestamp);
 
                 dir->add_file(file);
             }

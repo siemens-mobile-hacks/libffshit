@@ -3,24 +3,37 @@
 namespace FULLFLASH {
 namespace Filesystem {
 
-Directory::Directory(const std::string name, const std::string path) : 
+Directory::Directory(const std::string name, const std::string path) :
     name(name),
     path(path),
-    timestamp(std::chrono::seconds(0)) { 
+    attributes(Attributes(static_cast<uint32_t>(FileAttributes::DIRECTORY))),
+    timestamp(std::chrono::seconds(0)) {
 }
 
-Directory::Directory(const std::string name, const std::string path, const TimePoint &timestamp) : 
+Directory::Directory(const std::string name, const std::string path, const Attributes &attributes) :
     name(name),
     path(path),
-    timestamp(timestamp) { 
+    attributes(attributes),
+    timestamp(std::chrono::seconds(0)) {
+}
+
+Directory::Directory(const std::string name, const std::string path, const Attributes &attributes, const TimePoint &timestamp) :
+    name(name),
+    path(path),
+    attributes(attributes),
+    timestamp(timestamp) {
 }
 
 Directory::Ptr Directory::build(const std::string name, const std::string path) {
     return std::make_shared<Directory>(name, path);
 }
 
-Directory::Ptr Directory::build(const std::string name, const std::string path, const TimePoint &timestamp) {
-    return std::make_shared<Directory>(name, path, timestamp);
+Directory::Ptr Directory::build(const std::string name, const std::string path, const Attributes &attributes) {
+    return std::make_shared<Directory>(name, path, attributes);
+}
+
+Directory::Ptr Directory::build(const std::string name, const std::string path, const Attributes &attributes, const TimePoint &timestamp) {
+    return std::make_shared<Directory>(name, path, attributes, timestamp);
 }
 
 void Directory::add_subdir(Ptr dir) {
@@ -37,6 +50,10 @@ const std::string &Directory::get_name() const {
 
 const std::string &Directory::get_path() const {
     return path;
+}
+
+const Attributes &Directory::get_attributes() const {
+    return attributes;
 }
 
 const TimePoint Directory::get_timestamp() const {

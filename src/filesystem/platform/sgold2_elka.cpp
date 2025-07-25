@@ -555,7 +555,9 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
             const FFSBlock &    root_block      = ffs_map.at(10);
             FileHeader          root_header     = read_file_header(root_block);
             auto                timestamp       = fat_timestamp_to_unix(root_header.fat_timestamp);
-            Directory::Ptr      root            = Directory::build(part_name, ROOT_PATH, timestamp);
+            Attributes          attributes(root_header.attributes);
+
+            Directory::Ptr      root            = Directory::build(part_name, ROOT_PATH, attributes, timestamp);
 
             print_file_header(root_header);
 
@@ -677,6 +679,7 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
             const auto &        file_block  = ffs_map.at(dir_info.id);
             FileHeader          file_header = read_file_header(file_block);;
             TimePoint           timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
+            Attributes          attributes(file_header.attributes);
 
             print_file_header(file_header);
 
@@ -684,8 +687,8 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
                 Log::Logger::info("Processing ID: {:5d}, Path: {}{}", dir_info.id, block_name, path + file_header.name);
             }
 
-            if (file_header.attributes & 0x10) {
-                Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, timestamp);
+            if (attributes.is_directory()) {
+                Directory::Ptr dir_next = Directory::build(file_header.name, block_name + path, attributes, timestamp);
 
                 dir->add_subdir(dir_next);
 
@@ -698,7 +701,7 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
                     read_full_data(ffs_map, file_header, file_data);
                 }
 
-                File::Ptr file = File::build(file_header.name, block_name + path, timestamp, file_data);
+                File::Ptr file = File::build(file_header.name, block_name + path, file_data, attributes, timestamp);
 
                 dir->add_file(file);
             }

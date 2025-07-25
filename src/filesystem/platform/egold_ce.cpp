@@ -53,7 +53,7 @@ void EGOLD_CE::print_file_header(const FFSFile &file) {
     Log::Logger::debug("    ID:           {:04X} {}", file.header.id, file.header.id);
     Log::Logger::debug("    Parent:       {:04X} {}", file.header.parent_id, file.header.parent_id);
     Log::Logger::debug("    Timestamp:    {:08X}", file.header.fat_timestamp);
-    Log::Logger::debug("    Flags:        {:04X}", file.header.flags);
+    Log::Logger::debug("    Attributes:   {:04X}", file.header.attributes);
     Log::Logger::debug("    Data ID:      {:04X} {:04X}", file.header.data_id, file.header.data_id + ID_ADD);
     Log::Logger::debug("    Unk4:         {:04X}", file.header.unk4);
     Log::Logger::debug("    Next part ID: {:04X}", file.header.next_part_id);
@@ -226,7 +226,7 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::strin
             fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.parent_id), 1);
             fs_block.data.read<uint32_t>(oofs, reinterpret_cast<char *>(&file.header.fat_timestamp), 1);
             fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.data_id), 1);
-            fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.flags), 1);
+            fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.attributes), 1);
             fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.unk4), 1);
             fs_block.data.read<uint16_t>(oofs, reinterpret_cast<char *>(&file.header.next_part_id), 1);
 
@@ -271,7 +271,9 @@ void EGOLD_CE::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::strin
         try {
             const auto &        root_block  = ffs_files.at(6);
             auto                timestamp   = fat_timestamp_to_unix(root_block.header.fat_timestamp);
-            Directory::Ptr      root        = Directory::build(part_name, ROOT_PATH, timestamp);
+            Attributes          attributes(root_block.header.attributes);
+
+            Directory::Ptr      root        = Directory::build(part_name, ROOT_PATH, attributes, timestamp);
             
             root_dir->add_subdir(root);
 
@@ -342,6 +344,8 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
 
         const auto &file        = ffs_files.at(id);
         auto        timestamp   = fat_timestamp_to_unix(file.header.fat_timestamp);
+        Attributes  attributes(file.header.attributes);
+
 
         if (verbose_processing) {
             Log::Logger::info("Processing ID: {:5d} {:5d}, Path: {}{}{}", file.block->header.block_id, file.header.id, part_name, path, file.header.name);
@@ -350,8 +354,8 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
         print_file_header(file);
         
         try {
-            if (file.header.flags & 0x10) {
-                Directory::Ptr dir_next = Directory::build(file.header.name, part_name + path, timestamp);
+            if (attributes.is_directory()) {
+                Directory::Ptr dir_next = Directory::build(file.header.name, part_name + path, attributes, timestamp);
 
                 dir->add_subdir(dir_next);
 
@@ -361,7 +365,7 @@ void EGOLD_CE::scan(const std::string &part_name, const FFSBlocksMap &ffs_blocks
 
                 read_full(ffs_blocks, ffs_files, file, file_data);
 
-                File::Ptr file_ = File::build(file.header.name, part_name + path, timestamp, file_data);
+                File::Ptr file_ = File::build(file.header.name, part_name + path, file_data, attributes, timestamp);
 
                 dir->add_file(file_);
             }

@@ -85,7 +85,7 @@ class SGOLD2_ELKA : public Base {
         void                        print_file_part(const FilePart &part);
         void                        print_data(const FFSBlock &block);
 
-        static FileHeader           read_file_header(const FFSBlock &block);
+        static FileHeader           read_file_header(const FFSBlock &block, bool skip_broken = false);
         static FilePart             read_file_part(const RawData &data);
 
         void                        scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory::Ptr dir, const FileHeader &header, bool skip_broken = false, std::string path = "/");

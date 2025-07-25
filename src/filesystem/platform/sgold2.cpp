@@ -111,9 +111,10 @@ void SGOLD2::print_data(const FFSBlock &block) {
     }
 }
 
-SGOLD2::FileHeader SGOLD2::read_file_header(const RawData &data) {
-    FileHeader  header;
-    size_t      offset = 0;
+SGOLD2::FileHeader SGOLD2::read_file_header(const RawData &data, bool skip_broken) {
+    FileHeader      header;
+    size_t          offset = 0;
+    static size_t   borken_names = 0;
 
     data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.id), 1);
     data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.unknown1), 1);
@@ -163,17 +164,29 @@ SGOLD2::FileHeader SGOLD2::read_file_header(const RawData &data) {
         delete[] from;
         delete[] to;
 
-        throw Exception("iconv(): {}", strerror(errno));
+        if (skip_broken) {
+            throw Exception("iconv(): {}", strerror(errno));
+        } else {
+            std::string hex;
+
+            for (size_t i = 0; i < str_size; ++i) {
+                hex += fmt::format("{:02X} ", static_cast<uint8_t>(from[i]));
+            }
+
+            header.name = fmt::format("broken_name_{}", borken_names++);
+
+            Log::Logger::warn("Broken name: {} -> {}", hex, header.name);
+        }
+    } else {
+        to[str_size - to_size] = 0x00;
+
+        header.name = std::string(to);
+
+        iconv_close(iccd);
+
+        delete []from;
+        delete []to;
     }
-
-    to[str_size - to_size] = 0x00;
-
-    header.name = std::string(to);
-
-    iconv_close(iccd);
-    
-    delete []from;
-    delete []to;
 
     return header;
 }
@@ -434,7 +447,7 @@ void SGOLD2::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory
             }
         } catch (const FULLFLASH::BaseException &e) {
             if (skip_broken) {
-                Log::Logger::warn("Skip. Broken file/directory: {}", e.what());
+                Log::Logger::warn("Skip. Broken file/directory ID: {:5d}: {}. Directory: {}", id, e.what(), path);
             } else {
                 throw;
             }

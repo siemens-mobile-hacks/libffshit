@@ -89,10 +89,11 @@ void SGOLD2_ELKA::print_file_part(const FilePart &part) {
     Log::Logger::debug("  Next part ID:   {:04X} {}", part.next_part, part.next_part);
 }
 
-SGOLD2_ELKA::FileHeader SGOLD2_ELKA::read_file_header(const FFSBlock &block) {
+SGOLD2_ELKA::FileHeader SGOLD2_ELKA::read_file_header(const FFSBlock &block, bool skip_broken) {
     const RawData &             header_data = block.data;
     SGOLD2_ELKA::FileHeader     header;
     size_t                      offset = 0;
+    static size_t               borken_names = 0;
 
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.id), 1);
     header_data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.unknown1), 1);
@@ -138,17 +139,29 @@ SGOLD2_ELKA::FileHeader SGOLD2_ELKA::read_file_header(const FFSBlock &block) {
         delete []from;
         delete []to;
 
-        throw Exception("iconv(): {}", strerror(errno));
+        if (skip_broken) {
+            throw Exception("iconv(): {}", strerror(errno));
+        } else {
+            std::string hex;
+
+            for (size_t i = 0; i < str_size; ++i) {
+                hex += fmt::format("{:02X} ", static_cast<uint8_t>(from[i]));
+            }
+
+            header.name = fmt::format("broken_name_{}", borken_names++);
+
+            Log::Logger::warn("Broken name: {} -> {}", hex, header.name);
+        }
+    } else {
+        to[str_size - to_n] = 0x00;
+
+        header.name = std::string(to);
+
+        iconv_close(iccd);
+
+        delete []from;
+        delete []to;
     }
-
-    to[str_size - to_n] = 0x00;
-
-    header.name = std::string(to);
-
-    iconv_close(iccd);
-
-    delete []from;
-    delete []to;
 
     return header;
 }

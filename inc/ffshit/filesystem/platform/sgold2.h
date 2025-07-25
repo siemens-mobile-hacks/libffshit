@@ -73,7 +73,7 @@ class SGOLD2 : public Base {
 
         void                        parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::string> parts_to_extract);
 
-        static FileHeader           read_file_header(const RawData &data);
+        static FileHeader           read_file_header(const RawData &data, bool skip_broken = false);
         static FilePart             read_file_part(const RawData &data);
 
         void                        read_recurse(FSBlocksMap &ffs_map, RawData &data, uint16_t next_id);

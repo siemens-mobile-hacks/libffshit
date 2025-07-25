@@ -145,7 +145,8 @@ static bool is_empty(const char *buf, size_t size) {
 // =========================================================================
 
 Partitions::Partitions(const RawData& raw_data, Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr) : data(raw_data) {
-    this->detector  = detector;
+    this->detector      = detector;
+    this->fs_platform   = detector->get_platform();
 
     search_partitions(old_search_algorithm, search_start_addr);
 
@@ -166,6 +167,10 @@ const RawData &Partitions::get_data() const {
 
 const Detector::Ptr &Partitions::get_detector() const {
     return detector;
+}
+
+Platform Partitions::get_fs_platform() const {
+    return fs_platform;
 }
 
 void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_addr) {
@@ -615,6 +620,12 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
 
         table_start_addr &= FF_ADDRESS_MASK;
 
+        if (!match_pattern(pattern_sg, table_start_addr)) {
+            Log::Logger::warn("Partitions table at address: {:08X} doesn't match ad SGOLD table pattern. Skip.", table_start_addr);
+
+            continue;
+        }
+
         Log::Logger::debug("{} {:08X}", header, table_start_addr);
 
         size_t struct_size = 0x2C;
@@ -782,6 +793,22 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
         table_start_addr &= FF_ADDRESS_MASK;
 
         Log::Logger::debug("{} {:08X}", header, table_start_addr);
+
+        if (!match_pattern(pattern_nsg, table_start_addr)) {
+            bool is_sgold = false;
+
+            if (match_pattern(pattern_sg, table_start_addr)) {
+                Log::Logger::warn("Partitions table at address: {:08X} doesn't match as SGOLD2 table pattern.", table_start_addr);
+                Log::Logger::warn("Detected platform SGOLD2, but partitions table format matched ad SGOLD. Using SGOLD partitions search. FS Platform overrided.");
+
+                fs_platform = Platform::SGOLD;
+
+                return search_partitions_sgold(start_addr);
+            }
+            Log::Logger::warn("Partitions table at address: {:08X} doesn't match as SGOLD2 table pattern. Skip.", table_start_addr);
+
+            continue;
+        }
 
         size_t struct_size = 0x34;
 
@@ -1410,6 +1437,15 @@ std::vector<uint32_t> Partitions::find_pattern(const Patterns::Readable &pattern
 
     return address_list;
 }
+
+bool Partitions::match_pattern(const Patterns::Readable &pattern_readable, uint32_t addr) {
+    Patterns::Pattern<uint32_t> pattern(pattern_readable);
+
+    uint32_t *data_ptr = reinterpret_cast<uint32_t *>(data.get_data().get() + addr);
+
+    return pattern.match(data_ptr);
+}
+
 
 };
 };

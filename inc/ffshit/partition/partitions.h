@@ -22,7 +22,7 @@ class Partitions {
         using Ptr       = std::shared_ptr<Partitions>;
         using Map       = tsl::ordered_map<std::string, Partition>;
         
-        Partitions(const RawData& raw_data, Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0);
+        Partitions(const RawData &raw_data, Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0);
 
         static Ptr build(const RawData& raw_data, Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0) {
             return std::make_unique<Partitions>(raw_data, detector, old_search_algorithm, search_start_addr);
@@ -31,6 +31,7 @@ class Partitions {
         const Map &                 get_partitions() const;
         const RawData &             get_data() const;
         const Detector::Ptr &       get_detector() const;
+        Platform                    get_fs_platform() const;
 
     private:
         uint32_t                    block_size;
@@ -38,6 +39,8 @@ class Partitions {
         
         Detector::Ptr               detector;
         const RawData &             data;
+
+        Platform                    fs_platform;
 
         bool                        check_part_name(const std::string &name);
 
@@ -58,6 +61,8 @@ class Partitions {
 
         std::vector<uint32_t>       find_pattern8(const Patterns::Readable &pattern_readable, uint32_t start = 0, bool break_first = false);
         std::vector<uint32_t>       find_pattern(const Patterns::Readable &pattern_readable, uint32_t start = 0, bool break_first = false);
+
+        bool                        match_pattern(const Patterns::Readable &pattern_readable, uint32_t addr);
 
 };
 

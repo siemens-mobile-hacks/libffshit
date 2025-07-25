@@ -176,6 +176,24 @@ RawData &RawData::operator =(RawData &&prev) {
     return *this;
 }
 
+void RawData::reserve(size_t data_size) {
+    size_t chunks = (data_size / CHUNK_SIZE) + 1;
+
+    if (this->size != 0) {
+        auto tmp_data = Data(new char[this->size]);
+
+        memcpy(tmp_data.get(), this->data.get(), this->size);
+
+        this->size_real += CHUNK_SIZE * chunks;
+        this->data      = Data(new char[this->size_real]);
+
+        memcpy(data.get(), tmp_data.get(), this->size);
+    } else {
+        this->size_real = CHUNK_SIZE * chunks;
+        this->data      = Data(new char[this->size_real]);
+    }
+}
+
 void RawData::add(char *data, size_t add_size) {
     if (add_size == 0) {
         throw Exception("RawData::add() add_size == 0");

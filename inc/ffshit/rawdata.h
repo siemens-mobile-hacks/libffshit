@@ -25,6 +25,8 @@ class RawData {
 
         RawData &       operator =(const RawData &prev);
         RawData &       operator =(RawData &&prev);
+
+        void            reserve(size_t data_size);
     
         void            add(char *data, size_t add_size);
         void            add(const RawData &new_data);

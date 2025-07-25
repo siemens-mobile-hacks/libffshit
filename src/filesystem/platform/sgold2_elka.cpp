@@ -710,7 +710,12 @@ void SGOLD2_ELKA::scan(const std::string &block_name, FSBlocksMap &ffs_map, Dire
                 RawData     file_data;
                 uint32_t    data_id = file_header.id + 1;
 
+                // Для диска Cache блока может и не быть
                 if (ffs_map.count(data_id)) {
+                    if (file_header.size != 0 ) {
+                        file_data.reserve(file_header.size);
+                    }
+
                     read_full_data(ffs_map, file_header, file_data);
                 }
 

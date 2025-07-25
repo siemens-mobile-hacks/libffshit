@@ -387,11 +387,10 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                     size_t read_size    = fs_block.header.size - FFS_MAX_DATA_SIZE;
 
                     read_size &= 0x3FF;
-
                     size_data = ceil((read_size / 16.0) + 1) * 32.0;
 
                     if (fs_block.header.flags == 0xFFFFFFC0) {
-                        fs_block.data = RawData(this->partitions->get_data(), ff_boffset + fs_block.header.offset, FFS_MAX_DATA_SIZE_2);
+                        fs_block.data = RawData(this->partitions->get_data(), ff_boffset + fs_block.header.offset, FFS_MAX_DATA_SIZE);
 
                         // ===============================
 

@@ -275,7 +275,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                 block_data.read<uint32_t>(offset_header, reinterpret_cast<char *>(&fs_block.header.offset), 1);
 
                 if (check_end(fs_block.header)) {
-                    Log::Logger::debug("{} {:08X}: {:08X} {:08X} {:08X} {:08X} - End", 
+                    Log::Logger::debug("{} {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - End", 
                         part_name, 
                         block.get_addr() + offset, 
                         fs_block.header.flags, 
@@ -302,7 +302,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                         fs_block.data = block_data.read_aligned(read_offset, read_size);
                     }
 
-                    Log::Logger::debug("{} <0x0200 {:08X}: {:08X} {:08X} {:08X} {:08X} - {:04X} {:08X} {:08X}", 
+                    Log::Logger::debug("{}  <0x0200 {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - {:04X} {:08X} {:08X}", 
                         part_name, 
                         ff_boffset + offset, 
                         fs_block.header.flags, 
@@ -335,7 +335,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                     if (read_size != 0) {
                         size_data = ceil((read_size / 16.0) + 1) * 32.0;
 
-                        Log::Logger::debug("{} >0x0200 {:08X}: {:08X} {:08X} {:08X} {:08X} - {:04X} {:08X} {:08X}", 
+                        Log::Logger::debug("{}  >0x0200 {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - {:04X} {:08X} {:08X}", 
                             part_name, 
                             block.get_addr() + offset, 
                             fs_block.header.flags, 
@@ -349,7 +349,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                         offset -= size_data;
 
                     } else {
-                        Log::Logger::debug("{} >0x0200 {:08X}: {:08X} {:08X} {:08X} {:08X} - {:04X} {:08X} {:08X}", 
+                        Log::Logger::debug("{}  >0x0200 {:08X}: {:08X} {:08X} {:08X} {:08X} - {:04X} {:08X} {:08X}", 
                             part_name, 
                             block.get_addr() + offset, 
                             fs_block.header.flags, 
@@ -363,7 +363,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                         offset -= 32;
                     }
                 } else if (fs_block.header.size > FFS_MAX_DATA_SIZE && size_diff < FFS_MAX_DATA_SIZE && size_diff2 > FFS_MAX_DATA_SIZE_2) {
-                    Log::Logger::debug("{} <0x0800 {:08X}: {:08X} {:08X} {:08X} {:08X} - {:04X} {:08X} {:08X}", 
+                    Log::Logger::debug("{} 1>0x0800 {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - {:04X} {:08X} {:08X}", 
                         part_name, 
                         block.get_addr() + offset, 
                         fs_block.header.flags, 
@@ -378,7 +378,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                         size_t read_addr = ff_boffset + fs_block.header.offset;
                         size_t read_size = fs_block.header.size;
 
-                        fs_block.data = RawData(this->partitions->get_data(), read_addr, fs_block.header.size);
+                        fs_block.data = RawData(this->partitions->get_data(), read_addr, read_size);
                     }
 
                     offset -= 32;
@@ -387,10 +387,11 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                     size_t read_size    = fs_block.header.size - FFS_MAX_DATA_SIZE;
 
                     read_size &= 0x3FF;
+
                     size_data = ceil((read_size / 16.0) + 1) * 32.0;
 
                     if (fs_block.header.flags == 0xFFFFFFC0) {
-                        fs_block.data = RawData(this->partitions->get_data(), ff_boffset + fs_block.header.offset, FFS_MAX_DATA_SIZE);
+                        fs_block.data = RawData(this->partitions->get_data(), ff_boffset + fs_block.header.offset, fs_block.header.size & 0xC00);
 
                         // ===============================
 
@@ -401,7 +402,7 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                         }
                     }
 
-                    Log::Logger::debug("{} >0x0800 {:08X}: {:08X} {:08X} {:08X} {:08X} - {:04X} {:08X} {:08X}", 
+                    Log::Logger::debug("{} 2>0x0800 {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - {:04X} {:08X} {:08X}", 
                         part_name, 
                         block.get_addr() + offset,
                         fs_block.header.flags, 
@@ -418,10 +419,10 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                         size_t read_addr = ff_boffset + fs_block.header.offset;
                         size_t read_size = fs_block.header.size;
 
-                        fs_block.data = RawData(this->partitions->get_data(), read_addr, fs_block.header.size);
+                        fs_block.data = RawData(this->partitions->get_data(), read_addr, read_size);
                     }
 
-                    Log::Logger::debug("{} <0x0800 {:08X}: {:08X} {:08X} {:08X} {:08X} - {:04X} {:08X} {:08X}", 
+                    Log::Logger::debug("{}  <0x0800 {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - {:04X} {:08X} {:08X}", 
                         part_name, 
                         block.get_addr() + offset, 
                         fs_block.header.flags, 

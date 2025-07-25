@@ -61,7 +61,16 @@ FULLFLASH::FULLFLASH(char *ff_data, size_t ff_data_size, Platform platform) {
 }
 
 void FULLFLASH::load_partitions(bool old_search_algorithm, uint32_t search_start_addr) {
+    Log::Logger::info("Loading partitions");
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     this->partitions = Partitions::Partitions::build(data, detector, old_search_algorithm, search_start_addr);
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto diff_time = end_time - start_time;
+
+    Log::Logger::info("Done in {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(diff_time).count());
 }
 
 const Detector &FULLFLASH::get_detector() const {

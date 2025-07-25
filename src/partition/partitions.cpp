@@ -571,27 +571,30 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
 
             Log::Logger::debug("    {:6s} Block addr: {:08X} -> {:08X} WTF: {:04X}", block_name, block_addr + base_address, block_addr, wtf);
 
-            if (!partitions_map.count(block_name)) {
-                partitions_map[block_name] = Partition(block_name);
+            // Пока нужны только FFS
+            if (block_name.find("FFS") != std::string::npos) {
+                if (!partitions_map.count(block_name)) {
+                    partitions_map[block_name] = Partition(block_name);
+                }
+
+                size_t  single_block_size   = 65536;
+
+                if (wtf == 0x80) { // New EGOLD
+                    single_block_size *= 2;
+                }
+
+                size_t  block_data_size     = single_block_size * blocks_count;
+
+                RawData block_data;
+
+                for (uint16_t i = 0; i < blocks_count; ++i) {
+                    RawData tmp(data, block_addr + (single_block_size * i), single_block_size);
+
+                    block_data.add(tmp);
+                }
+
+                partitions_map[block_name].add_block(Block(header, block_data, block_addr & 0xFFFFFF00, block_data_size));
             }
-
-            size_t  single_block_size   = 65536;
-
-            if (wtf == 0x80) { // New EGOLD
-                single_block_size *= 2;
-            }
-
-            size_t  block_data_size     = single_block_size * blocks_count;
-
-            RawData block_data;
-
-            for (uint16_t i = 0; i < blocks_count; ++i) {
-                RawData tmp(data, block_addr + (single_block_size * i), single_block_size);
-
-                block_data.add(tmp);
-            }
-
-            partitions_map[block_name].add_block(Block(header, block_data, block_addr & 0xFFFFFF00, block_data_size));
 
             offset += 6;
         }

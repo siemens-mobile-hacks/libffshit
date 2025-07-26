@@ -468,7 +468,7 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
             continue;
         }
 
-        if (blocks_count > 2) {
+        if (blocks_count > 4) {
             continue;
         }
 

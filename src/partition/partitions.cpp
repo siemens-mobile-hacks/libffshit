@@ -606,27 +606,38 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
 bool Partitions::search_partitions_sgold(uint32_t start_addr) {
     Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
 
-    auto addresses = find_pattern(pattern_sg_nsg_table_pointer, start_addr, false);
+    auto address_list       = find_pattern(pattern_sg_nsg_table_pointer, start_addr, false);
+    bool by_table_pattern   = false;
 
-    if (!addresses.size()) {
-        return false;
+    if (!address_list.size()) {
+        Log::Logger::debug("Table pointer not found. Searching by table pattern match");
+
+        by_table_pattern = true;
+
+        address_list = find_pattern(pattern_sg, start_addr, false);
     }
 
-    for (auto &addr : addresses) {
+    for (auto &addr : address_list) {
         Log::Logger::debug("Pattern find, addr: {:08X}", addr);
 
         char        header[4];
         uint32_t    table_start_addr;
 
-        data.read_type<char>(addr, header, 4);
-        data.read_type<uint32_t>(addr + 4, &table_start_addr, 1);
+        if (by_table_pattern) {
+            table_start_addr = addr;
+        } else {
+            data.read_type<char>(addr, header, 4);
+            data.read_type<uint32_t>(addr + 4, &table_start_addr, 1);
 
-        table_start_addr &= FF_ADDRESS_MASK;
+            table_start_addr &= FF_ADDRESS_MASK;
 
-        if (!match_pattern(pattern_sg, table_start_addr)) {
-            Log::Logger::warn("Partitions table at address: {:08X} doesn't match ad SGOLD table pattern. Skip.", table_start_addr);
+            if (!match_pattern(pattern_sg, table_start_addr)) {
+                Log::Logger::warn("Partitions table at address: {:08X} doesn't match ad SGOLD table pattern. Skip.", table_start_addr);
 
-            continue;
+                continue;
+            }
+
+            Log::Logger::debug("Table start addr: {:08X}", table_start_addr);
         }
 
         Log::Logger::debug("{} {:08X}", header, table_start_addr);
@@ -774,14 +785,19 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
 bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
     Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
 
-    auto address_list    = find_pattern(pattern_sg_nsg_table_pointer, start_addr, false);
-    
+    auto address_list       = find_pattern(pattern_sg_nsg_table_pointer, start_addr, false);
+    bool by_table_pattern   = false;
+
     if (detector->is_sl75()) {
         Log::Logger::warn("SL75 ja pierdole!");
     }
 
     if (!address_list.size()) {
-        return false;
+        Log::Logger::debug("Table pointer not found. Searching by table pattern match");
+
+        by_table_pattern = true;
+
+        address_list = find_pattern(pattern_nsg, start_addr, false);
     }
 
     for (auto &addr : address_list) {
@@ -790,12 +806,15 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
         char        header[4];
         uint32_t    table_start_addr;
 
-        data.read_type<char>(addr, header, 4);
-        data.read_type<uint32_t>(addr + 4, &table_start_addr, 1);
+        if (by_table_pattern) {
+            table_start_addr = addr;
+        } else {
+            data.read_type<char>(addr, header, 4);
+            data.read_type<uint32_t>(addr + 4, &table_start_addr, 1);
 
-        table_start_addr &= FF_ADDRESS_MASK;
-
-        Log::Logger::debug("{} {:08X}", header, table_start_addr);
+            table_start_addr &= FF_ADDRESS_MASK;
+            Log::Logger::debug("Table start addr: {:08X}", table_start_addr);
+        }
 
         if (!match_pattern(pattern_nsg, table_start_addr)) {
             bool is_sgold = false;
@@ -950,15 +969,15 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
 bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
     Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
 
-    // auto address_list    = find_pattern(pattern_nsg);
-    auto address_list    = find_pattern(pattern_sg_nsg_table_pointer, start_addr, false);
-    
-    if (detector->is_sl75()) {
-        Log::Logger::warn("SL75 ja pierdole!");
-    }
+    auto address_list       = find_pattern(pattern_sg_nsg_table_pointer, start_addr, false);
+    bool by_table_pattern   = false;
 
     if (!address_list.size()) {
-        return false;
+        Log::Logger::debug("Table pointer not found. Searching by table pattern match");
+
+        by_table_pattern = true;
+
+        address_list = find_pattern(pattern_nsg, start_addr, false);
     }
 
     for (auto addr : address_list) {
@@ -967,12 +986,16 @@ bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
         char        header[4];
         uint32_t    table_start_addr;
 
-        data.read_type<char>(addr, header, 4);
-        data.read_type<uint32_t>(addr + 4, &table_start_addr, 1);
+        if (by_table_pattern) {
+            table_start_addr = addr;
+        } else {
+            data.read_type<char>(addr, header, 4);
+            data.read_type<uint32_t>(addr + 4, &table_start_addr, 1);
 
-        table_start_addr &= FF_ADDRESS_MASK;
+            table_start_addr &= FF_ADDRESS_MASK;
 
-        Log::Logger::debug("{} {:08X}", header, table_start_addr);
+            Log::Logger::debug("Table start addr: {:08X}", table_start_addr);
+        }
 
         size_t struct_size = 0x34;
 

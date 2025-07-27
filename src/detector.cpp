@@ -170,7 +170,7 @@ void Detector::detect_imei_model() {
 
     if (borken_imei) {
         Log::Logger::warn("Couldn't detect IMEI");
-        Log::Logger::debug("IMEI broken: {}", imei);
+        // Log::Logger::debug("IMEI broken: {}", imei);
 
         imei.clear();
     }

@@ -76,7 +76,7 @@ static const Patterns::Readable pattern_nsg {
 
 static const Patterns::Readable pattern_sg_nsg_table_pointer {
     "4F 54 50 00",
-    "?? ?? ?? A0"
+    "?? ?? ?? A?"
 };
 
 static const Patterns::Readable pattern_egold {
@@ -606,7 +606,7 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
 bool Partitions::search_partitions_sgold(uint32_t start_addr) {
     Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
 
-    auto address_list       = find_pattern(pattern_sg_nsg_table_pointer, start_addr, false);
+    auto address_list       = find_pattern(pattern_sg_nsg_table_pointer, start_addr, true);
     bool by_table_pattern   = false;
 
     if (!address_list.size()) {
@@ -785,7 +785,7 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
 bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
     Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
 
-    auto address_list       = find_pattern(pattern_sg_nsg_table_pointer, start_addr, false);
+    auto address_list       = find_pattern(pattern_sg_nsg_table_pointer, start_addr, true);
     bool by_table_pattern   = false;
 
     if (detector->is_sl75()) {
@@ -969,7 +969,7 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
 bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
     Log::Logger::debug("Searching partitions from 0x{:08X}", start_addr);
 
-    auto address_list       = find_pattern(pattern_sg_nsg_table_pointer, start_addr, false);
+    auto address_list       = find_pattern(pattern_sg_nsg_table_pointer, start_addr, true);
     bool by_table_pattern   = false;
 
     if (!address_list.size()) {
@@ -1428,7 +1428,7 @@ std::vector<uint32_t> Partitions::find_pattern(const Patterns::Readable &pattern
 
     Log::Logger::debug("Searching pattern: {}", pattern.to_string());
 
-    address_list.reserve(1000);
+    address_list.reserve(10000);
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1440,16 +1440,6 @@ std::vector<uint32_t> Partitions::find_pattern(const Patterns::Readable &pattern
         }
 
         address_list.push_back(i);
-
-        // std::string match_data;
-
-        // for (size_t j = 0; j < pattern_readable.size(); ++j) {
-        //     match_data += fmt::format("{:08X} ", + *(data_ptr + j));
-        // }
-
-        // Log::Logger::debug("Match addr: {:08X}", i);
-        // Log::Logger::debug("{}", pattern.to_string());
-        // Log::Logger::debug(match_data);
 
         if (break_first) {
             break;

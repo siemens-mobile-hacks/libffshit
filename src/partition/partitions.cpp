@@ -393,11 +393,6 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
             data.read_type<uint16_t>(offset,     &blocks_count, 1);
             data.read_type<uint32_t>(offset + 2, &block_segment_addr, 1);
 
-            // uint16_t    segment         = block_segment_addr >> 16;
-            // uint16_t    segment_offset  = block_segment_addr & 0xFFFF;
-
-            // size_t      ff_offset   = ((segment * 0x4000) + segment_offset) - base_address;
-
             size_t ff_offset = segment_to_page(block_segment_addr) - base_address;
 
             if (ff_offset >= data.get_size()) {
@@ -471,11 +466,6 @@ bool Partitions::search_partitions_egold(uint32_t start_addr) {
         if (blocks_count > 4) {
             continue;
         }
-
-        // uint16_t    segment         = block_segment_addr >> 16;
-        // uint16_t    segment_offset  = block_segment_addr & 0xFFFF;
-
-        // size_t      ff_offset   = ((segment * 0x4000) + segment_offset) - base_address;
 
         size_t  ff_offset = segment_to_page(block_segment_addr) - base_address;
 
@@ -759,24 +749,6 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
         if (!partitions_map.empty()) {
             break;
         }
-
-        // if (!partitions_map.empty()) {
-        //     bool ffs_found = false;
-
-        //     for (const auto &pair : partitions_map) {
-        //         if (pair.first.find("FFS") != std::string::npos) {
-        //             ffs_found = true;
-
-        //             break;
-        //         }
-        //     }
-
-        //     if (ffs_found) {
-        //         break;
-        //     }
-
-        //     partitions_map.clear();
-        // }
     }
 
     return true;

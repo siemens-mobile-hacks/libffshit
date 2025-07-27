@@ -934,7 +934,7 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
     }
 
     if (partitions_map.empty()) {
-        Log::Logger::warn("Partitions not found. SGOLD2_ELKA protoype? Trying to search SGOLD2_ELKA partitions");
+        Log::Logger::warn("Partitions not found. SGOLD2_ELKA prototype? Trying to search SGOLD2_ELKA partitions");
 
         if (search_partitions_sgold2_elka(start_addr)) {
             fs_platform = Platform::SGOLD2_ELKA;

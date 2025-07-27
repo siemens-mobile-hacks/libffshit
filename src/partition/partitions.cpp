@@ -708,7 +708,7 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
                     if (header.unknown_3 != 0xFFFFFFF0) {
                         memset(header.name, 0x0, 8);
 
-                        Log::Logger::warn("Skip. The patch for increasing the disk size has been installed, but the blocks have not been formatted? ");
+                        Log::Logger::warn("Skip. The block is not formatted.");
 
                         continue;
                     }
@@ -889,7 +889,7 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                     if (header.unknown_3 != 0xFFFFFFF0) {
                         memset(header.name, 0x0, 8);
 
-                        Log::Logger::warn("Skip. The patch for increasing the disk size has been installed, but the blocks have not been formatted? ");
+                        Log::Logger::warn("Skip. The block is not formatted.");
 
                         continue;
                     }

@@ -207,14 +207,14 @@ void SGOLD2_ELKA::print_data(const FFSBlock &block) {
 void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::string> parts_to_extract) {
     const auto &part_map = partitions->get_partitions();
 
-    auto check_end = [](const FITHeader &header) -> bool {
+    static auto check_end = [](const FITHeader &header) -> bool {
         return  header.flags    == 0xFFFFFFFF &&
                 header.id       == 0xFFFFFFFF &&
                 header.size     == 0xFFFFFFFF &&
                 header.offset   == 0xFFFFFFFF;
     };
 
-    auto calc_aligned_size = [](size_t size) -> size_t {
+    static auto calc_aligned_size = [](size_t size) -> size_t {
         return ceil((size / 16.0) + 1) * 32.0;
     };
 
@@ -288,26 +288,13 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
 
                 uint32_t    ff_boffset      = block.get_addr();
 
-                size_t      block_size_hi   = fs_block.header.size & 0x1800;
-                size_t      block_size_lo   = fs_block.header.size & 0x7FF;
+                size_t      block_header_size      = fs_block.header.size;
+                size_t      block_header_size_hi   = fs_block.header.size & 0x1C00;
+                size_t      block_header_size_lo   = fs_block.header.size & 0x3FF;
 
-                bool        read_from_table            = false;
-                bool        read_from_table_and_offset = false;
-                bool        read_from_offset           = false;
-
-                if (fs_block.header.size <= 0x200) {
-                    read_from_table = true;
-                }
-
-                if (block_size_lo > 0x400 && block_size_lo <= 0x600) {
-                    read_from_table_and_offset = true;
-                }
-
-                if (block_size_hi == 0x800 && block_size_lo < 0x200 && block_size_lo > 0) {
-                    read_from_table_and_offset = true;
-                }
-
-                read_from_offset = !read_from_table_and_offset && !read_from_table;
+                bool        read_from_table             = (block_header_size <= 0x200);
+                bool        read_from_table_and_offset  = (block_header_size_hi && block_header_size_lo <= 0x200 && block_header_size_lo > 0);
+                bool        read_from_offset            = !read_from_table_and_offset && !read_from_table;
 
                 if (read_from_table) {
                     uint32_t size_data = calc_aligned_size(fs_block.header.size);

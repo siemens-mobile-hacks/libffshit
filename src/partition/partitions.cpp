@@ -630,8 +630,6 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
             Log::Logger::debug("Table start addr: {:08X}", table_start_addr);
         }
 
-        Log::Logger::debug("{} {:08X}", header, table_start_addr);
-
         size_t struct_size = 0x2C;
 
         for (size_t offset = table_start_addr; offset < table_start_addr + 64 * struct_size; offset += struct_size) {

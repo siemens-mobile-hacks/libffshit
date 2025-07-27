@@ -21,7 +21,7 @@ FULLFLASH::FULLFLASH(std::filesystem::path fullflash_path) {
 
     x65flasher_fix();
 
-    this->detector = Detector::build(this->data);
+    this->detector = Platform::Detector::build(this->data);
 }
 
 FULLFLASH::FULLFLASH(char *ff_data, size_t ff_data_size) {
@@ -29,10 +29,10 @@ FULLFLASH::FULLFLASH(char *ff_data, size_t ff_data_size) {
 
     x65flasher_fix();
 
-    this->detector = Detector::build(this->data);
+    this->detector = Platform::Detector::build(this->data);
 }
 
-FULLFLASH::FULLFLASH(std::filesystem::path fullflash_path, Platform platform) {
+FULLFLASH::FULLFLASH(std::filesystem::path fullflash_path, Platform::Type platform) {
     std::ifstream file;
 
     file.open(fullflash_path, std::ios_base::binary | std::ios_base::in);
@@ -49,15 +49,15 @@ FULLFLASH::FULLFLASH(std::filesystem::path fullflash_path, Platform platform) {
 
     x65flasher_fix();
 
-    this->detector = Detector::build(this->data, platform);
+    this->detector = Platform::Detector::build(this->data, platform);
 }
 
-FULLFLASH::FULLFLASH(char *ff_data, size_t ff_data_size, Platform platform) {
+FULLFLASH::FULLFLASH(char *ff_data, size_t ff_data_size, Platform::Type platform) {
     this->data      = RawData(ff_data, ff_data_size);
 
     x65flasher_fix();
 
-    this->detector = Detector::build(this->data, platform);
+    this->detector = Platform::Detector::build(this->data, platform);
 }
 
 void FULLFLASH::load_partitions(bool old_search_algorithm, uint32_t search_start_addr) {
@@ -73,7 +73,7 @@ void FULLFLASH::load_partitions(bool old_search_algorithm, uint32_t search_start
     Log::Logger::info("Done in {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(diff_time).count());
 }
 
-const Detector &FULLFLASH::get_detector() const {
+const Platform::Detector &FULLFLASH::get_detector() const {
     return *detector;
 }
 

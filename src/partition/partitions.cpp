@@ -144,7 +144,7 @@ static bool is_empty(const char *buf, size_t size) {
 
 // =========================================================================
 
-Partitions::Partitions(const RawData& raw_data, Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr) : data(raw_data) {
+Partitions::Partitions(const RawData& raw_data, Platform::Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr) : data(raw_data) {
     this->detector      = detector;
     this->fs_platform   = detector->get_platform();
 
@@ -165,31 +165,31 @@ const RawData &Partitions::get_data() const {
     return data;
 }
 
-const Detector::Ptr &Partitions::get_detector() const {
+const Platform::Detector::Ptr &Partitions::get_detector() const {
     return detector;
 }
 
-Platform Partitions::get_fs_platform() const {
+Platform::Type Partitions::get_fs_platform() const {
     return fs_platform;
 }
 
 void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_addr) {
     auto old_search = [&]() {
         switch (detector->get_platform()) {
-            case Platform::EGOLD_CE:    block_size = 0x10000; old_search_partitions_egold_ce(); break;
-            case Platform::SGOLD:
-            case Platform::SGOLD2:      block_size = 0x10000; old_search_partitions_sgold_sgold2(); break;
-            case Platform::SGOLD2_ELKA: block_size = 0x10000; old_search_partitions_sgold2_elka(); break;
+            case Platform::Type::EGOLD_CE:    block_size = 0x10000; old_search_partitions_egold_ce(); break;
+            case Platform::Type::SGOLD:
+            case Platform::Type::SGOLD2:      block_size = 0x10000; old_search_partitions_sgold_sgold2(); break;
+            case Platform::Type::SGOLD2_ELKA: block_size = 0x10000; old_search_partitions_sgold2_elka(); break;
             default: throw Exception("Couldn't detect fullflash platform");
         }
     };
 
     auto new_search = [&]() {
         switch (detector->get_platform()) {
-            case Platform::EGOLD_CE:    search_partitions_egold(start_addr); break;
-            case Platform::SGOLD:       search_partitions_sgold(start_addr); break;
-            case Platform::SGOLD2:      search_partitions_sgold2(start_addr); break;
-            case Platform::SGOLD2_ELKA: search_partitions_sgold2_elka(start_addr); break;
+            case Platform::Type::EGOLD_CE:    search_partitions_egold(start_addr); break;
+            case Platform::Type::SGOLD:       search_partitions_sgold(start_addr); break;
+            case Platform::Type::SGOLD2:      search_partitions_sgold2(start_addr); break;
+            case Platform::Type::SGOLD2_ELKA: search_partitions_sgold2_elka(start_addr); break;
 
             default: throw Exception("Couldn't detect fullflash platform");
         }
@@ -619,7 +619,7 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
             data.read_type<char>(addr, header, 4);
             data.read_type<uint32_t>(addr + 4, &table_start_addr, 1);
 
-            table_start_addr &= FF_ADDRESS_MASK;
+            table_start_addr &= Platform::SGOLD_FF_ADDRESS_MASK;
 
             if (!match_pattern(pattern_sg, table_start_addr)) {
                 Log::Logger::warn("Partitions table at address: {:08X} doesn't match ad SGOLD table pattern. Skip.", table_start_addr);
@@ -654,8 +654,8 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
                 continue;
             }
 
-            name_addr   &= FF_ADDRESS_MASK;
-            table_addr  &= FF_ADDRESS_MASK;
+            name_addr   &= Platform::SGOLD_FF_ADDRESS_MASK;
+            table_addr  &= Platform::SGOLD_FF_ADDRESS_MASK;
 
             std::string partition_name;
 
@@ -682,8 +682,8 @@ bool Partitions::search_partitions_sgold(uint32_t start_addr) {
                 data.read_type<uint32_t>(table_addr + i, &block_addr);
                 data.read_type<uint32_t>(table_addr + i + 4, &block_size);
 
-                uint32_t masked_block_addr = block_addr & FF_ADDRESS_MASK;
-                uint32_t masked_block_size = block_size & FF_ADDRESS_MASK;
+                uint32_t masked_block_addr = block_addr & Platform::SGOLD_FF_ADDRESS_MASK;
+                uint32_t masked_block_size = block_size & Platform::SGOLD_FF_ADDRESS_MASK;
 
                 Log::Logger::debug("  Block:        Name: {}, Addr: {:08X}, size: {:08X}, table: {:08X}", partition_name, masked_block_addr, masked_block_size, table_addr + i);
 
@@ -782,7 +782,7 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
             data.read_type<char>(addr, header, 4);
             data.read_type<uint32_t>(addr + 4, &table_start_addr, 1);
 
-            table_start_addr &= FF_ADDRESS_MASK;
+            table_start_addr &= Platform::SGOLD_FF_ADDRESS_MASK;
             Log::Logger::debug("Table start addr: {:08X}", table_start_addr);
         }
 
@@ -793,7 +793,7 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                 Log::Logger::warn("Partitions table at address: {:08X} doesn't match as SGOLD2 table pattern.", table_start_addr);
                 Log::Logger::warn("Detected platform SGOLD2, but partitions table format matched ad SGOLD. Using SGOLD partitions search. FS Platform overrided.");
 
-                fs_platform = Platform::SGOLD;
+                fs_platform = Platform::Type::SGOLD;
 
                 return search_partitions_sgold(start_addr);
             }
@@ -828,8 +828,8 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                 continue;
             }
 
-            name_addr   &= FF_ADDRESS_MASK;
-            table_addr  &= FF_ADDRESS_MASK;
+            name_addr   &= Platform::SGOLD_FF_ADDRESS_MASK;
+            table_addr  &= Platform::SGOLD_FF_ADDRESS_MASK;
 
             std::string partition_name;
 
@@ -871,8 +871,8 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                     block_addr -= shit;
                 }
 
-                uint32_t masked_block_addr = block_addr & FF_ADDRESS_MASK;
-                uint32_t masked_block_size = block_size & FF_ADDRESS_MASK;
+                uint32_t masked_block_addr = block_addr & Platform::SGOLD_FF_ADDRESS_MASK;
+                uint32_t masked_block_size = block_size & Platform::SGOLD_FF_ADDRESS_MASK;
 
                 Log::Logger::debug("  Block:        Name: {}, Addr: {:08X}, size: {:08X}, table: {:08X}", partition_name, masked_block_addr, masked_block_size, table_addr + i);
 
@@ -937,7 +937,7 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
         Log::Logger::warn("Partitions not found. SGOLD2_ELKA prototype? Trying to search SGOLD2_ELKA partitions");
 
         if (search_partitions_sgold2_elka(start_addr)) {
-            fs_platform = Platform::SGOLD2_ELKA;
+            fs_platform = Platform::Type::SGOLD2_ELKA;
 
             return true;
         }
@@ -972,7 +972,7 @@ bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
             data.read_type<char>(addr, header, 4);
             data.read_type<uint32_t>(addr + 4, &table_start_addr, 1);
 
-            table_start_addr &= FF_ADDRESS_MASK;
+            table_start_addr &= Platform::SGOLD_FF_ADDRESS_MASK;
 
             Log::Logger::debug("Table start addr: {:08X}", table_start_addr);
         }
@@ -1003,8 +1003,8 @@ bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
                 continue;
             }
 
-            name_addr   &= FF_ADDRESS_MASK;
-            table_addr  &= FF_ADDRESS_MASK;
+            name_addr   &= Platform::SGOLD_FF_ADDRESS_MASK;
+            table_addr  &= Platform::SGOLD_FF_ADDRESS_MASK;
 
             std::string partition_name;
 
@@ -1039,8 +1039,8 @@ bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
                 data.read_type<uint32_t>(table_addr + i, &block_addr);
                 data.read_type<uint32_t>(table_addr + i + 4, &block_size);
 
-                uint32_t masked_block_addr = block_addr & FF_ADDRESS_MASK;
-                uint32_t masked_block_size = block_size & FF_ADDRESS_MASK;
+                uint32_t masked_block_addr = block_addr & Platform::SGOLD_FF_ADDRESS_MASK;
+                uint32_t masked_block_size = block_size & Platform::SGOLD_FF_ADDRESS_MASK;
 
                 Log::Logger::debug("  Block:        Name: {}, Addr: {:08X}, size: {:08X}, table: {:08X}", partition_name, masked_block_addr, masked_block_size, table_addr + i);
 

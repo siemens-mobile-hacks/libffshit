@@ -42,7 +42,7 @@ set(SOURCES_LIST
     src/system.cpp
     src/rawdata.cpp
     src/fullflash.cpp
-    src/detector.cpp
+    src/platform/detector.cpp
     src/partition/block.cpp
     src/partition/partition.cpp
     src/partition/partitions.cpp
@@ -61,12 +61,13 @@ set(PUBLIC_HEADERS_LIST
     inc/thirdparty/ordered_map.h
     inc/ffshit/version.h
     inc/ffshit/rawdata.h
-    inc/ffshit/detector.h
     inc/ffshit/fullflash.h
     inc/ffshit/help.h
     inc/ffshit/patterns/ex.h
     inc/ffshit/patterns/raw.h
     inc/ffshit/patterns/pattern.h
+    inc/ffshit/platform/types.h
+    inc/ffshit/platform/detector.h
     inc/ffshit/partition/ex.h
     inc/ffshit/partition/block.h
     inc/ffshit/partition/partition.h
@@ -75,7 +76,6 @@ set(PUBLIC_HEADERS_LIST
     inc/ffshit/filesystem/structure/attributes.h
     inc/ffshit/filesystem/structure/file.h
     inc/ffshit/filesystem/structure/directory.h
-    inc/ffshit/filesystem/platform/types.h
     inc/ffshit/filesystem/platform/platform.h
     inc/ffshit/filesystem/platform/base.h
     inc/ffshit/filesystem/platform/egold_ce.h

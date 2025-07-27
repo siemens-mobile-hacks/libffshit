@@ -2,11 +2,10 @@
 #define LIBFFSHIT_FULLFLASH_PARTITIONS_PARTITIONS_H
 
 #include "ffshit/rawdata.h"
-#include "ffshit/filesystem/platform/types.h"
+#include "ffshit/platform/detector.h"
+#include "ffshit/platform/types.h"
 #include "ffshit/partition/partition.h"
 #include "ffshit/patterns/pattern.h"
-
-#include "ffshit/detector.h"
 
 #include "thirdparty/ordered_map.h"
 
@@ -22,25 +21,25 @@ class Partitions {
         using Ptr       = std::shared_ptr<Partitions>;
         using Map       = tsl::ordered_map<std::string, Partition>;
         
-        Partitions(const RawData &raw_data, Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0);
+        Partitions(const RawData &raw_data, Platform::Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0);
 
-        static Ptr build(const RawData& raw_data, Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0) {
+        static Ptr build(const RawData& raw_data, Platform::Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0) {
             return std::make_unique<Partitions>(raw_data, detector, old_search_algorithm, search_start_addr);
         }
 
-        const Map &                 get_partitions() const;
-        const RawData &             get_data() const;
-        const Detector::Ptr &       get_detector() const;
-        Platform                    get_fs_platform() const;
+        const Map &                     get_partitions() const;
+        const RawData &                 get_data() const;
+        const Platform::Detector::Ptr & get_detector() const;
+        Platform::Type                  get_fs_platform() const;
 
     private:
         uint32_t                    block_size;
         Map                         partitions_map;
         
-        Detector::Ptr               detector;
+        Platform::Detector::Ptr     detector;
         const RawData &             data;
 
-        Platform                    fs_platform;
+        Platform::Type              fs_platform;
 
         bool                        check_part_name(const std::string &name);
 

@@ -6,7 +6,6 @@
 
 #include "ffshit/filesystem/structure/structure.h"
 
-
 namespace FULLFLASH {
 namespace Filesystem  {
 

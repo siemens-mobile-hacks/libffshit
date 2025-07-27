@@ -1,10 +1,11 @@
-#include "ffshit/detector.h"
+#include "ffshit/platform/detector.h"
 #include "ffshit/log/logger.h"
 #include "ffshit/system.h"
 
 #include <algorithm>
 
 namespace FULLFLASH {
+namespace Platform {
 
 Detector::Detector(const RawData &data) : data(data) {
     sl75_bober_kurwa    = false;
@@ -14,7 +15,7 @@ Detector::Detector(const RawData &data) : data(data) {
     detect_imei_model();
 }
 
-Detector::Detector(const RawData &data, Platform platform) : data(data) {
+Detector::Detector(const RawData &data, Type platform) : data(data) {
     sl75_bober_kurwa    = false;
     base_adress         = 0;
 
@@ -23,7 +24,7 @@ Detector::Detector(const RawData &data, Platform platform) : data(data) {
     detect_imei_model();
 }
 
-const Platform Detector::get_platform() const {
+const Type Detector::get_platform() const {
     return platform;
 }
 
@@ -59,10 +60,10 @@ void Detector::detect_platform() {
     data.read_string(BC65_BC75_OFFSET, bcore_name, 1);
 
     if (bcore_name == "BC65" || bcore_name == "BCORE65") {
-        platform    = Platform::SGOLD;
+        platform    = Type::SGOLD;
         base_adress = 0xA0000000;
     } else if (bcore_name == "BC75") {
-        platform    = Platform::SGOLD2;
+        platform    = Type::SGOLD2;
         base_adress = 0xA0000000;
     } else {
         bcore_name.clear();
@@ -70,14 +71,14 @@ void Detector::detect_platform() {
         data.read_string(BC85_OFFSET, bcore_name, 1);
 
         if (bcore_name == "BC85") {
-            platform    = Platform::SGOLD2_ELKA;
+            platform    = Type::SGOLD2_ELKA;
             base_adress = 0xA0000000;
         } else {
-            platform = Platform::UNK;
+            platform = Type::UNK;
         }
     }
 
-    if (platform == Platform::UNK) {
+    if (platform == Type::UNK) {
         for (const auto &offset : EGOLD_INFO_OFFSETS) {
             std::string magick;
 
@@ -87,7 +88,7 @@ void Detector::detect_platform() {
                 continue;
             }
 
-            platform        = Platform::EGOLD_CE;
+            platform        = Type::EGOLD_CE;
             base_adress     = 16777216 - data.get_size(); // Max adress size
             egold_offset = offset;
 
@@ -98,13 +99,13 @@ void Detector::detect_platform() {
 
 void Detector::detect_imei_model() {
     switch (platform) {
-        case Platform::EGOLD_CE: {
+        case Type::EGOLD_CE: {
             data.read_string(egold_offset + EGOLD_MODEL_OFFSET, model);
 
             break;
         }
 
-        case Platform::SGOLD: {
+        case Type::SGOLD: {
             data.read_string(X65_MODEL_OFFSET, model);
             data.read_string(X65_IMEI_OFFSET, imei);
 
@@ -121,7 +122,7 @@ void Detector::detect_imei_model() {
             break;
         }
 
-        case Platform::SGOLD2: {
+        case Type::SGOLD2: {
             data.read_string(X75_MODEL_OFFSET, model);
             data.read_string(X75_IMEI_OFFSET, imei);
 
@@ -138,7 +139,7 @@ void Detector::detect_imei_model() {
             break;
         }
 
-        case Platform::SGOLD2_ELKA: {
+        case Type::SGOLD2_ELKA: {
             data.read_string(X85_MODEL_OFFSET, model);
             data.read_string(X85_IMEI_OFFSET, imei);
 
@@ -152,7 +153,7 @@ void Detector::detect_imei_model() {
             break;
         }
 
-        case Platform::UNK: {
+        case Type::UNK: {
             break;
         }
     }
@@ -182,4 +183,5 @@ void Detector::detect_imei_model() {
     }
 }
 
+};
 };

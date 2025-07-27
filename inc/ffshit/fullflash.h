@@ -1,7 +1,7 @@
 #ifndef LIBFFSHIT_FULLFLASH_FULLFLASH_H
 #define LIBFFSHIT_FULLFLASH_FULLFLASH_H
 
-#include "ffshit/detector.h"
+#include "ffshit/platform/detector.h"
 #include "ffshit/partition/partitions.h"
 #include "ffshit/rawdata.h"
 
@@ -17,8 +17,8 @@ class FULLFLASH {
         FULLFLASH(std::filesystem::path fullflash_path);
         FULLFLASH(char *ff_data, size_t ff_data_size);
 
-        FULLFLASH(std::filesystem::path fullflash_path, Platform platform);
-        FULLFLASH(char *ff_data, size_t ff_data_size, Platform platform);
+        FULLFLASH(std::filesystem::path fullflash_path, Platform::Type platform);
+        FULLFLASH(char *ff_data, size_t ff_data_size, Platform::Type platform);
 
         template<typename ...Args>
         static Ptr build(Args... args) {
@@ -27,12 +27,12 @@ class FULLFLASH {
 
         void                                load_partitions(bool old_search_algorithm, uint32_t search_start_addr);
 
-        const Detector &                    get_detector() const;
+        const Platform::Detector &          get_detector() const;
         Partitions::Partitions::Ptr         get_partitions() const;
 
     private:
         RawData                             data;
-        Detector::Ptr                       detector;
+        Platform::Detector::Ptr             detector;
         Partitions::Partitions::Ptr         partitions;
 
         void                                x65flasher_fix();

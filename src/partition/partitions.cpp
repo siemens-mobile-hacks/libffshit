@@ -1368,18 +1368,6 @@ std::vector<uint32_t> Partitions::find_pattern8(const Patterns::Readable &patter
 
         address_list.push_back(i);
 
-        // std::string match_data;
-
-        // for (size_t j = 0; j < pattern_readable.size(); ++j) {
-        //     uint8_t value = *(data_ptr + j);
-
-        //     match_data += fmt::format("{:02X} ", value);
-        // }
-
-        // Log::Logger::debug("Match addr: {:08X}", i);
-        // Log::Logger::debug("{}", pattern.to_string());
-        // Log::Logger::debug(match_data);
-
         if (break_first) {
             break;
         }

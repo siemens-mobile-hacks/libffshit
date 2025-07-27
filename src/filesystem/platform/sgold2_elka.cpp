@@ -286,11 +286,11 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                     break;
                 }
 
-                uint32_t    ff_boffset      = block.get_addr();
+                uint32_t    ff_boffset              = block.get_addr();
 
-                size_t      block_header_size      = fs_block.header.size;
-                size_t      block_header_size_hi   = fs_block.header.size & 0x1C00;
-                size_t      block_header_size_lo   = fs_block.header.size & 0x3FF;
+                size_t      block_header_size       = fs_block.header.size;
+                size_t      block_header_size_hi    = fs_block.header.size & 0x1C00;
+                size_t      block_header_size_lo    = fs_block.header.size & 0x3FF;
 
                 bool        read_from_table             = (block_header_size <= 0x200);
                 bool        read_from_table_and_offset  = (block_header_size_hi && block_header_size_lo <= 0x200 && block_header_size_lo > 0);
@@ -299,20 +299,20 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                 if (read_from_table) {
                     uint32_t size_data = calc_aligned_size(fs_block.header.size);
 
+                    Log::Logger::debug("{} T  {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - {:04X}", 
+                        part_name,
+                        ff_boffset + offset,
+                        fs_block.header.flags,
+                        fs_block.header.id,
+                        fs_block.header.size,
+                        fs_block.header.offset,
+                        size_data);
+
                     if (fs_block.header.flags == 0xFFFFFFC0) {
                         size_t read_size = fs_block.header.size;
 
                         fs_block.data = block_data.read_aligned(offset, read_size);
                     }
-
-                    Log::Logger::debug("{} T  {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - {:04X}", 
-                        part_name, 
-                        ff_boffset + offset, 
-                        fs_block.header.flags, 
-                        fs_block.header.id, 
-                        fs_block.header.size, 
-                        fs_block.header.offset, 
-                        size_data);
 
                     offset -= size_data;
                 }
@@ -320,6 +320,16 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                 if (read_from_table_and_offset) {
                     size_t read_size_block  = fs_block.header.size;
                     size_t read_size        = fs_block.header.size & 0x3FF;
+                    size_t size_data        = calc_aligned_size(read_size);
+
+                    Log::Logger::debug("{} TO {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - {:04X}", 
+                        part_name, 
+                        block.get_addr() + offset,
+                        fs_block.header.flags,
+                        fs_block.header.id,
+                        fs_block.header.size,
+                        fs_block.header.offset,
+                        size_data);
 
                     if (fs_block.header.flags == 0xFFFFFFC0) {
                         fs_block.data = RawData(this->partitions->get_data(), ff_boffset + fs_block.header.offset, fs_block.header.size & 0xC00);
@@ -331,37 +341,25 @@ void SGOLD2_ELKA::parse_FIT(bool skip_broken, bool skip_dup, std::vector<std::st
                         fs_block.data.add(data_nonaligned);
                     }
 
-                    size_t size_data = calc_aligned_size(read_size);
-
-                    Log::Logger::debug("{} TO {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - {:04X}", 
-                        part_name, 
-                        block.get_addr() + offset, 
-                        fs_block.header.flags, 
-                        fs_block.header.id, 
-                        fs_block.header.size, 
-                        fs_block.header.offset, 
-                        size_data);
-
-
                     offset -= size_data;
                 }
 
                 if (read_from_offset) {
+                    Log::Logger::debug("{} O  {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - {:04X}", 
+                        part_name, 
+                        block.get_addr() + offset,
+                        fs_block.header.flags,
+                        fs_block.header.id,
+                        fs_block.header.size,
+                        fs_block.header.offset,
+                        32);
+
                     if (fs_block.header.flags == 0xFFFFFFC0) {
                         size_t read_addr = ff_boffset + fs_block.header.offset;
                         size_t read_size = fs_block.header.size;
 
                         fs_block.data = RawData(this->partitions->get_data(), read_addr, read_size);
                     }
-
-                    Log::Logger::debug("{} O  {:08X}: Flags: {:08X} ID: {:08X} Size: {:08X} Offset: {:08X} - {:04X}", 
-                        part_name, 
-                        block.get_addr() + offset, 
-                        fs_block.header.flags, 
-                        fs_block.header.id, 
-                        fs_block.header.size, 
-                        fs_block.header.offset, 
-                        32);
 
                     offset -= 32;
                 }

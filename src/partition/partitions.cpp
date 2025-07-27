@@ -877,10 +877,6 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                 Log::Logger::debug("  Block:        Name: {}, Addr: {:08X}, size: {:08X}, table: {:08X}", partition_name, masked_block_addr, masked_block_size, table_addr + i);
 
                 if (partition_name.find("FFS") != std::string::npos) {
-                    if (!partitions_map.count(partition_name)) {
-                        partitions_map[partition_name] = Partition(partition_name);
-                    }
-
                     Block::Header header;
 
                     size_t  block_rd_offset = masked_block_addr;
@@ -899,6 +895,10 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
                     }
 
                     Log::Logger::debug("  Block header: Name: {}, Unk1: {:04X}, Unk2: {:04X}, Unk3: {:08X}", header.name, header.unknown_1, header.unknown_2, header.unknown_3);
+
+                    if (!partitions_map.count(partition_name)) {
+                        partitions_map[partition_name] = Partition(partition_name);
+                    }
 
                     partitions_map[partition_name].add_block(
                         Block(  header, 
@@ -933,7 +933,17 @@ bool Partitions::search_partitions_sgold2(uint32_t start_addr) {
         }
     }
 
-    return true;
+    if (partitions_map.empty()) {
+        Log::Logger::warn("Partitions not found. SGOLD2_ELKA protoype? Trying to search0 SGOLD2_ELKA partitions");
+
+        if (search_partitions_sgold2_elka(start_addr)) {
+            fs_platform = Platform::SGOLD2_ELKA;
+
+            return true;
+        }
+    }
+
+    return !partitions_map.empty();
 }
 
 bool Partitions::search_partitions_sgold2_elka(uint32_t start_addr) {
@@ -1343,6 +1353,10 @@ void Partitions::inspect() {
             partitions_map.erase(iter++);
         } else {
             ++iter;
+        }
+
+        if (partitions_map.empty()) {
+            break;
         }
     }
 }

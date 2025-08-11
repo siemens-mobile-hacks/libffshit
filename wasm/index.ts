@@ -1,15 +1,18 @@
-import Module, { Options, Entry } from "#build/libffshit_wasm.js";
+import Module, { Options, Entry, MainModule, FFS as NativeFFS } from "#build/libffshit_wasm.js";
 
-const libffshit = await Module();
+let libffshit!: MainModule;
 
 export type FFSOpenOptions = Partial<Options> & {
     platform?: "auto" | "EGOLD_CE" | "SGOLD" | "SGOLD2" | "SGOLD2_ELKA";
 }
 
 export class FFS {
-    private handle = new libffshit.FFS();
+    private handle: NativeFFS | undefined;
 
-    open(buffer: Buffer, options: FFSOpenOptions = {}) {
+    async open(buffer: Buffer, options: FFSOpenOptions = {}) {
+        libffshit = libffshit ?? await Module();
+        this.handle = this.handle ?? new libffshit.FFS();
+
         const ptr = libffshit._malloc(buffer.length);
         libffshit.HEAPU8.set(new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength), ptr);
         try {
@@ -20,6 +23,9 @@ export class FFS {
                 skipBroken: true,
                 skipDuplicates: true,
                 debug: false,
+                verboseData: false,
+                verboseHeaders: false,
+                verboseProcessing: false,
                 ...options
             });
         } finally {
@@ -27,19 +33,33 @@ export class FFS {
         }
     }
 
+    close() {
+        if (!this.handle)
+            throw new Error("FFS is not opened");
+        this.handle.close();
+    }
+
     getPlatform() {
+        if (!this.handle)
+            throw new Error("FFS is not opened");
         return this.handle.getPlatform();
     }
 
     getModel() {
+        if (!this.handle)
+            throw new Error("FFS is not opened");
         return this.handle.getModel();
     }
 
     getIMEI() {
+        if (!this.handle)
+            throw new Error("FFS is not opened");
         return this.handle.getIMEI();
     }
 
     stat(path: string): Entry | undefined {
+        if (!this.handle)
+            throw new Error("FFS is not opened");
         const entry = this.handle.stat(path);
         return entry.path == "" ? undefined : entry;
     }
@@ -49,6 +69,8 @@ export class FFS {
     }
 
     readFile(path: string): Buffer | undefined {
+        if (!this.handle)
+            throw new Error("FFS is not opened");
         const result = this.handle.readFile(path);
         if (result.data) {
             const buffer = Buffer.from(new Uint8Array(libffshit.HEAPU8.buffer, result.data, result.size));
@@ -58,6 +80,8 @@ export class FFS {
     }
 
     readDir(path: string): Entry[] {
+        if (!this.handle)
+            throw new Error("FFS is not opened");
         const vector = this.handle.readDir(path);
         const entries: Entry[] = [];
         for (let i = 0, l = vector.size(); i < l; i++)

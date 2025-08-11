@@ -3,7 +3,7 @@ import { FFS } from "./index.js";
 
 const ffs = new FFS();
 const fullflash = fs.readFileSync("/tmp/1.bin");
-ffs.open(fullflash);
+await ffs.open(fullflash);
 console.log(ffs.getPlatform());
 console.log(ffs.getModel());
 console.log(ffs.getIMEI());
@@ -19,3 +19,5 @@ console.log(blob?.toString());
 const blob2 = ffs.readFile("/ffs/pictures/stalker_wallpapers_194.jpg");
 if (blob2)
     fs.writeFileSync("/tmp/1.jpg", blob2);
+
+ffs.close();

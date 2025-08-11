@@ -55,7 +55,10 @@ EMSCRIPTEN_BINDINGS(libffshit) {
         .field("platform", &FFS::Options::platform)
         .field("skipBroken", &FFS::Options::skipBroken)
         .field("skipDuplicates", &FFS::Options::skipDuplicates)
-        .field("debug", &FFS::Options::debug);
+        .field("debug", &FFS::Options::debug)
+        .field("verboseProcessing", &FFS::Options::verboseProcessing)
+        .field("verboseHeaders", &FFS::Options::verboseHeaders)
+        .field("verboseData", &FFS::Options::verboseData);
 };
 
 FFS::FFS() = default;

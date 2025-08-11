@@ -93,6 +93,5 @@ public:
     Entry stat(const std::string &path) const;
     std::vector<Entry> readDir(const std::string &path) const;
     FileData readFile(const std::string &path) const;
-
     void close();
 };

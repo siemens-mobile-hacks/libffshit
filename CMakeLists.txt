@@ -181,7 +181,7 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
         -sMODULARIZE
         -sINVOKE_RUN=0
         -sSINGLE_FILE=0
-        -sASSERTIONS=0
+        -sASSERTIONS=1
         -sEXIT_RUNTIME=1
         -sFILESYSTEM=0
         -sSTACK_OVERFLOW_CHECK=0
@@ -190,8 +190,8 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
         -sMALLOC=emmalloc
         -sEXPORTED_FUNCTIONS=['_malloc','_free']
         -sEXPORTED_RUNTIME_METHODS=['ccall','wasmMemory','HEAPU8']
+        -sEXPORT_EXCEPTION_HANDLING_HELPERS=1
         -fwasm-exceptions
-        --closure 1
         --bind
     )
     target_link_options(libffshit_wasm PRIVATE --emit-tsd "$<TARGET_FILE_DIR:libffshit_wasm>/libffshit_wasm.d.ts")

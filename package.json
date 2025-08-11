@@ -1,6 +1,6 @@
 {
     "name": "@sie-js/libffshit",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "description": "Siemens filesystem library",
     "repository": {
         "url": "git+https://github.com/siemens-mobile-hacks/libffshit.git"

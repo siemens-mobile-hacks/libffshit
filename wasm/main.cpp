@@ -4,7 +4,9 @@
 #include <filesystem>
 #include <stdexcept>
 #include <emscripten/bind.h>
-#include <ffshit/filesystem/platform/types.h>
+#include <ffshit/fullflash.h>
+#include <ffshit/filesystem/ex.h>
+#include <ffshit/partition/ex.h>
 
 #include "FFS.h"
 
@@ -42,7 +44,10 @@ EMSCRIPTEN_BINDINGS(libffshit) {
         .field("size", &FFS::Entry::size)
         .field("timestamp", &FFS::Entry::timestamp)
         .field("isFile", &FFS::Entry::isFile)
-        .field("isDirectory", &FFS::Entry::isDirectory);
+        .field("isDirectory", &FFS::Entry::isDirectory)
+        .field("isReadonly", &FFS::Entry::isReadonly)
+        .field("isHidden", &FFS::Entry::isHidden)
+        .field("isSystem", &FFS::Entry::isSystem);
 
     value_object<FFS::Options>("Options")
         .field("isOldSearchAlgorithm", &FFS::Options::isOldSearchAlgorithm)
@@ -53,9 +58,7 @@ EMSCRIPTEN_BINDINGS(libffshit) {
         .field("debug", &FFS::Options::debug);
 };
 
-FFS::FFS() {
-
-}
+FFS::FFS() = default;
 
 void FFS::open(uintptr_t ptr, size_t size, const FFS::Options &options) {
     if (options.debug) {
@@ -65,27 +68,35 @@ void FFS::open(uintptr_t ptr, size_t size, const FFS::Options &options) {
     }
 
     try {
-        char *data = reinterpret_cast<char *>(ptr);
-        m_partitions = FULLFLASH::Partitions::Partitions::build(data, size, options.isOldSearchAlgorithm, options.searchStartAddress);
-        m_platform = m_partitions->get_platform();
+        auto *data = reinterpret_cast<char *>(ptr);
 
-        if (options.platform != "auto")
-            m_platform = FULLFLASH::StringToPlatform.at(options.platform);
+        if (options.platform == "auto") {
+            m_fullflash = FULLFLASH::FULLFLASH::build(data, size);
+            const auto &detector = m_fullflash->get_detector();
+            m_platform = detector.get_platform();
+
+            if (m_platform == FULLFLASH::Platform::Type::UNK)
+                throw FULLFLASH::Exception("Unknown platform");
+
+            m_fullflash->load_partitions(options.isOldSearchAlgorithm, options.searchStartAddress);
+            m_partitions = m_fullflash->get_partitions();
+
+            if (m_partitions->get_fs_platform() != detector.get_platform())
+                m_platform = m_partitions->get_fs_platform();
+        } else {
+            m_platform = FULLFLASH::Platform::StringToType.at(options.platform);
+            m_fullflash = FULLFLASH::FULLFLASH::build(data, size, m_platform);
+            m_fullflash->load_partitions(options.isOldSearchAlgorithm, options.searchStartAddress);
+            m_partitions = m_fullflash->get_partitions();
+        }
+
         m_filesystem = FULLFLASH::Filesystem::build(m_platform, m_partitions);
+        m_filesystem->log_verbose_processing(options.verboseProcessing);
+        m_filesystem->log_verbose_headers(options.verboseHeaders);
+        m_filesystem->log_verbose_data(options.verboseData);
 
         m_filesystem->load(options.skipBroken, options.skipDuplicates);
-
-        m_rootDir = FULLFLASH::Filesystem::Directory::build("", "");
-        m_map = m_filesystem->get_filesystem_map();
-
-        for (const auto it: m_map) {
-            auto disk = FULLFLASH::Filesystem::Directory::build(it.first, "/", it.second->get_timestamp());
-            for (const auto subdir: it.second->get_subdirs())
-                disk->add_subdir(subdir);
-            for (const auto file: it.second->get_files())
-                disk->add_file(file);
-            m_rootDir->add_subdir(disk);
-        }
+        m_rootDir = m_filesystem->get_root();
     } catch (const FULLFLASH::Partitions::Exception &e) {
         close();
         throw std::runtime_error("[FULLFLASH::Partitions::Exception] " + e.what());
@@ -106,7 +117,6 @@ void FFS::open(uintptr_t ptr, size_t size, const FFS::Options &options) {
 
 void FFS::close() {
     m_rootDir.reset();
-    m_map = {};
     m_filesystem.reset();
     m_partitions.reset();
 }
@@ -116,25 +126,25 @@ FFS::~FFS() {
     FULLFLASH::Log::Logger::init(nullptr);
 }
 
-std::string FFS::getPlatform() {
+std::string FFS::getPlatform() const {
     if (!m_partitions)
         throw std::runtime_error("FFS is closed.");
-    return FULLFLASH::PlatformToString.at(m_partitions->get_platform());
+    return FULLFLASH::Platform::TypeToString.at(m_platform);
 }
 
-std::string FFS::getIMEI() {
+std::string FFS::getIMEI() const {
     if (!m_partitions)
         throw std::runtime_error("FFS is closed.");
-    return m_partitions->get_imei();
+    return m_fullflash->get_detector().get_imei();
 }
 
-std::string FFS::getModel() {
+std::string FFS::getModel() const {
     if (!m_partitions)
         throw std::runtime_error("FFS is closed.");
-    return m_partitions->get_model();
+    return m_fullflash->get_detector().get_model();
 }
 
-FFS::FileData FFS::readFile(const std::string &path) {
+FFS::FileData FFS::readFile(const std::string &path) const {
     if (!m_partitions)
         throw std::runtime_error("FFS is closed.");
     const auto dirOrFile = getDirOrFilePtr(path);
@@ -142,12 +152,12 @@ FFS::FileData FFS::readFile(const std::string &path) {
         return { .data = 0, .size = 0 };
     const auto data = dirOrFile.file->get_data();
     auto dataSize = data.get_size();
-    uint8_t *buffer = reinterpret_cast<uint8_t *>(malloc(dataSize));
+    auto *buffer = static_cast<uint8_t *>(malloc(dataSize));
     memcpy(buffer, data.get_data().get(), dataSize);
     return { .data = reinterpret_cast<uintptr_t>(buffer), .size = dataSize };
 }
 
-FULLFLASH::Filesystem::Directory::Ptr FFS::getDirPtr(const std::string &path) {
+FULLFLASH::Filesystem::Directory::Ptr FFS::getDirPtr(const std::string &path) const {
     FULLFLASH::Filesystem::Directory::Ptr dir = m_rootDir;
     const auto parts = splitPath(path);
     for (const auto &part: parts) {
@@ -165,7 +175,7 @@ FULLFLASH::Filesystem::Directory::Ptr FFS::getDirPtr(const std::string &path) {
     return dir;
 }
 
-FFS::Entry FFS::stat(const std::string &path) {
+FFS::Entry FFS::stat(const std::string &path) const {
     if (!m_partitions)
         throw std::runtime_error("FFS is closed.");
     const auto dirOrFile = getDirOrFilePtr(path);
@@ -175,20 +185,27 @@ FFS::Entry FFS::stat(const std::string &path) {
         entry.path = dirOrFile.dir->get_path();
         entry.timestamp = timePointToUnix(dirOrFile.dir->get_timestamp()) * 1000;
         entry.isDirectory = true;
+        entry.isReadonly = dirOrFile.dir->get_attributes().is_readonly();
+        entry.isHidden = dirOrFile.dir->get_attributes().is_hidden();
+        entry.isSystem = dirOrFile.dir->get_attributes().is_system();
         return entry;
-    } else if (dirOrFile.file) {
+    }
+    if (dirOrFile.file) {
         Entry entry = {};
         entry.name = dirOrFile.file->get_name();
         entry.path = dirOrFile.file->get_path();
         entry.timestamp = timePointToUnix(dirOrFile.file->get_timestamp()) * 1000;
         entry.size = dirOrFile.file->get_size();
         entry.isFile = true;
+        entry.isReadonly = dirOrFile.file->get_attributes().is_readonly();
+        entry.isHidden = dirOrFile.file->get_attributes().is_hidden();
+        entry.isSystem = dirOrFile.file->get_attributes().is_system();
         return entry;
     }
     return {};
 }
 
-FFS::DirOrFile FFS::getDirOrFilePtr(const std::string &path) {
+FFS::DirOrFile FFS::getDirOrFilePtr(const std::string &path) const {
     const auto parentDir = getDirPtr(getParentDir(path));
     const auto baseName = getBaseName(path);
     for (const auto subdir: parentDir->get_subdirs()) {
@@ -202,7 +219,7 @@ FFS::DirOrFile FFS::getDirOrFilePtr(const std::string &path) {
     return {};
 }
 
-std::vector<FFS::Entry> FFS::readDir(const std::string &path) {
+std::vector<FFS::Entry> FFS::readDir(const std::string &path) const {
     if (!m_partitions)
         throw std::runtime_error("FFS is closed.");
     const auto parentDir = getDirPtr(path);

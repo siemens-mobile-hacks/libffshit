@@ -3,18 +3,14 @@
 #include <ffshit/ex.h>
 #include <ffshit/filesystem/structure/directory.h>
 #include <ffshit/filesystem/structure/structure.h>
-#include <ffshit/version.h>
-#include <ffshit/system.h>
 #include <ffshit/log/logger.h>
-#include <ffshit/filesystem/ex.h>
 #include <ffshit/partition/partitions.h>
-#include <ffshit/partition/ex.h>
-#include <ffshit/filesystem/ex.h>
-#include <ffshit/filesystem/platform/types.h>
+#include <ffshit/platform/types.h>
 #include <ffshit/filesystem/platform/builder.h>
 
-class FFSLogInterface : public FULLFLASH::Log::Interface {
+class FFSLogInterface final : public FULLFLASH::Log::Interface {
 public:
+    virtual ~FFSLogInterface() = default;
     using Ptr = std::shared_ptr<FFSLogInterface>;
 
     FFSLogInterface() { }
@@ -23,19 +19,19 @@ public:
         return std::make_shared<FFSLogInterface>();
     }
 
-    void on_info(std::string msg) override final {
+    void on_info(const std::string msg) override final {
         fprintf(stderr, "[FFS] [I] %s\n", msg.c_str());
     }
 
-    void on_warning(std::string msg) override final {
+    void on_warning(const std::string msg) override final {
         fprintf(stderr, "[FFS] [W] %s\n", msg.c_str());
     }
 
-    void on_error(std::string msg) override final {
+    void on_error(const std::string msg) override final {
         fprintf(stderr, "[FFS] [E] %s\n", msg.c_str());
     }
 
-    void on_debug(std::string msg) override final {
+    void on_debug(const std::string msg) override final {
         fprintf(stderr, "[FFS] [D] %s\n", msg.c_str());
     }
 };
@@ -49,6 +45,9 @@ public:
         uint32_t searchStartAddress = 0;
         std::string platform;
         bool debug = false;
+        bool verboseProcessing = false;
+        bool verboseHeaders = false;
+        bool verboseData = false;
     };
 
     struct Entry {
@@ -58,6 +57,9 @@ public:
         size_t size = 0;
         bool isFile = false;
         bool isDirectory = false;
+        bool isReadonly = false;
+        bool isHidden = false;
+        bool isSystem = false;
     };
 
     struct DirOrFile {
@@ -71,26 +73,26 @@ public:
     };
 
 private:
+    FULLFLASH::FULLFLASH::Ptr m_fullflash;
     FULLFLASH::Filesystem::Directory::Ptr m_rootDir;
     FULLFLASH::Partitions::Partitions::Ptr m_partitions;
     FULLFLASH::Filesystem::Base::Ptr m_filesystem;
-    FULLFLASH::Platform m_platform = FULLFLASH::Platform::UNK;
-    FULLFLASH::Filesystem::FSMap m_map;
+    FULLFLASH::Platform::Type m_platform = FULLFLASH::Platform::Type::UNK;
 
-    FULLFLASH::Filesystem::Directory::Ptr getDirPtr(const std::string &path);
-    DirOrFile getDirOrFilePtr(const std::string &path);
+    FULLFLASH::Filesystem::Directory::Ptr getDirPtr(const std::string &path) const;
+    DirOrFile getDirOrFilePtr(const std::string &path) const;
 
 public:
     FFS();
     ~FFS();
 
     void open(uintptr_t ptr, size_t size, const Options &options);
-    std::string getPlatform();
-    std::string getModel();
-    std::string getIMEI();
-    Entry stat(const std::string &path);
-    std::vector<Entry> readDir(const std::string &path);
-    FileData readFile(const std::string &path);
+    std::string getPlatform() const;
+    std::string getModel() const;
+    std::string getIMEI() const;
+    Entry stat(const std::string &path) const;
+    std::vector<Entry> readDir(const std::string &path) const;
+    FileData readFile(const std::string &path) const;
 
     void close();
 };

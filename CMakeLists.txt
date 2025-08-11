@@ -171,25 +171,31 @@ install(
 
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
     add_executable(libffshit_wasm wasm/main.cpp)
+    set_property(TARGET libffshit_wasm PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
     target_link_libraries(libffshit_wasm PRIVATE fmt::fmt ${PROJECT_NAME})
     target_link_options(libffshit_wasm PUBLIC
         -sWASM=1
+        -sSTRICT=1
         -sEXPORT_ES6=1
+        -sDYNAMIC_EXECUTION=0
         -sMODULARIZE
         -sINVOKE_RUN=0
         -sSINGLE_FILE=0
-        -sASSERTIONS=1
+        -sASSERTIONS=0
         -sEXIT_RUNTIME=1
         -sFILESYSTEM=0
         -sSTACK_OVERFLOW_CHECK=0
         -sALLOW_MEMORY_GROWTH
+        -sENVIRONMENT=node,web,worker
+        -sMALLOC=emmalloc
         -sEXPORTED_FUNCTIONS=['_malloc','_free']
         -sEXPORTED_RUNTIME_METHODS=['ccall','wasmMemory','HEAPU8']
         -fwasm-exceptions
+        --closure 1
         --bind
     )
     target_link_options(libffshit_wasm PRIVATE --emit-tsd "$<TARGET_FILE_DIR:libffshit_wasm>/libffshit_wasm.d.ts")
-    target_compile_options(libffshit_wasm PUBLIC -O3 -fwasm-exceptions)
+    target_compile_options(libffshit_wasm PUBLIC -Oz -fwasm-exceptions)
 endif()
 
 if (BUILD_DEB_PACKAGE)

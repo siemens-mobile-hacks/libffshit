@@ -13,25 +13,25 @@ public:
     virtual ~FFSLogInterface() = default;
     using Ptr = std::shared_ptr<FFSLogInterface>;
 
-    FFSLogInterface() { }
+    FFSLogInterface() = default;
 
     static Ptr build() {
         return std::make_shared<FFSLogInterface>();
     }
 
-    void on_info(const std::string msg) override final {
+    void on_info(const std::string msg) final {
         fprintf(stderr, "[FFS] [I] %s\n", msg.c_str());
     }
 
-    void on_warning(const std::string msg) override final {
+    void on_warning(const std::string msg) final {
         fprintf(stderr, "[FFS] [W] %s\n", msg.c_str());
     }
 
-    void on_error(const std::string msg) override final {
+    void on_error(const std::string msg) final {
         fprintf(stderr, "[FFS] [E] %s\n", msg.c_str());
     }
 
-    void on_debug(const std::string msg) override final {
+    void on_debug(const std::string msg) final {
         fprintf(stderr, "[FFS] [D] %s\n", msg.c_str());
     }
 };
@@ -65,6 +65,7 @@ public:
     struct DirOrFile {
         FULLFLASH::Filesystem::Directory::Ptr dir = nullptr;
         FULLFLASH::Filesystem::File::Ptr file = nullptr;
+        std::string canonicalPath;
     };
 
     struct FileData {
@@ -79,9 +80,10 @@ private:
     FULLFLASH::Filesystem::Base::Ptr m_filesystem;
     FULLFLASH::Platform::Type m_platform = FULLFLASH::Platform::Type::UNK;
 
-    FULLFLASH::Filesystem::Directory::Ptr getDirPtr(const std::string &path) const;
+    std::tuple<FULLFLASH::Filesystem::Directory::Ptr, std::string> getDirPtr(const std::string &path) const;
     DirOrFile getDirOrFilePtr(const std::string &path) const;
-
+    static void fillAttributes(Entry *entry, const FULLFLASH::Filesystem::File::Ptr& file, const std::string &parentPath) ;
+    void fillAttributes(Entry *entry, const FULLFLASH::Filesystem::Directory::Ptr& dir, const std::string &parentPath) const;
 public:
     FFS();
     ~FFS();

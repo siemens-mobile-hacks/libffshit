@@ -4,12 +4,10 @@ import { FFS } from "./index.js";
 const ffs = new FFS();
 const fullflash = fs.readFileSync("/tmp/1.bin");
 await ffs.open(fullflash);
+
 console.log(ffs.getPlatform());
 console.log(ffs.getModel());
 console.log(ffs.getIMEI());
-
-console.log("ls /", ffs.readDir("/"));
-console.log("ls /FFS_C", ffs.readDir("/FFS_C"));
 
 console.log(ffs.stat("/FFS/Pictures"));
 
@@ -19,5 +17,13 @@ console.log(blob?.toString());
 const blob2 = ffs.readFile("/ffs/pictures/stalker_wallpapers_194.jpg");
 if (blob2)
     fs.writeFileSync("/tmp/1.jpg", blob2);
+
+console.log(ffs.stat("/"));
+console.log(ffs.readDir("/"));
+console.log(ffs.readDir("/ffs_c"));
+console.log(ffs.readDir("/ffs_c/browser"));
+
+console.log("tree /");
+console.dir(ffs.getFilesTree(), { depth: null });
 
 ffs.close();

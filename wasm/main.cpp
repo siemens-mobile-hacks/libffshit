@@ -12,7 +12,8 @@
 
 using namespace emscripten;
 
-static int64_t timePointToUnix(std::chrono::system_clock::time_point tp);
+static double timePointToUnix(std::chrono::system_clock::time_point tp);
+static std::string normalizePath(const std::string &path);
 static std::string joinPath(const std::vector<std::string> &parts);
 static std::vector<std::string> splitPath(const std::string &input);
 static std::string getParentDir(const std::string &path);
@@ -154,70 +155,69 @@ FFS::FileData FFS::readFile(const std::string &path) const {
     if (!dirOrFile.file)
         return { .data = 0, .size = 0 };
     const auto data = dirOrFile.file->get_data();
-    auto dataSize = data.get_size();
+    const auto dataSize = data.get_size();
     auto *buffer = static_cast<uint8_t *>(malloc(dataSize));
     memcpy(buffer, data.get_data().get(), dataSize);
     return { .data = reinterpret_cast<uintptr_t>(buffer), .size = dataSize };
 }
 
-FULLFLASH::Filesystem::Directory::Ptr FFS::getDirPtr(const std::string &path) const {
+std::tuple<FULLFLASH::Filesystem::Directory::Ptr, std::string> FFS::getDirPtr(const std::string &path) const {
     FULLFLASH::Filesystem::Directory::Ptr dir = m_rootDir;
-    const auto parts = splitPath(path);
+    const auto parts = splitPath(toLower(path));
+    std::vector<std::string> canonicalPathParts;
+
+    if (parts.empty())
+        return { dir, "/" };
+
+    // canonicalPathParts.push_back(dir->get_name());
     for (const auto &part: parts) {
         bool found = false;
-        for (const auto subdir: dir->get_subdirs()) {
+        for (const auto &subdir: dir->get_subdirs()) {
             if (toLower(subdir->get_name()) == part) {
                 dir = subdir;
+                canonicalPathParts.push_back(dir->get_name());
                 found = true;
                 break;
             }
         }
         if (!found)
-            return nullptr;
+            return { nullptr, "" };
     }
-    return dir;
+    return { dir, joinPath(canonicalPathParts) };
 }
 
 FFS::Entry FFS::stat(const std::string &path) const {
     if (!m_partitions)
         throw std::runtime_error("FFS is closed.");
+    auto parentPath = getParentDir(path);
     const auto dirOrFile = getDirOrFilePtr(path);
     if (dirOrFile.dir) {
         Entry entry = {};
-        entry.name = dirOrFile.dir->get_name();
-        entry.path = dirOrFile.dir->get_path();
-        entry.timestamp = timePointToUnix(dirOrFile.dir->get_timestamp()) * 1000;
-        entry.isDirectory = true;
-        entry.isReadonly = dirOrFile.dir->get_attributes().is_readonly();
-        entry.isHidden = dirOrFile.dir->get_attributes().is_hidden();
-        entry.isSystem = dirOrFile.dir->get_attributes().is_system();
+        fillAttributes(&entry, dirOrFile.dir, parentPath);
         return entry;
     }
     if (dirOrFile.file) {
         Entry entry = {};
-        entry.name = dirOrFile.file->get_name();
-        entry.path = dirOrFile.file->get_path();
-        entry.timestamp = timePointToUnix(dirOrFile.file->get_timestamp()) * 1000;
-        entry.size = dirOrFile.file->get_size();
-        entry.isFile = true;
-        entry.isReadonly = dirOrFile.file->get_attributes().is_readonly();
-        entry.isHidden = dirOrFile.file->get_attributes().is_hidden();
-        entry.isSystem = dirOrFile.file->get_attributes().is_system();
+        fillAttributes(&entry, dirOrFile.file, parentPath);
         return entry;
     }
     return {};
 }
 
 FFS::DirOrFile FFS::getDirOrFilePtr(const std::string &path) const {
-    const auto parentDir = getDirPtr(getParentDir(path));
-    const auto baseName = getBaseName(path);
-    for (const auto subdir: parentDir->get_subdirs()) {
-       if (toLower(subdir->get_name()) == baseName)
-           return { .dir = subdir };
+    const auto normalizedPath = normalizePath(path);
+    if (normalizedPath == "/")
+        return { .dir = m_rootDir, .canonicalPath = "/" };
+
+    const auto [parentDir, parentDirCanonicalPath] = getDirPtr(getParentDir(normalizedPath));
+    const auto baseNameLC = getBaseName(toLower(path));
+    for (const auto &subdir: parentDir->get_subdirs()) {
+       if (toLower(subdir->get_name()) == baseNameLC)
+           return { .dir = subdir, .canonicalPath = parentDirCanonicalPath + "/" + subdir->get_name() };
     }
-    for (const auto file: parentDir->get_files()) {
-        if (toLower(file->get_name()) == baseName)
-            return { .file = file };
+    for (const auto &file: parentDir->get_files()) {
+        if (toLower(file->get_name()) == baseNameLC)
+            return { .file = file, .canonicalPath = parentDirCanonicalPath + "/" + file->get_name() };
     }
     return {};
 }
@@ -225,28 +225,46 @@ FFS::DirOrFile FFS::getDirOrFilePtr(const std::string &path) const {
 std::vector<FFS::Entry> FFS::readDir(const std::string &path) const {
     if (!m_partitions)
         throw std::runtime_error("FFS is closed.");
-    const auto parentDir = getDirPtr(path);
+    const auto [parentDir, parentDirCanonicalPath] = getDirPtr(path);
     std::vector<Entry> entries;
     if (parentDir) {
-        for (const auto subdir: parentDir->get_subdirs()) {
+        for (const auto &subdir: parentDir->get_subdirs()) {
             entries.resize(entries.size() + 1);
             auto &entry = entries.back();
-            entry.name = subdir->get_name();
-            entry.path = subdir->get_path();
-            entry.timestamp = timePointToUnix(subdir->get_timestamp()) * 1000;
-            entry.isDirectory = true;
+            fillAttributes(&entry, subdir, parentDirCanonicalPath);
         }
-        for (const auto file: parentDir->get_files()) {
+        for (const auto &file: parentDir->get_files()) {
             entries.resize(entries.size() + 1);
             auto &entry = entries.back();
-            entry.name = file->get_name();
-            entry.path = file->get_path();
-            entry.timestamp = timePointToUnix(file->get_timestamp()) * 1000;
-            entry.size = file->get_size();
-            entry.isFile = true;
+            fillAttributes(&entry, file, parentDirCanonicalPath);
         }
     }
     return entries;
+}
+
+void FFS::fillAttributes(Entry *entry, const FULLFLASH::Filesystem::File::Ptr &file, const std::string &parentPath) {
+    entry->name = file->get_name();
+    entry->path = parentPath;
+    entry->timestamp = timePointToUnix(file->get_timestamp()) * 1000;
+    entry->size = file->get_size();
+    entry->isFile = true;
+    entry->isReadonly = file->get_attributes().is_readonly();
+    entry->isHidden = file->get_attributes().is_hidden();
+    entry->isSystem = file->get_attributes().is_system();
+}
+
+void FFS::fillAttributes(Entry *entry, const FULLFLASH::Filesystem::Directory::Ptr &dir, const std::string &parentPath) const {
+    entry->name = dir == m_rootDir ? "" : dir->get_name();
+    entry->path = parentPath;
+    entry->timestamp = timePointToUnix(dir->get_timestamp()) * 1000;
+    entry->isDirectory = true;
+    entry->isReadonly = dir->get_attributes().is_readonly();
+    entry->isHidden = dir->get_attributes().is_hidden();
+    entry->isSystem = dir->get_attributes().is_system();
+}
+
+static std::string normalizePath(const std::string &path) {
+    return joinPath(splitPath(path));
 }
 
 static std::string getBaseName(const std::string &path) {
@@ -279,7 +297,7 @@ static std::vector<std::string> splitPath(const std::string &input) {
                         parts.pop_back();
                     }
                 } else {
-                    parts.push_back(toLower(part));
+                    parts.push_back(part);
                 }
                 part.clear();
             }
@@ -302,13 +320,13 @@ static std::string joinPath(const std::vector<std::string> &parts) {
     return result;
 }
 
-static int64_t timePointToUnix(std::chrono::system_clock::time_point tp) {
-    return std::chrono::duration_cast<std::chrono::seconds>(tp.time_since_epoch()).count();
+static double timePointToUnix(std::chrono::system_clock::time_point tp) {
+    return static_cast<double>(std::chrono::duration_cast<std::chrono::seconds>(tp.time_since_epoch()).count());
 }
 
 static std::string toLower(const std::string &s) {
     std::string result = s;
-    std::transform(result.begin(), result.end(), result.begin(), [](char c) {
+    std::transform(result.begin(), result.end(), result.begin(), [](const char c) {
         return std::tolower(static_cast<unsigned char>(c));
     });
     return result;

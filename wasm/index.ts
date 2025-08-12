@@ -10,6 +10,12 @@ export type FFSOpenOptions = Partial<Options> & {
     platform?: "auto" | "EGOLD_CE" | "SGOLD" | "SGOLD2" | "SGOLD2_ELKA";
 }
 
+export type FFSEntry = Entry;
+
+export type FFSTreeEntry = FFSEntry & {
+    children?: FFSTreeEntry[];
+};
+
 export class FFS {
     private handle: NativeFFS | undefined;
 
@@ -79,7 +85,7 @@ export class FFS {
         }
     }
 
-    stat(path: string): Entry | undefined {
+    stat(path: string): FFSEntry | undefined {
         if (!this.handle)
             throw new Error("FFS is not opened");
         try {
@@ -109,17 +115,46 @@ export class FFS {
         }
     }
 
-    readDir(path: string): Entry[] {
+    readDir(path: string): FFSEntry[] {
         if (!this.handle)
             throw new Error("FFS is not opened");
         try {
             const vector = this.handle.readDir(path);
-            const entries: Entry[] = [];
+            const entries: FFSEntry[] = [];
             for (let i = 0, l = vector.size(); i < l; i++)
                 entries.push(vector.get(i)!);
             return entries;
         } catch (e) {
             throw new Error(libffshit.getExceptionMessage(e).toString());
         }
+    }
+
+    getFilesTree(): FFSTreeEntry {
+        const rootDirStat = this.stat("/");
+        if (!rootDirStat)
+            throw new Error("Root directory is not found");
+
+        return {
+            ...rootDirStat,
+            children: this.readDirRecursive("/")
+        };
+    }
+
+    readDirRecursive(path: string): FFSTreeEntry[] {
+        const entries: FFSTreeEntry[] = [];
+        for (const entry of this.readDir(path)) {
+            if (entry.isDirectory) {
+                entries.push({
+                    ...entry,
+                    children: this.readDirRecursive(entry.path + "/" + entry.name)
+                });
+            } else {
+                entries.push({
+                    ...entry,
+                    children: []
+                });
+            }
+        }
+        return entries;
     }
 }

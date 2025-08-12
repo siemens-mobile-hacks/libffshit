@@ -16,7 +16,8 @@
     "files": [
         "./dist/wasm/*",
         "./build_wasm/*.wasm",
-        "./build_wasm/*.js"
+        "./build_wasm/*.js",
+        "./build_wasm/*.ts"
     ],
     "imports": {
         "#build/*.js": "./build_wasm/*.js"

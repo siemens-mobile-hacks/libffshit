@@ -27,11 +27,15 @@ class FULLFLASH {
 
         void                                load_partitions(bool old_search_algorithm, uint32_t search_start_addr);
 
+        // Writes the fullflash, with what the filesystem wrote to it, in the format it was read in
+        void                                save(std::filesystem::path fullflash_path) const;
+
         const Platform::Detector &          get_detector() const;
         Partitions::Partitions::Ptr         get_partitions() const;
 
     private:
         RawData                             data;
+        RawData                             x65flasher_header;
         Platform::Detector::Ptr             detector;
         Partitions::Partitions::Ptr         partitions;
 

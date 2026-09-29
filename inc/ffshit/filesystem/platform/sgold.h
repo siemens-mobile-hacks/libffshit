@@ -21,6 +21,10 @@ class SGOLD : public Base {
         void                    load(bool skip_broken = false, bool skip_dup = false, std::vector<std::string> parts_to_extract = {}) override final;
         const Directory::Ptr    get_root() const override final;
 
+        void                        write_file(const std::string &path, const RawData &data, const TimePoint &timestamp) override final;
+        void                        create_directory(const std::string &path, const TimePoint &timestamp) override final;
+        void                        remove(const std::string &path) override final;
+
     private:
         struct FITHeader {
             FITHeader() = default;

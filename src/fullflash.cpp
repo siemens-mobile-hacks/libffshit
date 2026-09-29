@@ -73,6 +73,27 @@ void FULLFLASH::load_partitions(bool old_search_algorithm, uint32_t search_start
     Log::Logger::info("Done in {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(diff_time).count());
 }
 
+void FULLFLASH::save(std::filesystem::path fullflash_path) const {
+    std::ofstream file;
+
+    file.open(fullflash_path, std::ios_base::binary | std::ios_base::out | std::ios_base::trunc);
+
+    if (!file.is_open()) {
+        throw Exception("Couldn't create file '{}': {}", fullflash_path.string(), std::string(strerror(errno)));
+    }
+
+    if (x65flasher_header.get_size()) {
+        file.write(x65flasher_header.get_data().get(), x65flasher_header.get_size());
+    }
+
+    file.write(data.get_data().get(), data.get_size());
+    file.close();
+
+    if (!file) {
+        throw Exception("Couldn't write file '{}': {}", fullflash_path.string(), std::string(strerror(errno)));
+    }
+}
+
 const Platform::Detector &FULLFLASH::get_detector() const {
     return *detector;
 }
@@ -105,6 +126,7 @@ void FULLFLASH::x65flasher_fix() {
     size_t old_size = tmp.get_size();
     size_t new_size = old_size - 0x10;
 
+    this->x65flasher_header = RawData(tmp, 0, 0x10);
     this->data =  RawData(tmp, 0x10, new_size);
 
     Log::Logger::warn("x65flasher fixed {:08X} -> {:08X}", old_size, new_size);

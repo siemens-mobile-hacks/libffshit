@@ -9,3 +9,4 @@ target_*
 _packages_deb/
 .clangd
 .cache
+tests/fullflashes

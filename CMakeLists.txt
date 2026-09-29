@@ -13,6 +13,7 @@ endif()
 option(BUILD_DEV "Development build" ON)
 option(BUILD_DEB_PACKAGE "Build debian-like package" OFF)
 option(USE_BUILTIN_LIBFMT "Use built-in libfmt instead of system library" OFF)
+option(BUILD_TESTS "Build the tests (needs GoogleTest)" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -47,14 +48,19 @@ set(SOURCES_LIST
     src/partition/partition.cpp
     src/partition/partitions.cpp
     src/filesystem/help.cpp
+    src/filesystem/hash.cpp
     src/filesystem/structure/attributes.cpp
     src/filesystem/structure/file.cpp
     src/filesystem/structure/directory.cpp
+    src/filesystem/platform/base.cpp
     src/filesystem/platform/egold_ce.cpp
     src/filesystem/platform/sgold.cpp
     src/filesystem/platform/sgold2.cpp
     src/filesystem/platform/sgold2_elka.cpp
-    src/filesystem/platform/builder.cpp)
+    src/filesystem/platform/builder.cpp
+    src/filesystem/write/records.cpp
+    src/filesystem/write/writer.cpp
+    src/filesystem/write/session.cpp)
 
 set(PUBLIC_HEADERS_LIST
     inc/thirdparty/ordered_hash.h
@@ -73,6 +79,7 @@ set(PUBLIC_HEADERS_LIST
     inc/ffshit/partition/partition.h
     inc/ffshit/partition/partitions.h
     inc/ffshit/filesystem/help.h
+    inc/ffshit/filesystem/hash.h
     inc/ffshit/filesystem/structure/attributes.h
     inc/ffshit/filesystem/structure/file.h
     inc/ffshit/filesystem/structure/directory.h
@@ -133,7 +140,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE DEF_VERSION_STRING_MINOR="${V
 target_compile_definitions(${PROJECT_NAME} PRIVATE DEF_VERSION_STRING_PATCH="${VERSION_PATCH}")
 target_compile_definitions(${PROJECT_NAME} PRIVATE DEF_VERSION_STRING="${VERSION_STRING}")
 
-target_include_directories(${PROJECT_NAME} PRIVATE inc)
+target_include_directories(${PROJECT_NAME} PRIVATE inc src)
 target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt ${Iconv_LIBRARIES})
 
 include(GNUInstallDirs)
@@ -196,6 +203,11 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
     )
     target_link_options(libffshit_wasm PRIVATE --emit-tsd "$<TARGET_FILE_DIR:libffshit_wasm>/libffshit_wasm.d.ts")
     target_compile_options(libffshit_wasm PUBLIC -Oz -fwasm-exceptions)
+endif()
+
+if (BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
 
 if (BUILD_DEB_PACKAGE)

@@ -21,23 +21,27 @@ class Partitions {
         using Ptr       = std::shared_ptr<Partitions>;
         using Map       = tsl::ordered_map<std::string, Partition>;
         
-        Partitions(const RawData &raw_data, Platform::Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0);
+        Partitions(RawData &raw_data, Platform::Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0);
 
-        static Ptr build(const RawData& raw_data, Platform::Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0) {
+        static Ptr build(RawData& raw_data, Platform::Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr = 0) {
             return std::make_unique<Partitions>(raw_data, detector, old_search_algorithm, search_start_addr);
         }
 
         const Map &                     get_partitions() const;
         const RawData &                 get_data() const;
+        RawData &                       get_data();
         const Platform::Detector::Ptr & get_detector() const;
         Platform::Type                  get_fs_platform() const;
+
+        // The blocks keep a copy of their data: after writing to the fullflash, this refreshes them
+        void                            reload_block_data(const std::string &partition_name);
 
     private:
         uint32_t                    block_size;
         Map                         partitions_map;
         
         Platform::Detector::Ptr     detector;
-        const RawData &             data;
+        RawData &                   data;
 
         Platform::Type              fs_platform;
 

@@ -34,6 +34,7 @@ class RawData {
         void            add_top(char *data, size_t add_size);
 
         void            read(size_t offset, char *data, size_t read_size) const;
+        void            write(size_t offset, const char *data, size_t write_size);
         void            read_string(size_t offset, std::string &str, size_t step = 1) const;
         void            read_wstring(size_t offset, std::wstring &str) const;
 

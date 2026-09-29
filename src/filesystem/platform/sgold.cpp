@@ -1,4 +1,5 @@
 #include "ffshit/filesystem/platform/sgold.h"
+#include "filesystem/codepage.h"
 #include "filesystem/write/session.h"
 #include "ffshit/filesystem/ex.h"
 
@@ -163,10 +164,6 @@ SGOLD::FileHeader SGOLD::read_file_header(const RawData &data) {
     data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.attributes), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.next_part), 1);
     data.read_string(offset, header.name);
-
-    if (header.name.size() >= 2 && header.name.at(0) == 0x1F) {
-        header.name.erase(header.name.begin(), header.name.begin() + 1);
-    }
     
     return header;
 }
@@ -399,6 +396,8 @@ void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory:
             const FFSBlock &tmp         = ffs_map.at(id);
             FileHeader      file_header = read_file_header(tmp.data);
             auto            timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
+
+            file_header.name = sgold_name_to_utf8(file_header.name, codepage);
 
             Attributes      attributes(file_header.attributes);
 

@@ -9,10 +9,11 @@ namespace FULLFLASH {
 namespace Filesystem {
 namespace Write {
 
-Session::Session(Platform::Type platform, Partitions::Partitions::Ptr partitions, Directory::Ptr root) :
+Session::Session(Platform::Type platform, Partitions::Partitions::Ptr partitions, Directory::Ptr root, const std::string &codepage) :
     platform(platform),
     partitions(partitions),
-    root(root) {
+    root(root),
+    codepage(codepage) {
 }
 
 Session::Path Session::parse(const std::string &path) const {
@@ -41,7 +42,7 @@ Writer &Session::writer(const std::string &partition) {
     auto it = writers.find(partition);
 
     if (it == writers.end()) {
-        it = writers.emplace(partition, Writer::build(platform, partitions, partition)).first;
+        it = writers.emplace(partition, Writer::build(platform, partitions, partition, codepage)).first;
     }
 
     return *it->second;

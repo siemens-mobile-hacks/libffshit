@@ -31,7 +31,7 @@ std::filesystem::path find_fullflash(const std::string &file_name) {
     return {};
 }
 
-Loaded load(const std::filesystem::path &path) {
+Loaded load(const std::filesystem::path &path, const std::string &codepage) {
     Loaded loaded;
 
     loaded.fullflash = FULLFLASH::FULLFLASH::build(path);
@@ -40,6 +40,7 @@ Loaded load(const std::filesystem::path &path) {
     auto partitions = loaded.fullflash->get_partitions();
 
     loaded.filesystem = FULLFLASH::Filesystem::build(partitions->get_fs_platform(), partitions);
+    loaded.filesystem->set_codepage(codepage);
     loaded.filesystem->load();
 
     return loaded;
@@ -218,12 +219,12 @@ void FullflashTest::TearDown() {
     }
 }
 
-Loaded FullflashTest::save_and_reload(const Loaded &loaded, const std::string &file_name) {
-    std::filesystem::path path = temp_dir / file_name;
+Loaded FullflashTest::save_and_reload(const Loaded &loaded, const std::string &codepage) {
+    std::filesystem::path path = temp_dir / "saved.bin";
 
     loaded.fullflash->save(path);
 
-    return load(path);
+    return load(path, codepage);
 }
 
 std::string FullflashTest::dir_path(const std::string &name) const {

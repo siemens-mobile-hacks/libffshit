@@ -3,6 +3,8 @@
 #include "ffshit/filesystem/ex.h"
 #include "ffshit/filesystem/hash.h"
 
+#include "filesystem/codepage.h"
+
 #include <cstring>
 #include <set>
 
@@ -586,7 +588,7 @@ class NewSgoldWriter : public Writer {
         }
 };
 
-// SGOLD: 16-bit ids, 8-bit names
+// SGOLD: 16-bit ids, 8-bit names in the phone's codepage, or 0x1F and UTF-8
 //
 // Header: id, parent id (16 bits), FAT time (32), data id (16), attributes with the upper 16 bits
 //         set (32), next part (16), the name ending in a 0
@@ -595,13 +597,15 @@ class NewSgoldWriter : public Writer {
 // Directory entry: id, name hash (16 bits each), in records of 128 bytes
 class SgoldWriter : public Writer {
     public:
-        SgoldWriter(Records::Ptr records) : Writer(std::move(records)) {
+        SgoldWriter(Records::Ptr records, const std::string &codepage) : Writer(std::move(records)), codepage(codepage) {
             init();
         }
 
     protected:
         static constexpr size_t HEADER_SIZE     = 16;
-        static constexpr size_t NAME_LENGTH_MAX = 255;
+        static constexpr size_t NAME_SIZE_MAX   = 255;
+
+        std::string codepage;
 
         uint32_t root_id() const override final {
             return 6;
@@ -722,24 +726,18 @@ class SgoldWriter : public Writer {
         }
 
         std::string to_stored(const std::string &name) const override final {
-            return name;
+            return sgold_name_from_utf8(name, codepage);
         }
 
         void check_new_name(const std::string &stored) const override final {
-            for (char c : stored) {
-                if (static_cast<unsigned char>(c) >= 0x80) {
-                    throw Exception("'{}': SGOLD names can only be ASCII", stored);
-                }
-            }
-
-            if (stored.size() > NAME_LENGTH_MAX) {
-                throw Exception("Names are up to {} characters long", NAME_LENGTH_MAX);
+            if (stored.size() > NAME_SIZE_MAX) {
+                throw Exception("Names are up to {} bytes long", NAME_SIZE_MAX);
             }
         }
 
+        // The firmware folds ASCII letters only: "Ärger" and "ärger" are two names to it
         std::string folded(const std::string &stored) const override final {
-            // A name can start with 0x1F, which the readers drop
-            std::string name = stored.size() >= 2 && stored[0] == 0x1F ? stored.substr(1) : stored;
+            std::string name = stored;
 
             for (auto &c : name) {
                 c = fold_case_8bit(c);
@@ -749,11 +747,11 @@ class SgoldWriter : public Writer {
         }
 };
 
-Writer::Ptr Writer::build(Platform::Type platform, Partitions::Partitions::Ptr partitions, const std::string &partition_name) {
+Writer::Ptr Writer::build(Platform::Type platform, Partitions::Partitions::Ptr partitions, const std::string &partition_name, const std::string &codepage) {
     Records::Ptr records = Records::build(platform, partitions, partition_name);
 
     switch (platform) {
-        case Platform::Type::SGOLD:         return std::make_unique<SgoldWriter>(std::move(records));
+        case Platform::Type::SGOLD:         return std::make_unique<SgoldWriter>(std::move(records), codepage);
         case Platform::Type::SGOLD2:
         case Platform::Type::SGOLD2_ELKA:   return std::make_unique<NewSgoldWriter>(std::move(records));
         default: {

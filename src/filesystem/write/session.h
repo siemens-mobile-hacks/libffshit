@@ -16,7 +16,7 @@ namespace Write {
 // the loaded directory tree and in the partitions' block data afterwards
 class Session {
     public:
-        Session(Platform::Type platform, Partitions::Partitions::Ptr partitions, Directory::Ptr root);
+        Session(Platform::Type platform, Partitions::Partitions::Ptr partitions, Directory::Ptr root, const std::string &codepage);
 
         // The paths start with the partition's name
         void                                write_file(const std::string &path, const RawData &data, const TimePoint &timestamp);
@@ -33,6 +33,7 @@ class Session {
         Platform::Type                      platform;
         Partitions::Partitions::Ptr         partitions;
         Directory::Ptr                      root;
+        std::string                         codepage;
         std::map<std::string, Writer::Ptr>  writers;
 
         Path                                parse(const std::string &path) const;

@@ -32,7 +32,8 @@ struct Loaded {
     FULLFLASH::Filesystem::Base::Ptr    filesystem;
 };
 
-Loaded                                  load(const std::filesystem::path &path);
+// SGOLD file names are read in the codepage
+Loaded                                  load(const std::filesystem::path &path, const std::string &codepage = "CP1252");
 
 // What a file or directory looked like: its content (empty for a directory) and timestamp
 struct Entry {
@@ -72,7 +73,7 @@ class FullflashTest : public ::testing::TestWithParam<Phone> {
         void                            TearDown() override;
 
         // Saves the fullflash and reads it back from the file
-        Loaded                          save_and_reload(const Loaded &loaded, const std::string &file_name = "saved.bin");
+        Loaded                          save_and_reload(const Loaded &loaded, const std::string &codepage = "CP1252");
 
         std::string                     dir_path(const std::string &name = "") const;
 };

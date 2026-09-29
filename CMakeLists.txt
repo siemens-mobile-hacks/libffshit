@@ -49,6 +49,7 @@ set(SOURCES_LIST
     src/partition/partitions.cpp
     src/filesystem/help.cpp
     src/filesystem/hash.cpp
+    src/filesystem/codepage.cpp
     src/filesystem/structure/attributes.cpp
     src/filesystem/structure/file.cpp
     src/filesystem/structure/directory.cpp

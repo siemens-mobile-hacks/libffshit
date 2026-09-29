@@ -21,12 +21,18 @@ class Base {
 
         Base() :    verbose_processing(false),
                     verbose_headers(false),
-                    verbose_data(false)
+                    verbose_data(false),
+                    codepage("CP1252")
                     { }
 
         void                            log_verbose_processing(bool enabled)    { this->verbose_processing  = enabled; }
         void                            log_verbose_headers(bool enabled)       { this->verbose_headers     = enabled; }
         void                            log_verbose_data(bool enabled)          { this->verbose_data        = enabled; }
+
+        // The 8-bit codepage SGOLD keeps file names in, which is the one of the phone's language:
+        // CP1252 (the default) for Western European languages, CP1251 for Cyrillic ones, CP1250
+        // for Central European ones, or any other iconv knows. Set it before load().
+        void                            set_codepage(const std::string &codepage);
 
         virtual void                    load(bool skip_broken = false, bool skip_dup = false, std::vector<std::string> parts_to_extract = {}) = 0;
         virtual const Directory::Ptr    get_root() const = 0;
@@ -48,6 +54,8 @@ class Base {
         bool verbose_processing;
         bool verbose_headers;
         bool verbose_data;
+
+        std::string codepage;
 
         // Built on the first write
         Write::Session &                write_session(Platform::Type platform, Partitions::Partitions::Ptr partitions, Directory::Ptr root);

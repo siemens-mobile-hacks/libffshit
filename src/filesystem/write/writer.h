@@ -43,7 +43,8 @@ class Writer {
     public:
         using Ptr = std::unique_ptr<Writer>;
 
-        static Ptr              build(Platform::Type platform, Partitions::Partitions::Ptr partitions, const std::string &partition_name);
+        // SGOLD keeps names in the codepage
+        static Ptr              build(Platform::Type platform, Partitions::Partitions::Ptr partitions, const std::string &partition_name, const std::string &codepage);
 
         virtual                 ~Writer() = default;
 

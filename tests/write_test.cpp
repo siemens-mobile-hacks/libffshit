@@ -290,23 +290,58 @@ TEST_P(WriteTest, RejectsBadPaths) {
 }
 
 TEST_P(WriteTest, WritesNamesBeyondAscii) {
-    std::string path = dir_path("ffshit-файл.bin");
-
-    if (GetParam().platform == Type::SGOLD) {
-        // The 8-bit names of SGOLD have no known encoding beyond ASCII
-        EXPECT_THROW(write(path, pattern(100, 1)), FULLFLASH::BaseException);
-
-        expect_unchanged_on_disk();
-
-        return;
-    }
-
     Tree expected = snapshot(*original.filesystem);
 
-    write(path, pattern(100, 1));
-    expected[path] = file_entry(pattern(100, 1));
+    // On SGOLD in the codepage, and in UTF-8 when the codepage lacks a character
+    for (const std::string name : { "ffshit-Ärger.bin", "ffshit-файл.bin", "ffshit-中文.bin" }) {
+        write(dir_path(name), pattern(100, name.size()));
+        expected[dir_path(name)] = file_entry(pattern(100, name.size()));
+    }
 
     expect_tree(snapshot(*save_and_reload(original).filesystem), expected);
+}
+
+TEST_P(WriteTest, FoldsTheCaseOfWhatTheFirmwareFolds) {
+    Tree expected = snapshot(*original.filesystem);
+
+    write(dir_path("ffshit-ärger.bin"), pattern(100, 1));
+    write(dir_path("ffshit-Ärger.bin"), pattern(200, 2));
+
+    // SGOLD folds ASCII letters only: both files are there
+    if (GetParam().platform == Type::SGOLD) {
+        expected[dir_path("ffshit-ärger.bin")] = file_entry(pattern(100, 1));
+    }
+
+    expected[dir_path("ffshit-Ärger.bin")] = file_entry(pattern(200, 2));
+
+    expect_tree(snapshot(*save_and_reload(original).filesystem), expected);
+}
+
+TEST_P(WriteTest, KeepsSgoldNamesInThePhonesCodepage) {
+    if (GetParam().platform != Type::SGOLD) {
+        GTEST_SKIP() << "only SGOLD names are 8-bit";
+    }
+
+    original.filesystem->set_codepage("CP1251");
+
+    write(dir_path("ffshit-файл.bin"), pattern(100, 1));
+    // CP1251 has no Ä
+    write(dir_path("ffshit-Ärger.bin"), pattern(100, 2));
+
+    Loaded cp1251 = save_and_reload(original, "CP1251");
+
+    EXPECT_NE(find_file(*cp1251.filesystem, dir_path("ffshit-файл.bin")), nullptr);
+    EXPECT_NE(find_file(*cp1251.filesystem, dir_path("ffshit-Ärger.bin")), nullptr);
+
+    // The bytes of "файл" in CP1251 are "ôàéë" in CP1252, a name in UTF-8 reads the same in both
+    Loaded cp1252 = save_and_reload(original, "CP1252");
+
+    EXPECT_NE(find_file(*cp1252.filesystem, dir_path("ffshit-ôàéë.bin")), nullptr);
+    EXPECT_NE(find_file(*cp1252.filesystem, dir_path("ffshit-Ärger.bin")), nullptr);
+}
+
+TEST_P(WriteTest, RejectsAnUnknownCodepage) {
+    EXPECT_THROW(original.filesystem->set_codepage("NO-SUCH-CODEPAGE"), FULLFLASH::BaseException);
 }
 
 TEST_P(WriteTest, ShowsTheChangesBeforeTheyAreSaved) {

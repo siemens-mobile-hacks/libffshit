@@ -41,6 +41,18 @@ TEST(NameHashTest, HashesEightBitNamesLikeTheSgoldFirmware) {
     EXPECT_EQ(name_hash_8bit("s2200.bin"),               0xABDE);
 }
 
+// As the emulated CX70 v56 stored names made over OBEX: in its codepage, CP1252, and else as 0x1F
+// and the name in UTF-8. The hash is of the stored bytes.
+TEST(NameHashTest, HashesEightBitNamesAsTheyAreStored) {
+    EXPECT_EQ(name_hash_8bit("\xC4rger"),                0x98DC);
+    EXPECT_EQ(name_hash_8bit("\xE4rger"),                0xA456);
+    EXPECT_EQ(name_hash_8bit("a\xE9\x80"),               0x9462);
+    EXPECT_EQ(name_hash_8bit("\x1F" "Файл"),             0x3152);
+    EXPECT_EQ(name_hash_8bit("\x1F" "файл"),             0x92E3);
+    EXPECT_EQ(name_hash_8bit("\x1F" "Ωμέγα"),            0x6F37);
+    EXPECT_EQ(name_hash_8bit("\x1F" "中文"),             0x35D3);
+}
+
 TEST(NameHashTest, FoldsTheCaseOfEightBitNames) {
     EXPECT_EQ(name_hash_8bit("MISC"),                    name_hash_8bit("misc"));
     EXPECT_EQ(name_hash_8bit("Misc"),                    name_hash_8bit("mIsC"));

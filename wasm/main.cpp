@@ -2,6 +2,7 @@
 #include <ffshit/filesystem/structure/directory.h>
 #include <string>
 #include <filesystem>
+#include <new>
 #include <stdexcept>
 #include <emscripten/bind.h>
 #include <ffshit/fullflash.h>
@@ -28,12 +29,14 @@ EMSCRIPTEN_BINDINGS(libffshit) {
         .function("getPlatform", &FFS::getPlatform)
         .function("getIMEI", &FFS::getIMEI)
         .function("getModel", &FFS::getModel)
+        .function("getWarnings", &FFS::getWarnings)
         .function("readDir", &FFS::readDir)
         .function("readFile", &FFS::readFile)
         .function("open", &FFS::open)
         .function("stat", &FFS::stat)
         .function("close", &FFS::close);
     register_vector<FFS::Entry>("EntryArray");
+    register_vector<std::string>("StringArray");
 
     value_object<FFS::FileData>("FileData")
         .field("data", &FFS::FileData::data)
@@ -65,11 +68,10 @@ EMSCRIPTEN_BINDINGS(libffshit) {
 FFS::FFS() = default;
 
 void FFS::open(uintptr_t ptr, size_t size, const FFS::Options &options) {
-    if (options.debug) {
-        FULLFLASH::Log::Logger::init(logger);
-    } else {
-        FULLFLASH::Log::Logger::init(nullptr);
-    }
+    // Only the first init() takes effect, the interface is always installed to collect warnings
+    FULLFLASH::Log::Logger::init(logger);
+    logger->debug = options.debug;
+    logger->warnings.clear();
 
     try {
         auto *data = reinterpret_cast<char *>(ptr);
@@ -101,6 +103,10 @@ void FFS::open(uintptr_t ptr, size_t size, const FFS::Options &options) {
 
         m_filesystem->load(options.skipBroken, options.skipDuplicates);
         m_rootDir = m_filesystem->get_root();
+        m_warnings = std::move(logger->warnings);
+    } catch (const std::bad_alloc &) {
+        close();
+        throw std::runtime_error("Not enough memory to load the fullflash");
     } catch (const FULLFLASH::Partitions::Exception &e) {
         close();
         throw std::runtime_error("[FULLFLASH::Partitions::Exception] " + e.what());
@@ -123,6 +129,7 @@ void FFS::close() {
     m_rootDir.reset();
     m_filesystem.reset();
     m_partitions.reset();
+    m_warnings.clear();
 }
 
 FFS::~FFS() {
@@ -146,6 +153,12 @@ std::string FFS::getModel() const {
     if (!m_partitions)
         throw std::runtime_error("FFS is closed.");
     return m_fullflash->get_detector().get_model();
+}
+
+std::vector<std::string> FFS::getWarnings() const {
+    if (!m_partitions)
+        throw std::runtime_error("FFS is closed.");
+    return m_warnings;
 }
 
 FFS::FileData FFS::readFile(const std::string &path) const {
@@ -210,6 +223,8 @@ FFS::DirOrFile FFS::getDirOrFilePtr(const std::string &path) const {
         return { .dir = m_rootDir, .canonicalPath = "/" };
 
     const auto [parentDir, parentDirCanonicalPath] = getDirPtr(getParentDir(normalizedPath));
+    if (!parentDir)
+        return {};
     const auto baseNameLC = getBaseName(toLower(path));
     for (const auto &subdir: parentDir->get_subdirs()) {
        if (toLower(subdir->get_name()) == baseNameLC)

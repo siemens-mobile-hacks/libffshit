@@ -19,20 +19,31 @@ public:
         return std::make_shared<FFSLogInterface>();
     }
 
+    // Print everything to stderr
+    bool debug = false;
+    // Warnings and errors, e.g. broken files skipped while loading
+    std::vector<std::string> warnings;
+
     void on_info(const std::string msg) final {
-        fprintf(stderr, "[FFS] [I] %s\n", msg.c_str());
+        if (debug)
+            fprintf(stderr, "[FFS] [I] %s\n", msg.c_str());
     }
 
     void on_warning(const std::string msg) final {
-        fprintf(stderr, "[FFS] [W] %s\n", msg.c_str());
+        warnings.push_back(msg);
+        if (debug)
+            fprintf(stderr, "[FFS] [W] %s\n", msg.c_str());
     }
 
     void on_error(const std::string msg) final {
-        fprintf(stderr, "[FFS] [E] %s\n", msg.c_str());
+        warnings.push_back(msg);
+        if (debug)
+            fprintf(stderr, "[FFS] [E] %s\n", msg.c_str());
     }
 
     void on_debug(const std::string msg) final {
-        fprintf(stderr, "[FFS] [D] %s\n", msg.c_str());
+        if (debug)
+            fprintf(stderr, "[FFS] [D] %s\n", msg.c_str());
     }
 };
 
@@ -79,6 +90,7 @@ private:
     FULLFLASH::Partitions::Partitions::Ptr m_partitions;
     FULLFLASH::Filesystem::Base::Ptr m_filesystem;
     FULLFLASH::Platform::Type m_platform = FULLFLASH::Platform::Type::UNK;
+    std::vector<std::string> m_warnings;
 
     std::tuple<FULLFLASH::Filesystem::Directory::Ptr, std::string> getDirPtr(const std::string &path) const;
     DirOrFile getDirOrFilePtr(const std::string &path) const;
@@ -92,6 +104,7 @@ public:
     std::string getPlatform() const;
     std::string getModel() const;
     std::string getIMEI() const;
+    std::vector<std::string> getWarnings() const;
     Entry stat(const std::string &path) const;
     std::vector<Entry> readDir(const std::string &path) const;
     FileData readFile(const std::string &path) const;

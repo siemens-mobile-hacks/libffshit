@@ -7,6 +7,18 @@ namespace FULLFLASH {
 
 static constexpr size_t CHUNK_SIZE = 0x10000;
 
+// Space to allocate for data_size bytes. Small buffers (one per FFS record, tens of
+// thousands per fullflash) are allocated exactly: rounding each of them up to a chunk
+// multiplies the memory use, which the wasm build can't afford. Large ones keep a
+// spare chunk, the partition pattern search reads a few words past the end.
+static size_t capacity(size_t data_size) {
+    if (data_size < CHUNK_SIZE) {
+        return data_size;
+    }
+
+    return CHUNK_SIZE * ((data_size / CHUNK_SIZE) + 1);
+}
+
 RawData::RawData() : size(0) {
     size_real = CHUNK_SIZE;
 
@@ -22,9 +34,7 @@ RawData::RawData(char *data, size_t data_size) {
         throw Exception("RawData() from raw ptr. data_size == 0");
     }
 
-    size_t chunks = (data_size / CHUNK_SIZE) + 1;
-
-    this->size_real = CHUNK_SIZE * chunks;
+    this->size_real = capacity(data_size);
     this->data      = Data(new char[this->size_real]);
 
     memcpy(this->data.get(), data, data_size);
@@ -52,8 +62,8 @@ RawData::RawData(const RawData &prev) {
     }
 
     this->size      = prev.size;
-    this->size_real = prev.size_real;
-    this->data      = Data(new char[prev.size_real]);
+    this->size_real = capacity(prev.size);
+    this->data      = Data(new char[this->size_real]);
 
     memcpy(this->data.get(), prev.data.get(), prev.size);
 }
@@ -99,9 +109,7 @@ RawData::RawData(const RawData &prev, size_t offset, size_t data_size) {
         throw Exception("RawData() offset + size > prev. size");
     }
 
-    size_t chunks = (data_size / CHUNK_SIZE) + 1;
-
-    this->size_real = CHUNK_SIZE * chunks;
+    this->size_real = capacity(data_size);
     this->data      = Data(new char[this->size_real]);
     this->size      = data_size;
 
@@ -113,9 +121,7 @@ RawData::RawData(std::ifstream &file, size_t offset, size_t data_size) {
         throw Exception("RawData() from file data_size == 0");
     }
 
-    size_t chunks = (data_size / CHUNK_SIZE) + 1;
-
-    this->size_real = CHUNK_SIZE * chunks;
+    this->size_real = capacity(data_size);
     this->data      = Data(new char[this->size_real]);
     this->size      = data_size;
 
@@ -135,9 +141,7 @@ RawData &RawData::operator =(const RawData &prev) {
 
         if (this->size >= prev.size) {
             if (this->size_real < prev.size_real) {
-                size_t chunks = (prev.size / CHUNK_SIZE) + 1;
-
-                this->size_real = CHUNK_SIZE * chunks;
+                this->size_real = capacity(prev.size);
                 this->data      = Data(new char[this->size_real]);
             }
 
@@ -145,10 +149,8 @@ RawData &RawData::operator =(const RawData &prev) {
 
             memcpy(this->data.get(), prev.data.get(), prev.size);
         } else {
-            size_t chunks = (prev.size / CHUNK_SIZE) + 1;
-
             this->size      = prev.size;
-            this->size_real = CHUNK_SIZE * chunks;
+            this->size_real = capacity(prev.size);
             this->data      = Data(new char[this->size_real]);
 
             memcpy(this->data.get(), prev.data.get(), prev.size);

@@ -23,6 +23,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     endif()
 endif()
 
+# Everything, not only the wasm entry point: sources built without it drop their catch
+# blocks (skipping broken files) and skip destructors when an exception passes through
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
+    add_compile_options(-fwasm-exceptions)
+endif()
+
 if (USE_BUILTIN_LIBFMT)
     add_subdirectory(third_party/fmt)
 else()
@@ -185,6 +191,7 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
         -sEXIT_RUNTIME=1
         -sFILESYSTEM=0
         -sSTACK_OVERFLOW_CHECK=0
+        -sSTACK_SIZE=8MB
         -sALLOW_MEMORY_GROWTH
         -sENVIRONMENT=node,web,worker
         -sMALLOC=emmalloc

@@ -1,10 +1,18 @@
 import Module, { Options, Entry, MainModule, FFS as NativeFFS } from "#build/libffshit_wasm.js";
 
 interface MainModuleEx extends MainModule {
-    getExceptionMessage(err: unknown): string;
+    getExceptionMessage(err: unknown): [string, string];
 }
 
 let libffshit!: MainModuleEx;
+
+// C++ exceptions arrive as WebAssembly.Exception, which is not an Error.
+// JS errors and traps (WebAssembly.RuntimeError) are passed through.
+function toError(e: unknown): Error {
+    if (e instanceof Error)
+        return e;
+    return new Error(libffshit.getExceptionMessage(e)[1]);
+}
 
 export type FFSOpenOptions = Partial<Options> & {
     platform?: "auto" | "EGOLD_CE" | "SGOLD" | "SGOLD2" | "SGOLD2_ELKA";
@@ -39,7 +47,7 @@ export class FFS {
                 ...options
             });
         } catch (e) {
-            throw new Error(libffshit.getExceptionMessage(e).toString());
+            throw toError(e);
         } finally {
             libffshit._free(ptr);
         }
@@ -51,7 +59,7 @@ export class FFS {
         try {
             this.handle.close();
         } catch (e) {
-            throw new Error(libffshit.getExceptionMessage(e).toString());
+            throw toError(e);
         }
     }
 
@@ -61,7 +69,7 @@ export class FFS {
         try {
             return this.handle.getPlatform();
         } catch (e) {
-            throw new Error(libffshit.getExceptionMessage(e).toString());
+            throw toError(e);
         }
     }
 
@@ -71,7 +79,7 @@ export class FFS {
         try {
             return this.handle.getModel();
         } catch (e) {
-            throw new Error(libffshit.getExceptionMessage(e).toString());
+            throw toError(e);
         }
     }
 
@@ -81,7 +89,24 @@ export class FFS {
         try {
             return this.handle.getIMEI();
         } catch (e) {
-            throw new Error(libffshit.getExceptionMessage(e).toString());
+            throw toError(e);
+        }
+    }
+
+    // Problems found while opening, e.g. broken files that were skipped
+    getWarnings(): string[] {
+        if (!this.handle)
+            throw new Error("FFS is not opened");
+        try {
+            const vector = this.handle.getWarnings();
+            const warnings: string[] = [];
+            // Typed as any embind string input, but std::string always comes out as a string
+            for (let i = 0, l = vector.size(); i < l; i++)
+                warnings.push(vector.get(i) as string);
+            vector.delete();
+            return warnings;
+        } catch (e) {
+            throw toError(e);
         }
     }
 
@@ -92,7 +117,7 @@ export class FFS {
             const entry = this.handle.stat(path);
             return entry.path == "" ? undefined : entry;
         } catch (e) {
-            throw new Error(libffshit.getExceptionMessage(e).toString());
+            throw toError(e);
         }
     }
 
@@ -111,7 +136,7 @@ export class FFS {
                 return buffer;
             }
         } catch (e) {
-            throw new Error(libffshit.getExceptionMessage(e).toString());
+            throw toError(e);
         }
     }
 
@@ -125,7 +150,7 @@ export class FFS {
                 entries.push(vector.get(i)!);
             return entries;
         } catch (e) {
-            throw new Error(libffshit.getExceptionMessage(e).toString());
+            throw toError(e);
         }
     }
 

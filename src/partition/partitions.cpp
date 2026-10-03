@@ -144,7 +144,7 @@ static bool is_empty(const char *buf, size_t size) {
 
 // =========================================================================
 
-Partitions::Partitions(const RawData& raw_data, Platform::Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr) : data(raw_data) {
+Partitions::Partitions(RawData& raw_data, Platform::Detector::Ptr detector, bool old_search_algorithm, uint32_t search_start_addr) : data(raw_data) {
     this->detector      = detector;
     this->fs_platform   = detector->get_platform();
 
@@ -165,12 +165,20 @@ const RawData &Partitions::get_data() const {
     return data;
 }
 
+RawData &Partitions::get_data() {
+    return data;
+}
+
 const Platform::Detector::Ptr &Partitions::get_detector() const {
     return detector;
 }
 
 Platform::Type Partitions::get_fs_platform() const {
     return fs_platform;
+}
+
+void Partitions::reload_block_data(const std::string &partition_name) {
+    partitions_map.at(partition_name).reload_block_data(data);
 }
 
 void Partitions::search_partitions(bool old_search_algorithm, uint32_t start_addr) {

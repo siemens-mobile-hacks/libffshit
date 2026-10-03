@@ -1,5 +1,7 @@
 #include "ffshit/filesystem/structure/directory.h"
 
+#include <algorithm>
+
 namespace FULLFLASH {
 namespace Filesystem {
 
@@ -42,6 +44,14 @@ void Directory::add_subdir(Ptr dir) {
 
 void Directory::add_file(File::Ptr file) {
     files.push_back(file);
+}
+
+void Directory::remove_subdir(const Ptr &dir) {
+    subdirs.erase(std::remove(subdirs.begin(), subdirs.end(), dir), subdirs.end());
+}
+
+void Directory::remove_file(const File::Ptr &file) {
+    files.erase(std::remove(files.begin(), files.end(), file), files.end());
 }
 
 const std::string &Directory::get_name() const {

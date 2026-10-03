@@ -30,6 +30,8 @@ class Block {
         const uint32_t  get_size()  const;
         const RawData & get_data()  const;
 
+        void            reload_data(const RawData &fullflash_data);
+
     private:
         Header      header;
 

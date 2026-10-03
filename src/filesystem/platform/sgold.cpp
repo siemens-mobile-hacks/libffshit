@@ -1,4 +1,6 @@
 #include "ffshit/filesystem/platform/sgold.h"
+#include "filesystem/codepage.h"
+#include "filesystem/write/session.h"
 #include "ffshit/filesystem/ex.h"
 
 #include "ffshit/help.h"
@@ -94,6 +96,18 @@ const Directory::Ptr SGOLD::get_root() const {
     return root_dir;
 }
 
+void SGOLD::write_file(const std::string &path, const RawData &data, const TimePoint &timestamp) {
+    write_session(Platform::Type::SGOLD, partitions, root_dir).write_file(path, data, timestamp);
+}
+
+void SGOLD::create_directory(const std::string &path, const TimePoint &timestamp) {
+    write_session(Platform::Type::SGOLD, partitions, root_dir).create_directory(path, timestamp);
+}
+
+void SGOLD::remove(const std::string &path) {
+    write_session(Platform::Type::SGOLD, partitions, root_dir).remove(path);
+}
+
 void SGOLD::print_fit_header(const SGOLD::FITHeader &header) {
     if (!verbose_headers) {
         return;
@@ -150,10 +164,6 @@ SGOLD::FileHeader SGOLD::read_file_header(const RawData &data) {
     data.read<uint32_t>(offset, reinterpret_cast<char *>(&header.attributes), 1);
     data.read<uint16_t>(offset, reinterpret_cast<char *>(&header.next_part), 1);
     data.read_string(offset, header.name);
-
-    if (header.name.size() >= 2 && header.name.at(0) == 0x1F) {
-        header.name.erase(header.name.begin(), header.name.begin() + 1);
-    }
     
     return header;
 }
@@ -386,6 +396,8 @@ void SGOLD::scan(const std::string &block_name, FSBlocksMap &ffs_map, Directory:
             const FFSBlock &tmp         = ffs_map.at(id);
             FileHeader      file_header = read_file_header(tmp.data);
             auto            timestamp   = fat_timestamp_to_unix(file_header.fat_timestamp);
+
+            file_header.name = sgold_name_to_utf8(file_header.name, codepage);
 
             Attributes      attributes(file_header.attributes);
 

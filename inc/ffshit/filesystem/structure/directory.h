@@ -27,6 +27,9 @@ class Directory {
         void                    add_subdir(Ptr dir);
         void                    add_file(File::Ptr file);
 
+        void                    remove_subdir(const Ptr &dir);
+        void                    remove_file(const File::Ptr &file);
+
         const std::string &     get_name() const;
         const std::string &     get_path() const;
 

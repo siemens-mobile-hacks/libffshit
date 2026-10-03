@@ -1,4 +1,5 @@
 #include "ffshit/filesystem/platform/sgold2_elka.h"
+#include "filesystem/write/session.h"
 
 #include "ffshit/filesystem/ex.h"
 #include "ffshit/log/logger.h"
@@ -31,6 +32,18 @@ void SGOLD2_ELKA::load(bool skip_broken, bool skip_dup, std::vector<std::string>
 
 const Directory::Ptr SGOLD2_ELKA::get_root() const {
     return root_dir;
+}
+
+void SGOLD2_ELKA::write_file(const std::string &path, const RawData &data, const TimePoint &timestamp) {
+    write_session(Platform::Type::SGOLD2_ELKA, partitions, root_dir).write_file(path, data, timestamp);
+}
+
+void SGOLD2_ELKA::create_directory(const std::string &path, const TimePoint &timestamp) {
+    write_session(Platform::Type::SGOLD2_ELKA, partitions, root_dir).create_directory(path, timestamp);
+}
+
+void SGOLD2_ELKA::remove(const std::string &path) {
+    write_session(Platform::Type::SGOLD2_ELKA, partitions, root_dir).remove(path);
 }
 
 void SGOLD2_ELKA::print_fit_header(const SGOLD2_ELKA::FITHeader &header) {

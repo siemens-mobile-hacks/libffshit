@@ -1,4 +1,5 @@
 #include "ffshit/filesystem/platform/sgold2.h"
+#include "filesystem/write/session.h"
 
 #include "ffshit/filesystem/ex.h"
 #include "ffshit/ex.h"
@@ -39,6 +40,18 @@ void SGOLD2::load(bool skip_broken, bool skip_dup, std::vector<std::string> part
 
 const Directory::Ptr SGOLD2::get_root() const {
     return root_dir;
+}
+
+void SGOLD2::write_file(const std::string &path, const RawData &data, const TimePoint &timestamp) {
+    write_session(Platform::Type::SGOLD2, partitions, root_dir).write_file(path, data, timestamp);
+}
+
+void SGOLD2::create_directory(const std::string &path, const TimePoint &timestamp) {
+    write_session(Platform::Type::SGOLD2, partitions, root_dir).create_directory(path, timestamp);
+}
+
+void SGOLD2::remove(const std::string &path) {
+    write_session(Platform::Type::SGOLD2, partitions, root_dir).remove(path);
 }
 
 void SGOLD2::print_fit_header(const SGOLD2::FITHeader &header) {

@@ -308,6 +308,22 @@ void RawData::read(size_t offset, char *data, size_t read_size) const {
     memcpy(data, this->data.get() + offset, read_size);
 }
 
+void RawData::write(size_t offset, const char *data, size_t write_size) {
+    if (write_size == 0) {
+        return;
+    }
+
+    if (data == nullptr) {
+        throw Exception("RawData::write() ptr == nullptr");
+    }
+
+    if (offset + write_size > this->size) {
+        throw Exception("RawData::write() Write size + offset > data size; Offset: {}, Write size: {}, Data size: {}", offset, write_size, this->size);
+    }
+
+    memcpy(this->data.get() + offset, data, write_size);
+}
+
 void RawData::read_string(size_t offset, std::string &str, size_t step) const {
     size_t offset_start = offset;
 

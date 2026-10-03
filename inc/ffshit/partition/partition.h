@@ -20,6 +20,8 @@ class Partition {
         const std::string & get_name() const;
         const Blocks &      get_blocks() const;
 
+        void                reload_block_data(const RawData &fullflash_data);
+
     private:
         std::string name;
         size_t      size;

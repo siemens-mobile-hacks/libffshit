@@ -22,5 +22,11 @@ const Blocks &Partition::get_blocks() const {
     return blocks;
 }
 
+void Partition::reload_block_data(const RawData &fullflash_data) {
+    for (auto &block : blocks) {
+        block.reload_data(fullflash_data);
+    }
+}
+
 };
 };

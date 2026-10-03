@@ -27,5 +27,9 @@ const RawData &Block::get_data()  const {
     return data;
 }
 
+void Block::reload_data(const RawData &fullflash_data) {
+    data = RawData(fullflash_data, addr, size);
+}
+
 };
 };
